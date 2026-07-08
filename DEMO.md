@@ -1,7 +1,9 @@
 # Buildloop — webinar demo runbook
 
-> **Branch `buildloop-simple-demo` only.** This is a stripped-down teaching variant of Buildloop for a
-> live vibe-coding webinar. It is **not** the real method and must never merge to `main`. Three demo
+> **Temporary demo bundle.** This is a stripped-down teaching variant of Buildloop for a live
+> vibe-coding webinar. It is **not** the real method. It lives on branch `buildloop-simple-demo` and is
+> **temporarily merged into `main`** so it installs cleanly on another machine (`/plugin marketplace add
+> a-v-ershov/buildloop` pulls the default branch) — revert/remove it after the webinar. Three demo
 > skills — `demo-spec`, `demo-build`, `demo-release` — show the same before/after arcs the real
 > pipelines do, but fast enough for a live slot. Where the mechanism itself is the "wow" (the
 > independent verifier, the real audits) the demo keeps it **real**; only the slow surrounding
@@ -68,7 +70,8 @@ trivially-correct features; both approaches nail those and there's no contrast.
 
 ## Boundaries (keep the demo honest and safe)
 
-- Never merge `buildloop-simple-demo` into `main`. The real skills stay untouched.
-- Don't bump the plugin version for the demo (`.claude-plugin/plugin.json` is owned by the user).
+- The merge into `main` is **temporary**, only to make cross-machine install easy — plan to revert it
+  (drop the demo skills + `DEMO.md`, restore the version) once the webinar is done. The real skills stay
+  untouched by the demo ones either way.
 - The demo skills say out loud what the real pipeline adds — don't let "compressed for demo" read as
   "this is all there is".

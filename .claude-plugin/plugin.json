@@ -1,6 +1,6 @@
 {
   "name": "buildloop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Coding-workflow skills + agents for Claude Code: three pipelines from raw idea to cut release. project-spec (gather-context -> validate-idea -> define-product-requirements -> create-user-flows -> define-design-decisions -> design-architecture -> design-dev-architecture, conducted by create-project-spec; plus map-codebase for existing codebases) writes the buildable spec; build (setup-dev-environment -> plan-development -> implement-feature -> verify-feature, conducted by build-product) turns it into working software; release (audit-security/performance/product/code-health/accessibility -> cut-release, conducted by release-product) audits and ships it. Plus commit and propagate-changes. Bundled agents (spec-reviewer, spec-researcher, implementer, verifier) carry the pipelines' subagent roles. Every skill responds and thinks in whatever language you address it in.",
   "author": {
     "name": "a-v-ershov",

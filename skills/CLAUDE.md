@@ -110,16 +110,17 @@ the one outward-facing step and always confirms.
   phases consume them as overridable tie-breakers, logged in their Forks / Decisions log with
   `Source = preference`.
 
-## Demo variant (branch `buildloop-simple-demo` only — teaching, not the real method)
+## Demo variant (teaching bundle — temporary, not the real method)
 
-For a vibe-coding webinar this branch adds three **stripped-down** demo skills — `demo-spec`,
-`demo-build`, `demo-release` — that reproduce the spec/build/release before/after arcs fast enough for a
-live slot. They **keep the mechanism real where it's the point** (`demo-build` runs the genuine
+For a vibe-coding webinar this adds three **stripped-down** demo skills — `demo-spec`, `demo-build`,
+`demo-release` — that reproduce the spec/build/release before/after arcs fast enough for a live slot.
+They **keep the mechanism real where it's the point** (`demo-build` runs the genuine
 `implementer`+`verifier` two-agent loop; `demo-release` runs the genuine `audit-security`+`audit-performance`)
 and strip only the slow surrounding machinery (research/review, kanban, the fix→re-audit→cut loop).
 `demo-build` is hard-capped at 2 verify iterations; `demo-release` is report-only (no rework, no cut). The
-webinar runbook is the root **`DEMO.md`**. This branch must never merge to `main`, and the real skills are
-untouched.
+webinar runbook is the root **`DEMO.md`**. Lives on branch `buildloop-simple-demo` and is **temporarily
+merged into `main`** for easy cross-machine install — revert it after the webinar. The real skills are
+untouched by the demo ones.
 
 ## Where things live
 
