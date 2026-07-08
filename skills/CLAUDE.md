@@ -118,9 +118,8 @@ They **keep the mechanism real where it's the point** (`demo-build` runs the gen
 `implementer`+`verifier` two-agent loop; `demo-release` runs the genuine `audit-security`+`audit-performance`)
 and strip only the slow surrounding machinery (research/review, kanban, the fix→re-audit→cut loop).
 `demo-build` is hard-capped at 2 verify iterations; `demo-release` is report-only (no rework, no cut). The
-webinar runbook is the root **`DEMO.md`**. Lives on branch `buildloop-simple-demo` and is **temporarily
-merged into `main`** for easy cross-machine install — revert it after the webinar. The real skills are
-untouched by the demo ones.
+webinar runbook is the root **`DEMO.md`**. It currently lives on `main` **temporarily** for easy
+cross-machine install — remove it after the webinar. The real skills are untouched by the demo ones.
 
 ## Where things live
 

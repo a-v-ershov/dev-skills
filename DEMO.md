@@ -1,9 +1,9 @@
 # Buildloop — webinar demo runbook
 
 > **Temporary demo bundle.** This is a stripped-down teaching variant of Buildloop for a live
-> vibe-coding webinar. It is **not** the real method. It lives on branch `buildloop-simple-demo` and is
-> **temporarily merged into `main`** so it installs cleanly on another machine (`/plugin marketplace add
-> a-v-ershov/buildloop` pulls the default branch) — revert/remove it after the webinar. Three demo
+> vibe-coding webinar. It is **not** the real method. It currently lives on `main` **temporarily**, so it
+> installs cleanly on another machine (`/plugin marketplace add a-v-ershov/buildloop` pulls the default
+> branch) — remove it after the webinar. Three demo
 > skills — `demo-spec`, `demo-build`, `demo-release` — show the same before/after arcs the real
 > pipelines do, but fast enough for a live slot. Where the mechanism itself is the "wow" (the
 > independent verifier, the real audits) the demo keeps it **real**; only the slow surrounding
