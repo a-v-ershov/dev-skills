@@ -1,17 +1,18 @@
 ---
 name: demo-release
 disable-model-invocation: true
-description: "Webinar DEMO variant of the release phase — runs the real security + performance audits and prints a pre-deploy CHECKLIST, for a live before/after demo. Use only for the vibe-coding course demo, NOT for real releases (that's release-product). It spawns the genuine audit-security and audit-performance skills as fresh, read-only subagents in parallel, collects what they find, and renders it as a green/red pre-deploy checklist — the payoff being to SHOW that the method knows what to check before shipping (leaked keys, missing auth, injection, slow queries) versus a vibe-coder who doesn't. REPORT-ONLY: it does NOT file rework tasks, does NOT loop fixes, and does NOT cut a release. Reuses the real audits; only the fix/ship machinery is stripped."
-argument-hint: "[--audit security|performance]"
+description: "Webinar DEMO variant of the release phase — runs the real SECURITY audit (the star of this act) and prints a pre-deploy CHECKLIST, for a live before/after demo. Use only for the vibe-coding course demo, NOT for real releases (that's release-product). By default it spawns the genuine audit-security skill as a fresh, read-only subagent and renders its findings as a green/red pre-deploy checklist — the payoff being to SHOW that the method finds real security problems before shipping (leaked keys, missing auth, injection) versus a vibe-coder who just deploys and hopes. Performance is OPTIONAL (--with-performance). REPORT-ONLY: it does NOT file rework tasks, does NOT loop fixes, and does NOT cut a release / bump versions. Reuses the real audit; only the fix/ship machinery is stripped."
+argument-hint: "[--with-performance]"
 ---
 
-# Demo Release Skill (webinar variant — audits → checklist, report-only)
+# Demo Release Skill (webinar variant — security audit → checklist, report-only)
 
-You are running the **demo** version of the release phase for a live webinar. The payoff of this act is
-a **pre-deploy checklist**: the method automatically knows the things a vibe-coder doesn't even know to
-check (a leaked API key, an unprotected endpoint, an injection hole, an N+1 query) — and checks them
-every single time before shipping. The "before" (a co-host who just deploys and hopes) is set up live;
-your job is the "after".
+You are running the **demo** version of the release phase for a live webinar. The star of this act is
+**security**: the method automatically knows the things a vibe-coder doesn't even know to check (a
+leaked API key, an unprotected endpoint, an injection hole) — and **finds real problems** before
+shipping. That's what to show. The rest of the real release phase (version bumps, changelog, the fix
+loop, the cut) is **not** the point here and is stripped. The "before" (a co-host who just deploys and
+hopes) is set up live; your job is the "after".
 
 This is **not** `release-product`. You do not file rework tasks, you do not run the fix loop, and you do
 not `cut-release`. You **audit and report** — that's the whole act.
@@ -23,11 +24,11 @@ Never translate code, identifiers, commands, file paths, or CVE/CWE ids.
 
 ## What stays REAL
 
-- **`audit-security`** and **`audit-performance`** are the genuine skills — spawn each as a **fresh,
-  independent, read-only subagent**. They probe the real running/checked-in system and prove findings
-  with evidence; you don't hand-wave the results.
-- They are read-only and independent, so **run them in parallel** (one message, two agent spawns) — just
-  like the real release phase.
+- **`audit-security`** is the genuine skill — spawn it as a **fresh, independent, read-only subagent**.
+  It probes the real running/checked-in system and proves findings with evidence (a reproduced leak, a
+  `file:line` for a secret, a driven request that returns another user's data); you don't hand-wave.
+- **`audit-performance`** is available too but **optional** — only when `--with-performance` is passed.
+  When both run, they're read-only and independent, so spawn them **in parallel** (one message).
 
 ## What you STRIP (report-only)
 
@@ -48,33 +49,34 @@ loop, no `cut-release`.
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Stage 0: Frame — say this is the demo deploy-checklist: real audits, report-only, no fixes/ship
-- [ ] Stage 1: Audit — spawn audit-security + audit-performance in PARALLEL as fresh read-only subagents (report-only)
-- [ ] Stage 2: Collect — gather each agent's findings + verdict
+- [ ] Stage 0: Frame — say this is the demo deploy-checklist: real SECURITY audit, report-only, no fixes/ship
+- [ ] Stage 1: Audit — spawn audit-security (report-only); add audit-performance only if --with-performance
+- [ ] Stage 2: Collect — gather findings + verdict
 - [ ] Stage 3: Checklist — render a pre-deploy checklist (✅/❌ per checked item, with the evidence one-liner)
 - [ ] Stage 4: Close — say what the real release adds (files rework, fixes + re-audits, then cut-release)
 ```
 
 ### Stage 0: Frame
-State plainly: this is the **demo** deploy checklist — the real security and performance audits, run
-read-only, rendered as a checklist. No fixes are applied and nothing is shipped here.
+State plainly: this is the **demo** deploy checklist — the real **security** audit run read-only and
+rendered as a checklist (performance optional). No fixes are applied and nothing is shipped here.
 
-### Stage 1: Audit (parallel fan-out)
-Honor `--audit <name>` to run just one; otherwise spawn **both** in one message:
-- `audit-security` (`subagent_type` per the audit; it preloads its skill) — secrets in code/history,
-  authn/authz on protected paths, injection, the lethal trifecta, insecure data handling, supply chain.
-- `audit-performance` — the quality-attribute scenarios: slow paths, N+1 queries, unbounded work,
-  missing indexes/caching, payload sizes.
-In each spawn prompt, include the **report-only** instruction above. They are read-only and independent —
-they collide on nothing.
+### Stage 1: Audit
+Spawn **`audit-security`** (`subagent_type` per the audit; it preloads its skill) — secrets in
+code/history, authn/authz on protected paths, injection, the lethal trifecta, insecure data handling,
+supply chain. This is the one that matters for the act. Only when `--with-performance` is passed, also
+spawn **`audit-performance`** (slow paths, N+1, unbounded work, missing indexes) — in the **same
+message** so the two run in parallel. In each spawn prompt, include the **report-only** instruction
+above (probe + rank + return findings + write the audit doc, but do NOT file rework tasks or fix
+anything).
 
 ### Stage 2: Collect
 Gather each subagent's returned findings and verdict (clean / N blockers / N majors) and its written
 `.buildloop/release/<name>-audit.md`. Don't re-derive — use what they proved.
 
 ### Stage 3: Render the checklist (the payoff)
-Print a compact **pre-deploy checklist** grouped by audit. One line per checked item with a status and a
-short evidence note, e.g.:
+Print a compact **pre-deploy checklist**. Lead with the security block (the ⚡ Performance block only
+appears when `--with-performance` ran). One line per checked item with a status and a short evidence
+note, e.g.:
 
 ```
 🔒 Security
@@ -83,7 +85,7 @@ short evidence note, e.g.:
   ✅ SQL is parameterized (no string-built queries)
   ❌ OpenAI key logged in request logs on error  [major]
 
-⚡ Performance
+⚡ Performance  (only with --with-performance)
   ✅ Article list paginated (no unbounded query)
   ❌ N+1 on the dashboard: one query per article to fetch its status  [major]
 ```
@@ -99,8 +101,9 @@ stops at the checklist on purpose.
 
 ## Rules
 
-1. Real audits, spawned as fresh **read-only** subagents, run in **parallel**.
-2. **Report-only** — instruct each audit not to file rework tasks or fix anything; you never `cut-release`.
+1. **Security is the act** — `audit-security` runs by default; performance is optional (`--with-performance`).
+   Audits are fresh **read-only** subagents; when both run, run them in **parallel**.
+2. **Report-only** — instruct each audit not to file rework tasks or fix anything; you never `cut-release` or bump versions.
 3. Render findings as a pre-deploy **checklist**, red items first — that contrast is the act.
 4. Prove-backed only: each item reflects what the audit actually checked; no invented passes.
 5. Close by naming what the full release phase adds (file → fix → re-audit → cut).

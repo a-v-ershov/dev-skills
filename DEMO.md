@@ -23,19 +23,23 @@ articles** (with a user dashboard). Alexander provides that project repo separat
 
 ## What each demo skill does (and deliberately skips)
 
-- **`demo-spec [idea]`** — a fast, shallow PRD grill: 3–6 sharp questions (batched, each with a
-  recommended answer), then writes slim `product-requirements` / `architecture` / `dev-architecture`
-  docs under `.buildloop/project-spec/`. Skips gather-context, validate-idea, user-flows, the design
-  phases, research subagents, and adversarial review. ~5–15 min. The architecture doc carries the trust
-  boundaries + a STRIDE-lite note so Act 3 has a contract; the dev-architecture doc names the concrete
-  verification commands so Act 2 can run.
+- **`demo-spec [idea]`** — the **real staged flow, compressed**: four sequential stages with a gate
+  between each — (1) **gather-context** interview + critical pushback → recap gate; (2) **functional
+  requirements** presented → ok/not-ok gate → write doc; (3) **architecture** proposed (options + trust
+  boundaries + STRIDE-lite) → gate → write doc; (4) **dev-architecture** (the verification tooling, e.g.
+  Playwright) → gate → write doc. Under `.buildloop/project-spec/`. Cuts only the slow machinery (research
+  subagents, adversarial review, dual outputs) and the extra phases (validate-idea, user-flows, design) —
+  never a stage or a gate. The architecture doc carries the trust boundaries + STRIDE-lite so Act 3 has a
+  contract; the dev-architecture doc names the concrete verification tools so Act 2 can run.
 - **`demo-build [feature]`** — builds **one** feature with the **real** `implementer` + `verifier`
   agents. Writes a single throwaway task file (no kanban), spawns the implementer, then the **separate**
   verifier that authors adversarial tests and finds bugs. **Hard-capped at 2 implement↔verify
   iterations** (usually 1 is enough). Does not commit unless asked.
-- **`demo-release [--audit …]`** — spawns the **real** `audit-security` + `audit-performance` as
-  fresh, read-only subagents **in parallel**, in **report-only** mode (no rework tasks, no fixes, no
-  ship), and renders their findings as a green/red **pre-deploy checklist**.
+- **`demo-release [--with-performance]`** — spawns the **real** `audit-security` (the star of the act)
+  as a fresh, read-only subagent in **report-only** mode (no rework tasks, no fixes, no ship, no version
+  bump), and renders its findings as a green/red **pre-deploy checklist** — the point being it *finds
+  real security problems* (leaked keys, missing auth, injection). `audit-performance` is optional via
+  `--with-performance`.
 
 ## Run order & timing strategy
 
