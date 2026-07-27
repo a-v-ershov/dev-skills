@@ -1,17 +1,18 @@
 # Report templates (shared — release pipeline)
 
-Two shapes: the per-audit findings doc (`.dev-skills/release/<noun>-audit.md`, written by each `audit-*`) and
-the combined release summary (`.dev-skills/release/release-summary.md`, built by `release-product`). Fill in;
-delete the italic guidance.
+Two shapes: the per-step findings doc (`.dev-skills/release/<noun>-audit.md` from each `audit-*`, and the
+same shape for `refactor.md`, `test-gaps.md`, `manual-test-brief.md`) and the combined release summary
+(`.dev-skills/release/release-summary.md`, built by `release-product`). Fill in; delete the italic
+guidance.
 
-## Per-audit findings doc — `.dev-skills/release/<noun>-audit.md`
+## Per-step findings doc — `.dev-skills/release/<noun>-audit.md`
 
 ```
 # <Domain> audit — <product>
 
 - Date: <YYYY-MM-DD>
 - Contract: <path to the spec doc + the items proved against>
-- Verdict: **<clean | N blockers | N majors>**  ·  Iteration: <n>/<max_audit_iterations>
+- Verdict: **<clean | N blockers | N majors>**  ·  Round: <first | after the fix round>
 
 ## Findings
 
@@ -48,17 +49,28 @@ Built by `release-product` at the end of a run — decisions-first, for the huma
 - 🔴 <finding> → task T0NN <status>
 - waived: <finding> — <who waived it, why>
 
-## Filed for rework
-- <count> tasks across <audits> — see .dev-skills/build-plan/board.md
+## Owned by setup-production-environment
+- <missing production capability — no spend cap / no error tracking / variable unset> — not a code fix
 
-## Audits run
-| audit | verdict | blockers | majors | doc |
-|-------|---------|----------|--------|-----|
+## Filed for rework
+- <count> tasks across <steps> — see .dev-skills/build-plan/board.md
+
+## Steps run
+| step | verdict | blockers | majors | doc |
+|------|---------|----------|--------|-----|
+| refactor | done | 0 | 1 | refactor.md |
+| write-tests | 3 gaps closed, 1 bug filed | 1 | 0 | test-gaps.md |
 | security | clean | 0 | 2 | security-audit.md |
 | …        |       |   |   |                  |
 
+## Hands-on pass (manual-test)
+- <count> items waiting for a person — see manual-test-brief.md; <count> of them accepted as review: auto
+
 ## Shipped (if cut-release ran)
 - version <x.y.z> · tag <…> · PR <link> · changelog updated
+
+## Next, by hand
+- the hands-on pass above · `/setup-production-environment` when the product goes live
 ```
 
-Roll up; do not re-derive — concatenate each audit's verdict + the cut-release result.
+Roll up; do not re-derive — concatenate each step's verdict + the cut-release result.

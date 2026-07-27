@@ -3,7 +3,9 @@
 #
 # Enforces a write-scope invariant for skills that must not edit product code:
 #   - verify-feature  → may write tests + the backlog (.dev-skills/build-plan), nothing else
+#   - write-tests     → may write tests + .dev-skills/**, nothing else (the product is never patched)
 #   - audit-*         → may write findings (.dev-skills/**) + the backlog, nothing else
+#   - manual-test     → may write .dev-skills/** only (it is a read-only briefing)
 #
 # It reads the Claude Code hook JSON from stdin, extracts tool_input.file_path, and
 # ALLOWS the write only if that path matches one of the glob patterns passed as

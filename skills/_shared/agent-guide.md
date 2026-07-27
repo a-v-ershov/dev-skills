@@ -64,7 +64,8 @@ Known artifacts (the `.research.md` files are the depth; each has a short `.summ
 - `DESIGN.md` *(repo root, UI projects)* — the committed design system (tokens + rules) UI code is built against.
 - `.dev-skills/project-setup/design-system.md` — *(UI projects)* how the design system was chosen (the *why* behind `DESIGN.md`).
 - `.dev-skills/release/release-summary.md` — release readiness + what shipped (the verdict).
-- `.dev-skills/release/*-audit.md` — per-audit findings (security, performance, product, code-health, accessibility) — the audit trail.
+- `.dev-skills/release/*.md` — the release phase's findings: `refactor.md`, `test-gaps.md`, the per-audit
+  docs (security, performance, product+accessibility), and `manual-test-brief.md` — the audit trail.
 
 ## Rendered template (emit this between the markers)
 

@@ -1,22 +1,24 @@
 # Release config & modes (shared — release pipeline)
 
-Settings that govern the release phase. `release-product` sets them once; each release skill (`audit-*`,
-`cut-release`) reads them and adapts. Every skill is also runnable standalone, so it falls back
-gracefully when no config exists.
+Settings that govern the release phase. `release-product` sets them once; each release skill (`refactor`,
+`write-tests`, `audit-*`, `manual-test`, `cut-release`) reads them and adapts. Every skill is also
+runnable standalone, so it falls back gracefully when no config exists.
 
 ## The settings
 
 - **`mode`** — `interactive` (default) | `autopilot`.
   - `interactive`: stop at each hard gate — a 🔴 blocker, before filing rework, and before the
     outward-facing `cut-release` — for the human.
-  - `autopilot`: resolve ordinary forks itself and **log each** (in the audit's findings doc), running
-    audit → fix → re-audit back-to-back — **except** the two things that always stop (below).
-- **`max_audit_iterations`** — integer, default **3**. The cap on the audit↔fix↔re-audit loop for a
-  single audit. When a 🔴 survives this many rounds, the audit escalates to `needs_human` instead of
-  looping again.
-- **`audits`** — which of the five are enabled. Default: all. Each self-skips and records why if its
-  contract is absent or N/A (e.g. `audit-accessibility` on a product with no UI, `audit-performance`
-  with no measurable scenario).
+  - `autopilot`: resolve ordinary forks itself and **log each** (in the step's findings doc), running the
+    chain back-to-back — **except** the three things that always stop (below).
+- **`steps`** — which of the release chain's steps are enabled. Default: all applicable, in this fixed
+  order: `refactor` → `write-tests` → (`audit-security` · `audit-performance` · `audit-product`, in
+  parallel) → `manual-test`. A step self-skips and records why when it does not apply (e.g. the
+  accessibility part of `audit-product` on a product with no UI, `audit-performance` with no measurable
+  scenario).
+
+There is **no iteration setting.** Findings get one fix round and one re-run of the affected audits;
+whatever is still open then is `needs_human` (`audit-method.md` → "One round, then a decision").
 
 ## Config file — `.dev-skills/release/.release-config.md`
 
@@ -24,35 +26,39 @@ gracefully when no config exists.
 # Release pipeline config
 
 - mode: interactive            # interactive | autopilot
-- max_audit_iterations: 3      # cap on the audit↔fix↔re-audit loop before needs_human
-- audits: security, performance, product, code-health, accessibility
+- steps: refactor, write-tests, security, performance, product, manual-test
 ```
 
 ## How a release skill uses it
 
 1. At intake, read `.dev-skills/release/.release-config.md`.
-2. **Present:** use `mode`, `max_audit_iterations`, and the enabled `audits`.
+2. **Present:** use `mode` and the enabled `steps`.
 3. **Absent (standalone run):** ask the user once (one `AskUserQuestion`, defaults pre-selected:
-   interactive + 3 + all applicable audits), then write the file so later standalone skills inherit it.
+   interactive + all applicable steps), then write the file so later standalone skills inherit it.
 
-`.dev-skills/release/` is committed project documentation — no special gitignore; the release pipeline keeps no
-transient files (every findings doc is kept as the audit trail).
+`.dev-skills/release/` is committed project documentation — no special gitignore; the release pipeline
+keeps no transient files (every findings doc is kept as the audit trail).
 
-## Two things ALWAYS stop, regardless of mode
+## Three things ALWAYS stop, regardless of mode
 
 Autopilot suppresses ordinary forks, but never these:
 
-1. **A 🔴 blocker that survives `max_audit_iterations`** — a `needs_human` escalation. The whole point is
+1. **`refactor`'s plan.** It rewrites working code; the human approves the transformation list before
+   any of it is applied.
+2. **A finding still open after the single fix round** — a `needs_human` escalation. The whole point is
    to surface to a human that the release cannot be cut.
-2. **`cut-release` itself** — the outward-facing step (version bump, tag, push, PR) always confirms
+3. **`cut-release` itself** — the outward-facing step (version bump, tag, push, PR) always confirms
    before acting, in both modes (the `careful` pattern). It is the release phase's analog of the build
    phase's "critical / destructive change propagation always stops".
 
+Putting the product live is not on this list because it is not part of the release run at all:
+`setup-production-environment` is invoked by hand, and confirms every external action on its own.
+
 ## Autopilot rules (non-negotiable)
 
-- **Decide, but never hide.** Every fork the AI resolves is logged in the findings doc with the choice,
-  rationale, and confidence.
+- **Decide, but never hide.** Every fork the AI resolves is logged in the step's findings doc with the
+  choice, rationale, and confidence.
 - **Still do the work.** Autopilot skips human prompts — it does **not** skip the separate-agent audits,
-  the evidence standard, or the re-audit after a fix.
+  the evidence standard, red-first in `write-tests`, or the re-run after a fix.
 - **Audits are never self-approved.** Even in autopilot each audit runs in a fresh, independent agent and
   proves real outcomes — it does not rubber-stamp.

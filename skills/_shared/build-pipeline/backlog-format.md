@@ -73,7 +73,8 @@ was done, what was found, evidence links. The verifier's findings accumulate as 
   (a product feature, run by `implement-feature` then `verify-feature`), `verify` (an optional
   cross-cutting check, e.g. an end-to-end pass over several features, or — in an existing project —
   proving a pre-existing/adopted feature against its acceptance criteria), `rework` (a fix to
-  already-built code — filed by a release-phase `audit-*` finding, a `plan-development` reopen, or
+  already-built code — filed by a release-phase finding (an `audit-*`, or a bug `refactor` /
+  `write-tests` found and deliberately did not fix), a `plan-development` reopen, or
   `plan-development` delta mode reconciling a brownfield codebase against the target spec; `traces_to`
   points at the audit finding / changed spec section / as-is map finding; **dispatched exactly like
   `feature`**: `implement-feature` then `verify-feature`).

@@ -1,6 +1,6 @@
 ---
 name: audit-performance
-description: "Audit the built product's performance at the system level, against the spec's quality-attribute scenarios. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent performance engineer: it reads the latency/throughput/cost/scale scenarios from .dev-skills/project-spec/architecture.research.md and MEASURES whether the running system meets them — p50/p95 on the hot paths, throughput under the target load, bundle/asset weight and client render cost, query plans (N+1, missing index), and the resource/cost envelope. Read-only: it measures, reproduces the slow path, and ranks (blocker = a missed budget, major = met with no margin, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/performance-audit.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the number actually moved."
+description: "Audit the built product's performance at the system level, against the spec's quality-attribute scenarios. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent performance engineer: it reads the latency/throughput/cost/scale scenarios from .dev-skills/project-spec/architecture.research.md and MEASURES whether the running system meets them — p50/p95 on the hot paths, throughput under the target load, bundle/asset weight and client render cost, query plans (N+1, missing index), and the resource/cost envelope. Read-only: it measures, reproduces the slow path, and ranks (blocker = a missed budget, major = met with no margin, per the rubric) but NEVER edits product code and NEVER installs a profiler or load tool it wishes it had — an unavailable measurement is recorded as unmeasured, and tooling is setup-dev-environment's job. It files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/performance-audit.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs once after the fix round to confirm the number actually moved."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
@@ -18,9 +18,10 @@ reproduce the system under realistic load, capture the number, and compare it to
 with a budget you miss is a finding; a number with no budget behind it is a measurement, not a blocker.
 
 You are **read-only**. You measure, profile, drive load, and write throwaway probe scripts — but you
-**never edit the product's code**. A regression you find becomes a **rework task** for `build-tasks`,
-not a self-optimization. Optimizing what you measured would destroy the independence that makes the
-audit honest.
+**never edit the product's code** and you **never install a measurement tool you wish existed** — an
+unavailable measurement is recorded as unmeasured (tooling is `setup-dev-environment`'s job). A
+regression you find becomes a **rework task** for `build-tasks`, not a self-optimization. Optimizing
+what you measured would destroy the independence that makes the audit honest.
 
 The shared audit machine (why a fresh agent, the read→probe→prove→rank→file loop, how findings become
 tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what blocks the release:
@@ -71,7 +72,7 @@ an empty DB; report the percentile and the conditions, not a single lucky sample
 ### Stage 0: Intake
 Read the quality-attribute scenarios in `architecture.research.md` (your budgets — the measurable targets
 for latency, throughput, cost, scale). Read `verification.md` for the bring-up + how to drive each
-surface + the seed/reset commands. Read the mode + `max_audit_iterations`. On `--reaudit`, read the prior
+surface + the seed/reset commands. Read the mode. On `--reaudit`, read the prior
 `performance-audit.md` and re-measure only the scenarios whose findings had filed tasks.
 
 ### Stage 1: Measure
@@ -98,10 +99,10 @@ Return the verdict to `release-product`. On a re-audit, a previously-🔴 scenar
 
 ## Rules
 
-1. Read-only: you measure and file tasks — you never edit the product's code.
+1. Read-only: you measure and file tasks — you never edit the product's code and never install a tool.
 2. Measure, don't guess: every finding carries a number (percentile + conditions), reproduced on
    realistic, seeded data — not an empty DB or one lucky sample.
 3. Rank against the scenario's budget; no budget → measure but don't blocker it (flag the gap instead).
 4. Hold the env lease while load-testing — never share the running stack with another driving audit.
 5. A micro-optimization with no scenario behind it is ⚪ at most — no speculative-tuning noise.
-6. A re-audit clears a 🔴 only by re-measuring within budget — never by assumption.
+6. The re-run clears a 🔴 only by re-measuring within budget — never by assumption.
