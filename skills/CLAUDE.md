@@ -110,17 +110,6 @@ the one outward-facing step and always confirms.
   phases consume them as overridable tie-breakers, logged in their Forks / Decisions log with
   `Source = preference`.
 
-## Demo variant (teaching bundle — temporary, not the real method)
-
-For a vibe-coding webinar this adds three **stripped-down** demo skills — `demo-spec`, `demo-build`,
-`demo-release` — that reproduce the spec/build/release before/after arcs fast enough for a live slot.
-They **keep the mechanism real where it's the point** (`demo-build` runs the genuine
-`implementer`+`verifier` two-agent loop; `demo-release` runs the genuine `audit-security`+`audit-performance`)
-and strip only the slow surrounding machinery (research/review, kanban, the fix→re-audit→cut loop).
-`demo-build` is hard-capped at 2 verify iterations; `demo-release` is report-only (no rework, no cut). The
-webinar runbook is the root **`DEMO.md`**. It currently lives on `main` **temporarily** for easy
-cross-machine install — remove it after the webinar. The real skills are untouched by the demo ones.
-
 ## Where things live
 
 - `.dev-skills/project-spec/` — spec research docs, summaries, `adr/`, `.spec-config.md` (committed; transient
