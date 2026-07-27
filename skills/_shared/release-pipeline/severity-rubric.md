@@ -19,7 +19,7 @@ against taste. Defined once here; the audits and `release-product` reference it.
 
 ## What blocks the release
 
-- **Any open 🔴 blocks.** It must be fixed (a `build-product` rework run) and the audit re-run clean, or
+- **Any open 🔴 blocks.** It must be fixed (a `build-tasks` rework run) and the audit re-run clean, or
   explicitly waived by the human with the waiver logged in the findings doc.
 - **🟡 majors are filed, not blocking.** They become rework tasks; `release-product` surfaces the count,
   but a release may be cut with open majors at the human's call (logged).

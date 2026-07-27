@@ -1,7 +1,7 @@
 ---
 name: release-product
 disable-model-invocation: true
-description: "Take a built, verified product to a cut release. Use after build-product, as the release phase — the third pipeline, after the project-spec and build phases. A thin orchestrator: it reads the spec's quality-attribute contracts and runs the system-level audits (audit-security / audit-performance / audit-product / audit-code-health / audit-accessibility) as fresh, independent subagents in PARALLEL (they are read-only — they mutate nothing and collide on nothing), collects and ranks their findings by severity, files blockers/majors as rework tasks into the backlog (via plan-development's amend mode), drives a build-product run to fix them and re-audits — bounded by max_audit_iterations — until clean or escalated, then invokes cut-release (version + changelog + release notes + tag + commit + PR, always with confirmation, stopping before prod deploy). Audits never fix code; the cut is the only outward-facing step and always stops for the human. Resumable: the findings docs + backlog are the source of truth. Conducts the focused sub-skills; it does not duplicate their logic."
+description: "Take a built, verified product to a cut release. Use after build-tasks, as the release phase — the third pipeline, after the project-spec and build phases. A thin orchestrator: it reads the spec's quality-attribute contracts and runs the system-level audits (audit-security / audit-performance / audit-product / audit-code-health / audit-accessibility) as fresh, independent subagents in PARALLEL (they are read-only — they mutate nothing and collide on nothing), collects and ranks their findings by severity, files blockers/majors as rework tasks into the backlog (via plan-development's amend mode), drives a build-tasks run to fix them and re-audits — bounded by max_audit_iterations — until clean or escalated, then invokes cut-release (version + changelog + release notes + tag + commit + PR, always with confirmation, stopping before prod deploy). Audits never fix code; the cut is the only outward-facing step and always stops for the human. Resumable: the findings docs + backlog are the source of truth. Conducts the focused sub-skills; it does not duplicate their logic."
 argument-hint: "[--audit <name>] [--skip-ship]"
 ---
 
@@ -19,7 +19,7 @@ The loop:
 ```
 spawn all enabled audits in parallel (read-only, fresh agents)
    → collect findings → rank (severity-rubric)
-   → any open 🔴/🟡?  → file rework tasks (plan-development amend) → build-product fixes → re-audit  ⟲
+   → any open 🔴/🟡?  → file rework tasks (plan-development amend) → build-tasks fixes → re-audit  ⟲
                         (bounded by max_audit_iterations; a 🔴 at the cap → needs_human, stop)
    → clean (no open 🔴)?  → cut-release (version + changelog + notes + tag + PR, always confirmed)
    → build .dev-skills/release/release-summary.md
@@ -55,7 +55,7 @@ absent, ask once (defaults: interactive + 3 + all applicable) and write it. Full
 - [ ] Step 0: Intake — confirm build is complete; read the spec contracts + .release-config.md (write if absent); detect resume
 - [ ] Step 1: Audit — spawn the enabled audits in parallel (fresh agents); collect findings docs + verdicts
 - [ ] Step 2: Triage — rank all findings; file 🔴/🟡 as rework tasks (plan-development amend); ⚪ logged only
-- [ ] Loop: build-product fixes the rework → re-run only the affected audits → repeat until clean or cap (needs_human)
+- [ ] Loop: build-tasks fixes the rework → re-run only the affected audits → repeat until clean or cap (needs_human)
 - [ ] Step 3: Cut — no open 🔴 → invoke cut-release (always confirmed); honor --skip-ship to stop at audits
 - [ ] Done: build release-summary.md; refresh the project documentation map; report verdict + filed tasks + what shipped
 ```
@@ -82,7 +82,7 @@ Collect every findings doc. The audits already filed 🔴/🟡 as rework tasks (
 combined picture. In interactive, confirm before the fix run; before any **destructive** backlog change
 (cancelling/reopening a `done` task) always stop, in both modes. Then:
 
-1. **Fix** — invoke `build-product` to drive the open rework tasks (it implements + verifies each, as
+1. **Fix** — invoke `build-tasks` to drive the open rework tasks (it implements + verifies each, as
    usual). You do not fix anything yourself.
 2. **Re-audit** — re-run **only the audits whose findings were addressed**, as fresh agents, to confirm
    the contract is now upheld (proven, not assumed). Each round bumps that audit's iteration count.
@@ -109,9 +109,9 @@ and hand off.
 ## Rules
 
 1. **Conduct, don't duplicate.** Never audit, fix, or ship yourself — spawn the `audit-*` subagents,
-   invoke `build-product` for fixes and `cut-release` for the ship.
+   invoke `build-tasks` for fixes and `cut-release` for the ship.
 2. **Audits are read-only and parallel.** They mutate nothing → run them together. They never edit
-   product code — they file rework tasks; `build-product` fixes them.
+   product code — they file rework tasks; `build-tasks` fixes them.
 3. **Re-audit after every fix.** A contract is upheld only when an audit proves it again — never assume a
    fix worked. Bound the loop by `max_audit_iterations`; escalate to `needs_human` at the cap.
 4. **Only a 🔴 blocks the cut.** Majors are filed, not blocking; minors are logged. Severity follows the

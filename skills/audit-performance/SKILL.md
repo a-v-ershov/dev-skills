@@ -18,7 +18,7 @@ reproduce the system under realistic load, capture the number, and compare it to
 with a budget you miss is a finding; a number with no budget behind it is a measurement, not a blocker.
 
 You are **read-only**. You measure, profile, drive load, and write throwaway probe scripts — but you
-**never edit the product's code**. A regression you find becomes a **rework task** for `build-product`,
+**never edit the product's code**. A regression you find becomes a **rework task** for `build-tasks`,
 not a self-optimization. Optimizing what you measured would destroy the independence that makes the
 audit honest.
 

@@ -30,46 +30,53 @@ Installed as a plugin, the skills are namespaced — invoke them as `dev-skills:
 ### 1. Spec pipeline — raw idea → buildable project documentation (writes docs only)
 
 Entry point: **`create-project-spec`** (a thin conductor that sequences the phases below). Each phase
-elicits → researches real-world facts → drafts → runs an adversarial self-review → merges → emits a
-detailed `*.research.md` + a short `*.summary.md`. Run settings chosen once (`mode`: `interactive`
-pauses at each gate / `autopilot` runs through and logs every decision; `final_summary`;
-`project_type`: `greenfield` / `existing`); config in `.dev-skills/project-spec/.spec-config.md`.
+runs eight stages (0–7): intake → elicit → research **within a fixed network budget** (≤4 searches /
+≤4 opens, ranked by what would change the build) → draft → an independent, **offline** reviewer
+returns findings → apply them in place → emit a detailed `*.research.md` + a short `*.summary.md` →
+hard gate. Two run settings, chosen once (`mode`: `interactive` pauses at each gate / `autopilot`
+runs through and logs every decision; `final_summary`); config in
+`.dev-skills/project-spec/.spec-config.md`.
 
 | # | Skill | Produces (under `.dev-skills/project-spec/`) |
 |---|-------|----------------------------------------|
-| 0 | `map-codebase` *(existing projects only)* | `codebase-map.research.md` — reverse-engineered as-is facts (structure, stack, domain, surfaces) |
 | 1 | `gather-context` | `project-brief.research.md` — discovery interview; settled intent the rest reads |
 | 2 | `validate-idea` | `idea-validation.research.md` — adversarial KILL/SHRINK/forcing-questions pre-filter |
 | 3 | `define-product-requirements` | `product-requirements.research.md` — full committed feature set + acceptance criteria + domain model |
 | 4 | `create-user-flows` | `user-flows.research.md` |
-| 5 | `define-design-decisions` | `design-decisions.research.md` — the product→technical bridge (design direction, not mockups) |
-| 6 | `design-architecture` | `architecture.research.md` (+ `adr/`) — requirements-first system architecture |
+| 5 | `define-design-decisions` | `design-decisions.research.md` — the product→technical bridge (design direction + which UI kit / icon set / theming approach, not mockups) |
+| 6 | `design-architecture` | `architecture.research.md` (+ `adr/`) — requirements-first system architecture, incl. where it runs (hosting, environments, cost, residency, manual setup) and how success is measured (analytics/telemetry) |
 | 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/`) — the AI-first inner loop, incl. the custom project skills to author that wrap its dev/test scripts |
 
-**Existing project (brownfield):** with `project_type: existing`, `map-codebase` runs first to chart the
-as-is code, then phases 1–7 run in **existing-project mode** — reconstructing a *target* spec from the map
-+ the user's intent and logging drift (built-but-divergent / unwanted / not-yet-built). Output is the same
-artifacts, so the build pipeline runs unchanged. Method: `_shared/spec-pipeline/existing-project-mode.md`.
+**When the repo already has code:** no separate mode and no extra phase — each phase reads the code
+at its own intake, reports what it found, and confirms instead of re-asking; anything the user wants
+different lands in that doc's `## Divergences (code vs intended)` section, which `plan-development`
+turns into work. Method: `_shared/spec-pipeline/elicitation-method.md` → "When the repo already has code".
+
 
 ### 2. Build pipeline — spec → working software (mutates the repo)
 
-Entry point: **`build-product`** (conducts the build loop). Unlike the spec phase, this one scaffolds,
+Entry point: **`build-tasks`** (conducts the build loop). Unlike the spec phase, this one scaffolds,
 runs commands, and writes code. **Sequential**: one task at a time, single working tree, no parallelism.
 Config in `.dev-skills/build-plan/.build-config.md`.
 
 | # | Skill | Role |
 |---|-------|------|
-| 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check` + hooks) |
-| 1b | `create-design-system` *(UI projects)* | After the scaffold is up, make the design direction concrete: a root `DESIGN.md` (Google's tool-neutral tokens+prose). Proposes several candidates, renders each via `generate-mockups`, commits the chosen one. Invoked by setup; self-skips for no-UI |
-| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) |
-| 3 | `implement-feature` | Build one task into code (fresh per-task agent), UI built against `DESIGN.md` |
-| 4 | `verify-feature` | A **separate, unbiased** agent: authors adversarial tests, proves observable outcomes, pass/fail |
+| 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check` + hooks); for a UI project install the spec's UI kit + icon set and write the root `DESIGN.md` from the spec |
+| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task). Re-run later = amend mode (task deltas) |
+| 3 | `run-task` | **One task, end to end** — the whole cycle for a single task; also takes a free-form request (`origin: adhoc`) |
+| — | `implement-feature` | The implementer agent's procedure: build one task into code, UI against `DESIGN.md` |
+| — | `verify-feature` | The verifier agent's procedure: a **separate, unbiased** agent authoring adversarial tests, proving observable outcomes |
 
-`build-product` picks the lowest-id `ready` task (status `todo` with all `blocked_by` `done`), loops
-implement ↔ verify (bounded by `max_verify_iterations`; at the cap → `needs_human`), and on a green
-quality gate sets it `done` and makes a checkpoint commit. Resumable — the backlog is the source of truth.
+`build-tasks` picks the lowest-id `ready` task (status `todo` with all `blocked_by` `done`) and hands
+it to `run-task`, which runs the fixed short cycle — build once, verify once in a separate agent,
+**one** fix round, quality gate, then human acceptance (or `review: auto` when nothing is
+hand-checkable) and a spec catch-up edit if the product changed — then sets it `done` with a
+checkpoint commit. Anything the fix round leaves open goes to `needs_human`; there is no iteration
+counter. `build-tasks` stops after **8 tasks** per run (context fills with diffs) and asks for a
+`/compact`, and refuses to start when the spec has moved ahead of the plan. Resumable — the backlog is
+the source of truth.
 The design ladder is **decide → systematize → render**: `define-design-decisions` (spec) decides the
-direction, `create-design-system` (build) systematizes it into `DESIGN.md`, and `generate-mockups`
+direction (including the UI kit), `setup-dev-environment` (build) systematizes it into `DESIGN.md`, and `generate-mockups`
 (on demand) renders disposable stub UI variants against it to compare before building.
 
 ### 3. Release pipeline — working software → cut release (audits, then ship)
@@ -77,7 +84,7 @@ direction, `create-design-system` (build) systematizes it into `DESIGN.md`, and 
 Entry point: **`release-product`** (conducts the release). It proves the **system-level** properties no
 single task could — the counterpart of `verify-feature` at the scale of the whole product — then cuts
 the release. The audits are **read-only**, so (uniquely here) they **fan out in parallel**; findings are
-**filed as `rework` tasks, never fixed in place** (a separate `build-product` run fixes them, then the
+**filed as `rework` tasks, never fixed in place** (a separate `build-tasks` run fixes them, then the
 audit re-runs). Config in `.dev-skills/release/.release-config.md`.
 
 | # | Skill | Proves against / does |
@@ -90,7 +97,7 @@ audit re-runs). Config in `.dev-skills/release/.release-config.md`.
 | — | `cut-release` | clean tree + no open 🔴 → docs + version bump + changelog + tag/commit/PR (always confirmed; stops before prod deploy) |
 
 `release-product` fans out the enabled audits, ranks findings by severity, files 🔴/🟡 as `rework`
-tasks, drives `build-product` to fix them and re-audits (bounded by `max_audit_iterations`; a 🔴 at the
+tasks, drives `build-tasks` to fix them and re-audits (bounded by `max_audit_iterations`; a 🔴 at the
 cap → `needs_human`), and when no 🔴 remains invokes `cut-release`. Only a 🔴 blocks the cut; the cut is
 the one outward-facing step and always confirms.
 
@@ -99,10 +106,13 @@ the one outward-facing step and always confirms.
 - **`commit`** — analyze uncommitted changes, group by logic, create well-structured commits (English messages).
 - **`generate-mockups`** — on demand, generate several stub UI variants (no logic) for a screen and
   render them against the `DESIGN.md` so you can compare and choose; records the chosen one as a
-  design-note on the task. Also used by `create-design-system` (showcase mode) to render its candidates.
+  design-note on the task. It explores arrangement within the settled design system — never alternative systems.
   Never writes product code (write-scope guard); never auto-run in the build loop.
-- **`propagate-changes`** — after an upstream spec doc is edited, reconcile downstream docs + backlog
-  forward, surgically; runs automatically, pauses only on critical/destructive changes. Never writes code.
+- **Keeping the spec and the plan in agreement** needs no skill of its own: a spec phase re-run in
+  **amend mode** reconciles its own doc and points at `/plan-development`; `plan-development` re-run
+  against an existing backlog emits task deltas; `run-task` proposes the spec edit when a task changed
+  the product (`spec_sync`). Method: `_shared/build-pipeline/propagation-method.md`.
+
 - **`gather-context`** is also a reusable grill: any phase can call it for a fork blocked on context
   only the user holds, and the user can run it directly to be interviewed on any topic (including
   just their stack/style preferences). It captures the developer's standing preferences (stack, code
@@ -112,15 +122,15 @@ the one outward-facing step and always confirms.
 
 ## Where things live
 
-- `.dev-skills/project-spec/` — spec research docs, summaries, `adr/`, `.spec-config.md` (committed; transient
-  `*.review.md` is deleted after merge and gitignored).
+- `.dev-skills/project-spec/` — spec research docs, summaries, `adr/`, `.spec-config.md` (all committed;
+  the pipeline writes nothing transient).
 - `.dev-skills/build-plan/` — backlog (`tasks/`), `board.md`, `.build-config.md` (committed); plus
   `mockups/` — throwaway stub UI variants from `generate-mockups` (gitignored; only the chosen
   screenshot is kept).
 - `.dev-skills/project-setup/` — setup log + the verification contract `verify-feature` reads + the
   `design-system.md` record (committed).
 - **Root `DESIGN.md`** *(UI projects)* — the committed, tool-neutral design system (tokens + rules)
-  `create-design-system` writes and `implement-feature` / `generate-mockups` read.
+  `setup-dev-environment` writes and `implement-feature` / `generate-mockups` read.
 - `.dev-skills/release/` — per-audit findings docs + `release-summary.md` + `.release-config.md` (committed); the
   audit trail of why a release was, or wasn't, cut.
 - The project's **root `CLAUDE.md`** carries a marker-delimited *project documentation map* indexing the

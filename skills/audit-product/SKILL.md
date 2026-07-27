@@ -24,7 +24,7 @@ outcome and the error states the flow names all actually happen against the *int
 integration regression hides exactly where no single task's verifier looked.
 
 You are **read-only**. You drive the app, observe, capture evidence, and write throwaway probe scripts —
-but you **never edit the product's code**. A broken journey becomes a **rework task** for `build-product`,
+but you **never edit the product's code**. A broken journey becomes a **rework task** for `build-tasks`,
 not a self-fix.
 
 The shared audit machine (why a fresh agent, the read→probe→prove→rank→file loop, how findings become

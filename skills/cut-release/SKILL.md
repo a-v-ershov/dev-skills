@@ -15,7 +15,7 @@ release notes, then tag, commit, and open the PR. You are deliberate and reversi
 out of scope by design (project-specific and dangerous — a separate, human-owned step).
 
 You **never edit product code**. If something is wrong with the product, that is a finding for an audit
-and a fix for `build-product`, not a patch here. You touch docs, version files, the changelog, and git.
+and a fix for `build-tasks`, not a patch here. You touch docs, version files, the changelog, and git.
 
 ## Preconditions (refuse if unmet)
 
@@ -97,7 +97,10 @@ push and PR** — in both modes. Do not deploy.
 ### Done: stop before deploy + report
 Update the `## Shipped` section of `.dev-skills/release/release-summary.md` (version · tag · PR link · changelog
 updated). Report what shipped and state plainly that **production deploy is the human's next step**
-(out of scope here). If preconditions blocked the cut, report exactly what's open and point at
+(out of scope here). If `.dev-skills/project-spec/architecture.research.md` has a
+`## Deployment & environments` section, name the target platform and repeat any still-open items
+from its manual setup checklist (domain, DNS, payment, accounts) — so the handoff says *where* to
+deploy and what must be clicked first, without you doing either. If preconditions blocked the cut, report exactly what's open and point at
 `release-product`.
 
 ## Rules
@@ -107,7 +110,7 @@ updated). Report what shipped and state plainly that **production deploy is the 
 2. **Refuse over an open 🔴.** No release is cut with an unwaived blocker open; point back at
    `release-product`.
 3. **Never edit product code.** Docs, version, changelog, git — nothing else. Product problems are audit
-   findings + `build-product` fixes.
+   findings + `build-tasks` fixes.
 4. **Propose the version, never decide it silently.** The bump is the user's call; confirm every time.
 5. **Stop before production deploy.** Deploy + canary are out of scope by design — hand them to the human.
 6. **Commit/tag/PR text is English** (the `commit` skill); CHANGELOG + release notes follow the user's language.

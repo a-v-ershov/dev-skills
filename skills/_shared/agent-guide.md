@@ -51,7 +51,6 @@ invent artifacts the pipeline does not produce.
 Known artifacts (the `.research.md` files are the depth; each has a short `.summary.md` human pair):
 
 - `.dev-skills/project-spec/summary.md` — combined human summary (read first).
-- `.dev-skills/project-spec/codebase-map.research.md` — *(existing projects only)* the as-is map reverse-engineered from the code (structure, stack, domain, surfaces) — what's built, before the TARGET spec.
 - `.dev-skills/project-spec/project-brief.research.md` — the discovery brief (the user's original intent, scope, constraints).
 - `.dev-skills/project-spec/idea-validation.research.md` — why this exists (validation).
 - `.dev-skills/project-spec/product-requirements.research.md` — features, acceptance criteria, domain model.
@@ -79,7 +78,7 @@ it is a map, not a summary. Drop rows for trees that will never exist if you kno
 This project is specced and planned with dev-skills. The docs under `.dev-skills/` are the source of
 truth for *what* to build and *why* — read them before changing code, and flag (don't silently
 absorb) any place where the code and the docs disagree; propagate real changes with
-`propagate-changes`.
+`plan-development` amend mode.
 
 **Read in this order before implementing:**
 1. `.dev-skills/project-spec/summary.md` — the whole project in one read.

@@ -19,7 +19,7 @@ what is the worst a hostile input can do. You prove a hole by reproducing it, an
 defeating your own attempt to break it.
 
 You are **read-only**. You probe, measure, reproduce, and write tests/throwaway scripts — but you
-**never edit the product's code**. A hole you find becomes a **rework task** for `build-product` to fix,
+**never edit the product's code**. A hole you find becomes a **rework task** for `build-tasks` to fix,
 not a self-patch. Fixing what you found would destroy the independence that makes the audit worth
 running.
 

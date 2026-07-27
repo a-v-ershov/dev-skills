@@ -22,7 +22,7 @@ GitHub. Every skill replies in the language you write to it.
 
 ## What you get
 
-1. **Three pipelines, one command each** — call `create-project-spec`, `build-product`, or `release-product` and one meta-skill conducts every phase for you.
+1. **Three pipelines, one command each** — call `create-project-spec`, `build-tasks`, or `release-product` and one meta-skill conducts every phase for you.
 2. **It interviews you before it builds** — a discovery grill pulls the maximum context out of your head, down to your stack and style preferences, one question at a time, always with a recommended answer.
 3. **A separate agent always checks the work** — nothing self-certifies: a reviewer on every spec phase, plus a fresh verifier that writes adversarial tests and is hook-blocked from touching the code.
 4. **A real dev loop + release audits that hunt the AI's own bugs** — an enforced quality gate locally, then independent security / performance / quality / accessibility / doc audits before you ship.
@@ -40,9 +40,10 @@ runs on its own.
 
 ### 1 — Spec: idea → buildable spec
 
-`create-project-spec` runs seven persona-driven phases; each researches its claims (source-cited),
-drafts, is checked by an adversarial reviewer, and emits a research doc + a short human summary under
-`.dev-skills/project-spec/`.
+`create-project-spec` runs seven persona-driven phases; each researches the claims that would change
+what you build (source-cited, on a fixed budget — the rest is labelled unverified), drafts, is
+checked by an independent reviewer whose findings it applies, and emits a research doc + a short
+human summary under `.dev-skills/project-spec/`.
 
 | Step | Skill | Persona | Produces |
 |------|-------|---------|----------|
@@ -50,29 +51,33 @@ drafts, is checked by an adversarial reviewer, and emits a research doc + a shor
 | 2 | `validate-idea` | Founder-turned-investor | `idea-validation` — KILL / SHRINK / forcing questions |
 | 3 | `define-product-requirements` | Product manager | `product-requirements` — the full feature set, each with testable criteria |
 | 4 | `create-user-flows` | Product designer | `user-flows` — how users move through the product |
-| 5 | `define-design-decisions` | Design-system lead | `design-decisions` — direction, not mockups; the bridge to tech |
-| 6 | `design-architecture` | Software architect | `architecture` + ADRs — quality scenarios first, then components + tech |
+| 5 | `define-design-decisions` | Design-system lead | `design-decisions` — direction + which UI kit / icons / theming; the bridge to tech |
+| 6 | `design-architecture` | Software architect | `architecture` + ADRs — quality scenarios first, then components + tech, where it runs, and how it's measured |
 | 7 | `design-dev-architecture` | DX / platform engineer | `dev-architecture` + ADRs — the local inner loop and AI tooling |
 
-> **Brownfield:** point it at existing code (`project_type: existing`) and `map-codebase` runs first
-> to chart the as-is facts; every phase then reconstructs a *target* spec and logs the drift.
+> **Already have code?** No separate mode — every phase reads the repo at its intake, tells you what
+> it found, and confirms instead of re-asking; what you want changed is recorded as a divergence and
+> becomes work in the backlog.
 
 ### 2 — Build: spec → working software
 
-`build-product` turns the spec into code sequentially — one task at a time, single working tree, no
+`build-tasks` turns the spec into code sequentially — one task at a time, single working tree, no
 parallelism — mutating the real repo.
 
 | Step | Skill | Role |
 |------|-------|------|
-| 1 | `setup-dev-environment` | Scaffolds the repo, brings up the one-command stack, stands up the enforced quality gate (`make check` + hooks) |
-| — | `create-design-system` | *(UI)* makes the design direction concrete as a committed `DESIGN.md` you pick from rendered candidates |
+| 1 | `setup-dev-environment` | Scaffolds the repo, brings up the one-command stack, stands up the enforced quality gate (`make check` + hooks), writes `DESIGN.md` for a UI project |
 | 2 | `plan-development` | Emits a kanban backlog — one file per task, where `blocked_by` *is* the dependency graph |
-| 3 | `implement-feature` | Builds one task and gets the quality gate green |
-| 4 | `verify-feature` | A **fresh, separate agent** that authors adversarial tests, drives the real stack, and proves an observable outcome |
+| 3 | `run-task` | Runs **one** task end to end: implement → verify → one fix round → gate → you accept it → commit |
+| — | `build-tasks` | Works through the plan: next ready task → `run-task` → repeat, up to 8 per run |
 
-It picks the lowest-id ready task, builds it, verifies it in a separate agent (bounded — at the cap a
-task escalates to `needs_human`), and on a green gate makes a checkpoint commit. `generate-mockups`
-renders UI options on demand; `propagate-changes` walks a later spec edit forward into the backlog.
+It picks the lowest-id ready task, builds it, verifies it in a separate agent, allows exactly one fix
+round, then asks you to accept the work (or auto-accepts when there's nothing to check by hand) and
+offers the spec edit that keeps the docs honest — all in one checkpoint commit. Anything the fix round
+leaves open escalates to `needs_human`. `generate-mockups`
+renders UI options on demand. A later spec edit needs no separate skill: re-run the phase (it amends),
+then `plan-development` (it emits task deltas); a task that changed the product proposes its own spec
+edit in the same commit.
 
 ### 3 — Release: working software → cut release
 
@@ -88,7 +93,7 @@ read-only, so they fan out in **parallel** and file findings as rework — they 
 | `audit-accessibility` | the WCAG target — keyboard, focus, screen-reader, contrast |
 | `cut-release` | clean tree + no open 🔴 → docs, version, changelog, tag, commit, PR (always confirmed; **stops before prod deploy**) |
 
-A blocker becomes a rework task, fixed by a `build-product` run, then **re-audited to confirm it
+A blocker becomes a rework task, fixed by a `build-tasks` run, then **re-audited to confirm it
 closed**.
 
 ---
@@ -145,22 +150,21 @@ also runs on its own.
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
 | `create-project-spec` | Orchestrator | Sequences the seven spec phases from raw idea to buildable spec | the spec |
-| `map-codebase` | Code archaeologist | *(existing)* Reverse-engineers an existing codebase's as-is facts | `codebase-map.research.md` |
 | `gather-context` | Discovery interviewer | Interviews you to turn a short brief into shared understanding | `project-brief.research.md` |
 | `validate-idea` | Founder-investor | Pressure-tests demand, audience, problem, and business model | `idea-validation.research.md` |
 | `define-product-requirements` | Product manager | Defines who it's for and the full committed feature set + criteria | `product-requirements.research.md` |
 | `create-user-flows` | Product designer | Maps how users move through the product to get value | `user-flows.research.md` |
-| `define-design-decisions` | Design-system lead | Sets the design direction — system, key screens, platforms, a11y | `design-decisions.research.md` |
-| `design-architecture` | Software architect | Quality scenarios first, then components + the tech that realizes them | `architecture.research.md` + `adr/` |
+| `define-design-decisions` | Design-system lead | Sets the design direction — system + UI kit, key screens, platforms, a11y | `design-decisions.research.md` |
+| `design-architecture` | Software architect | Quality scenarios first, then components + tech, hosting & cost, analytics | `architecture.research.md` + `adr/` |
 | `design-dev-architecture` | DX / platform engineer | Designs the local inner loop, AI-drivable testing, and AI tooling | `dev-architecture.research.md` + `adr/` |
 
 ### Build — spec → working software
 
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
-| `build-product` | Orchestrator | Picks one ready task at a time and drives implement → verify → commit | the build loop |
+| `build-tasks` | Orchestrator | Picks one ready task at a time and hands it to `run-task` | the build run |
+| `run-task` | One-task cycle | implement → verify → one fix round → gate → acceptance → commit | a finished task |
 | `setup-dev-environment` | Platform engineer | Scaffolds the repo, brings up the stack, stands up the quality gate | repo + `.dev-skills/project-setup/` |
-| `create-design-system` | Design-system lead | *(UI)* Makes the design direction concrete from rendered candidates | `DESIGN.md` + `design-system.md` |
 | `plan-development` | Delivery tech lead | Turns the spec into a kanban backlog, one file per task | `.dev-skills/build-plan/` |
 | `implement-feature` | Implementer | Builds one backlog task into code and gets the quality gate green | code |
 | `verify-feature` | Independent verifier | Authors adversarial tests and proves a built task's observable outcomes | tests + verdict |
@@ -183,7 +187,6 @@ also runs on its own.
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
 | `commit` | Git helper | Splits session changes into well-structured commits (English messages) | commits |
-| `propagate-changes` | Cross-cutting conductor | Reconciles downstream docs + backlog after an upstream spec edit | updated docs + backlog |
 
 Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,
 audits under `.dev-skills/release/`. *(existing)* = brownfield projects only, *(UI)* = UI projects (self-skips

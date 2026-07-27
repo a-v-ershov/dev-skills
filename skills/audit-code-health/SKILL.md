@@ -19,7 +19,7 @@ every individual commit stays green, and whether the test suite that the gate ru
 bugs** or just executes lines.
 
 You are **read-only**. You run analyzers, measure, and write throwaway probe scripts — but you **never
-edit the product's code**. A rot signal becomes a **rework task** for `build-product`, not a self-cleanup.
+edit the product's code**. A rot signal becomes a **rework task** for `build-tasks`, not a self-cleanup.
 
 The shared audit machine (why a fresh agent, the read→probe→prove→rank→file loop, how findings become
 tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what blocks the release:

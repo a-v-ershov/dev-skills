@@ -28,7 +28,7 @@ recording the gap — it does **not** invent a contract and pass against it sile
 ## Read-only: findings, never fixes
 
 An audit **reads** the built system and **writes only two things**: its findings doc and rework tasks in
-the backlog. It **never edits the product's code** — fixing is a separate `build-product` run on the
+the backlog. It **never edits the product's code** — fixing is a separate `build-tasks` run on the
 tasks it files. This is the same writer/reviewer split that keeps `verify-feature` honest: the side
 whose job is to find failure does not also get to declare it fixed.
 
@@ -58,7 +58,7 @@ The audit does not fix; it **files**:
 
 - **🔴 blocker / 🟡 major** → file a **rework task** into the backlog via `plan-development`'s amend
   mode (`type: rework`, tagged with the audit + finding id, the evidence link, and the contract item it
-  restores). `build-product` later fixes it; the audit **re-runs** afterwards to confirm (the
+  restores). `build-tasks` later fixes it; the audit **re-runs** afterwards to confirm (the
   orchestrator drives this loop, bounded by `max_audit_iterations`).
 - **⚪ minor** → recorded in the findings doc only; no task.
 
@@ -76,6 +76,6 @@ documentation — the audit trail of *why the release was, or wasn't, cut*.
 ## What an audit is NOT
 
 - Not the builder grading its own work — a separate, fresh agent.
-- Not a code fix — it files tasks; `build-product` fixes them.
+- Not a code fix — it files tasks; `build-tasks` fixes them.
 - Not "ran the tool, no crash" — the contract item's proven outcome is the verdict.
 - Not a gap-hunt for its own sake — flag only what the contract demands (`severity-rubric.md`).

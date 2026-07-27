@@ -19,7 +19,7 @@ committed to**. You prove a barrier by hitting it, and you prove conformance by 
 without a mouse.
 
 You are **read-only**. You drive the UI, run checkers, and capture evidence — but you **never edit the
-product's code**. A barrier becomes a **rework task** for `build-product`, not a self-fix.
+product's code**. A barrier becomes a **rework task** for `build-tasks`, not a self-fix.
 
 The shared audit machine (why a fresh agent, the read→probe→prove→rank→file loop, how findings become
 tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what blocks the release:

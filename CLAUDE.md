@@ -48,8 +48,8 @@ Three sequential pipelines, each conducted by a thin **orchestrator** that seque
 
 - **Spec** (`create-project-spec`) — raw idea → buildable spec. Writes docs only. Each phase runs the
   same machine: *elicit → research (cite sources) → draft → adversarial review → merge → research doc +
-  human summary*. Greenfield by default; `project_type: existing` runs `map-codebase` first (brownfield).
-- **Build** (`build-product`) — spec → working software. **Mutates the repo.** Sequential: one task at a
+  human summary*. When the repo already has code, each phase reads it and confirms rather than re-asks.
+- **Build** (`build-tasks`) — spec → working software. **Mutates the repo.** Sequential: one task at a
   time, single working tree, no parallelism. Implement ↔ an independent verifier that authors adversarial
   tests, behind an enforced quality gate (`make check` + hooks).
 - **Release** (`release-product`) — built product → cut release. Read-only audits **fan out in parallel**,
@@ -58,7 +58,7 @@ Three sequential pipelines, each conducted by a thin **orchestrator** that seque
 
 Skills are **verbs**; their outputs are **nouns**. All artifacts are committed project documentation
 under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
-(UI projects). The transient `*.review.md` and `.dev-skills/build-plan/mockups/` are the only gitignored items.
+(UI projects). `.dev-skills/build-plan/mockups/` is the only gitignored item.
 
 ## Skill & agent authoring conventions
 
@@ -73,8 +73,8 @@ under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release
   `spec-researcher` are self-contained (a plugin agent can't reliably read `_shared/*.md` at runtime);
   `implementer`/`verifier`/`ui-prototyper` are thin wrappers that `skills:`-preload their procedure skill.
 - **`disable-model-invocation: true`** on side-effecting / outward-facing entry points so they don't
-  auto-fire from a cold chat: `commit`, `build-product`, `setup-dev-environment`, `create-design-system`,
-  `propagate-changes`, `cut-release`, `release-product`. Not set on the doc-only spec phases, the
+  auto-fire from a cold chat: `commit`, `build-tasks`, `run-task`, `setup-dev-environment`,
+  `cut-release`, `release-product`. Not set on the doc-only spec phases, the
   read-only `audit-*`, the build-loop skills, or `generate-mockups`.
 - **Write-scope guard hooks** (declared in a skill's frontmatter, running `scripts/guard-write-scope.sh`)
   turn a prose invariant into a harness guarantee: `verify-feature` writes tests + `.dev-skills/build-plan/`
