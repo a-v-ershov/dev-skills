@@ -1,72 +1,79 @@
-# Change propagation method (shared — spec + build pipelines)
+# Keeping the docs and the plan in agreement (shared — spec + build pipelines)
 
-When a stage document is edited, the documents downstream of it may no longer agree with it. This
-method reconciles them **forward**, automatically, surgically — and finally updates the backlog. It
-spans both pipelines, so it lives in the build-pipeline shared dir but is referenced by the spec-phase
-skills too (their `## Amend mode` sections) and driven by the `propagate-changes` conductor.
+The spec and the backlog describe the same product. They drift in **two directions**, and each
+direction is handled by the skill already doing the work — there is no separate propagation skill and
+no "do you want to propagate?" step:
 
-## The chain
+| Drift | Who notices | What happens |
+|-------|-------------|--------------|
+| **The spec changed** — a phase doc was edited, so later docs and the plan may disagree with it | the phase skill that just edited it | it amends the docs it owns, then says which later documents and the backlog may now be stale and offers the one command that reconciles them (`/plan-development`) |
+| **The product changed** — a task shipped behavior the spec doesn't describe | `run-task`, at the end of the task | it sets `spec_sync: pending` and proposes the concrete spec edit, which lands **in the same commit** as the code |
+
+Neither direction is enforced against the user's will. Drift is **recorded** — a `spec_sync: pending`
+task on the board, a divergence noted in a doc — so the next planning run sees it. Blocking work on
+paperwork is how the paperwork gets abandoned.
+
+## Direction 1 — the spec changed
+
+The chain of derivation is:
 
 ```
 idea-validation → product-requirements → user-flows → design-decisions → architecture
    → dev-architecture → [ backlog (.dev-skills/build-plan) ]
 ```
 
-Each arrow is a dependency: the downstream document is derived from the upstream one. A change at
-stage N may require reconciling N+1, N+2, … through to the backlog. Propagation only ever moves
-**forward** (a change never reaches back up the chain — that would be a new upstream edit, its own
-propagation).
+Each arrow means "derived from". A change at stage N may need reconciling at N+1, N+2, … and finally
+in the backlog. Reconciliation only ever moves **forward** — a change never edits upstream (that would
+be a new upstream change of its own).
 
-## Detection: none — it is explicit and automatic
+**Every stage skill supports an amend mode** — re-run it on a document that already exists and it
+reconciles rather than regenerates:
 
-There is **no git/manifest/checksum staleness check**. The change is known because someone just made
-it (a human edited a doc, or an upstream amend produced it). `propagate-changes` simply **reads the
-current files directly** and reasons about what downstream needs adjusting. It runs forward
-automatically — there is no "do you want to propagate?" gate. It pauses only for **critical or
-destructive** questions (below).
-
-## The per-skill amend contract
-
-Every stage skill (the six spec phases and `plan-development`) supports an **amend mode**: invoked
-with the upstream change, it reconciles **its own** document. The contract:
-
-1. **Read** the changed upstream document and its own current document, directly.
-2. **Assess impact.** Is its document still consistent with the upstream change? If **not affected**,
-   self-skip — report "no change needed" and do not touch the file. (This is the guard against
-   over-propagation: most changes don't ripple all the way down.)
+1. **Read** the changed upstream document and its own current one.
+2. **Assess impact.** Still consistent? Then **self-skip** — report "no change needed" and touch
+   nothing. This is the guard against over-propagating: most changes don't ripple far.
 3. **If affected, amend surgically.** Update only the parts the change touches, in place. **Preserve
-   the `## Forks / Decisions log`** (and, for the backlog, task status/history) — never regenerate the
-   document from scratch. Update the human `*.summary.md` too if the essence changed.
-4. **Record it.** Add a `## Forks / Decisions log` entry noting the propagation: what upstream changed,
-   what this doc changed in response, confidence. (For the backlog, append a `## Log` note on each
-   touched task.)
-5. **Ask only on a critical question.** If reconciling forces a decision the skill can't make safely —
-   a decision-changing fork, a low-confidence call, or anything destructive — surface it to the human
-   (both modes). Otherwise proceed and log it.
+   the `## Forks / Decisions log`** — never regenerate from scratch. Update the `*.summary.md` too if
+   the essence changed.
+4. **Record it** — a `## Forks / Decisions log` entry: what changed upstream, what this doc changed in
+   response, confidence.
+5. **Ask only on a critical question** — a decision-changing fork, a low-confidence call, anything
+   destructive. Otherwise proceed and log.
 
-The skill does its normal research/sanity-checks as needed for the amended part — but scoped to the
-change, not a full re-run.
+Research is scoped to the amended part, never a full re-run.
 
-## The conductor walk (propagate-changes)
+**Then hand off, don't chase.** After amending, the phase says in one line which document is next in
+the chain and offers to run its skill — and, **if `.dev-skills/build-plan/tasks/` exists**, that the plan
+may now be stale and `/plan-development` will reconcile it. The user decides how far to walk. This is
+also why `build-tasks` checks the spec-vs-plan anchor before a run: a plan that disagrees with the
+spec builds the wrong thing confidently.
 
-`propagate-changes` drives the chain forward from the changed stage:
+## Direction 2 — the product changed
 
-- For each downstream stage in order, invoke its skill in amend mode (via the Skill tool) with the
-  upstream change. The skill amends or self-skips. **Routine reconciliation proceeds automatically;**
-  only critical/destructive questions stop for the human.
-- A change that an early stage absorbs without rippling further lets the walk stop early (later stages
-  self-skip). A change that ripples continues down the chain.
-- **Continue into the backlog.** After the spec stages, invoke `plan-development` in amend mode to
-  reconcile the backlog as **task deltas** — add / modify / cancel / reopen-as-rework (see
-  `planning-method.md`), using `traces_to` to find the affected tasks. **Cancel and reopen-as-rework
-  are destructive — always confirm with the human**, in both modes.
-- **Never write code.** Propagation updates documents and the backlog only. Rebuilding the affected
-  features happens later, through the normal `build-product` loop, when the user runs it.
+`run-task` owns this end (its Stage 7). A task that shipped observable behavior the spec doesn't
+describe — a new screen, a changed rule, an `adhoc` task with no `traces_to` — sets `spec_sync:
+pending` and proposes the **written-out** edit: the feature line for `product-requirements.research.md`,
+the step or screen for `user-flows.research.md`. Applied, it lands in the task's own commit and flips
+to `spec_sync: done`; declined, it stays `pending` and shows up on the board and in the run's final
+report.
+
+Why in the same commit: a spec edit that waits for a "documentation pass" never happens, and the next
+`plan-development` run then plans from a picture the product outgrew.
+
+## Backlog reconciliation (`plan-development` amend mode)
+
+When `plan-development` runs against an existing backlog it emits **task deltas** rather than a new
+plan — add / modify / cancel / reopen-as-rework (see `planning-method.md`), using `traces_to` to find
+which tasks a changed spec section affects, and clearing `spec_sync: pending` on tasks whose behavior
+the spec now describes.
+
+**Cancel and reopen-as-rework are destructive — always confirm with the human**, in both modes.
+Everything else routine proceeds and is logged.
+
+**Never write code here.** Reconciliation updates documents and the backlog; rebuilding the affected
+features is a normal `run-task` / `build-tasks` run afterwards.
 
 ## What always stops (regardless of mode)
 
 - Any **destructive backlog delta** — cancelling a task, or reopening a `done` task as rework.
-- Any **decision-changing or low-confidence** reconciliation a stage can't make safely.
-
-Everything else — routine, confident, non-destructive reconciliation — proceeds automatically and is
-logged.
+- Any **decision-changing or low-confidence** reconciliation a skill can't make safely.

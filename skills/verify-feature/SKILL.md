@@ -1,6 +1,6 @@
 ---
 name: verify-feature
-description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by build-product as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .dev-skills/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log, sets a pass/fail verdict, bumps verify_attempts, and at the max_verify_iterations cap escalates the task to needs_human instead of looping. Runs after implement-feature; can also be invoked standalone on a task id."
+description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .dev-skills/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log and sets a pass/fail verdict. It runs ONCE per task: a fail sends its findings to the implementer for a single fix round, which is then checked by running the tests it just committed — it is not re-spawned to re-check, and anything the fix round leaves open escalates to needs_human. Runs after implement-feature; can also be invoked standalone on a task id."
 argument-hint: "[task-id]"
 hooks:
   PreToolUse:
@@ -24,7 +24,7 @@ feature's implementation**; beyond the tests you report findings, you don't fix 
 
 ## Why you run as a separate agent
 
-`build-product` spawns you as a **fresh subagent** so you carry none of the implementer's context or
+`run-task` spawns you as a **fresh subagent** so you carry none of the implementer's context or
 assumptions. That independence is the whole point — it is what catches the criteria the builder's
 self-check missed. (You also work standalone on a task id, but the unbiased-agent property only holds
 when you are not the agent that wrote the code.) It is also why *you* author the tests: tests written by
@@ -34,12 +34,12 @@ additional to any the implementer wrote — aimed at breaking the feature.
 ## Inputs and outputs
 
 - **Reads:** the task file (`acceptance` + `## Description`), `.dev-skills/project-setup/verification.md` (the
-  run/drive/prove commands), `.dev-skills/build-plan/.build-config.md` (`max_verify_iterations`). If
+  run/drive/prove commands), `.dev-skills/build-plan/.build-config.md` (`mode`). If
   `verification.md` is missing, stop and point the user at `setup-dev-environment` — verification
   cannot run without it.
 - **Writes:** the adversarial **test files** you author, committed into the project's test structure
   (the convention is in `verification.md`); a batch of findings appended to the task's `## Log`; the
-  task's `verify_attempts`; on escalation, the task's `status: needs_human`. Evidence under
+  on escalation, the task's `status: needs_human`. Evidence under
   `.dev-skills/build-plan/tasks/artifacts/`.
 
 Method (the loop, recording, escalation): **`../_shared/build-pipeline/verification-method.md`**. Task
@@ -71,16 +71,16 @@ language and think in it too. Never translate code, identifiers, commands, or fi
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Stage 0: Intake — read the task (acceptance + description) + verification.md + max_verify_iterations
+- [ ] Stage 0: Intake — read the task (acceptance + description) + verification.md + mode
 - [ ] Stage 1: Author tests → run → drive → prove each acceptance criterion (incl. negative/error paths), saving evidence
-- [ ] Stage 2: Record — append a dated findings batch to the task ## Log; bump verify_attempts
+- [ ] Stage 2: Record — append a dated findings batch to the task ## Log
 - [ ] Stage 3: Verdict — pass (all proven) / fail (hand back) / escalate to needs_human at the cap
 ```
 
 ### Stage 0: Intake
 Read the task's `acceptance` criteria and `## Description`. Read `.dev-skills/project-setup/verification.md`
 for the concrete commands (bring-up, drive/prove per surface, dummy auth, seed/reset, logs). Read
-`max_verify_iterations`. If the contract is missing, stop and report.
+`mode`. If the contract is missing, stop and report.
 
 ### Stage 1: Author → run → drive → prove
 For **each** acceptance criterion, produce two independent proofs. **Author** an adversarial automated
@@ -93,22 +93,23 @@ criteria explicitly. Save screenshots/responses to `.dev-skills/build-plan/tasks
 ### Stage 2: Record
 Append a dated batch of findings to the task's `## Log` (tagged `[verify-feature]`, with the
 iteration number, one line per criterion, evidence links on failures). Increment the task's
-`verify_attempts`.
 
 ### Stage 3: Verdict
 - **All criteria proven → PASS.** Report pass; the task is eligible to go `done` (the orchestrator
   commits it). 
-- **≥1 criterion unmet → FAIL.** Report the specific gaps; the orchestrator hands them back to
-  `implement-feature` for another round.
-- **Cap reached (`verify_attempts == max_verify_iterations`) with a critical criterion still failing →
-  ESCALATE.** Set the task `status: needs_human`, append a `## Log` summary of what's still failing and
-  what was tried, and surface it. This stops the loop in both modes.
+- **≥1 criterion unmet → FAIL.** Report the specific gaps. The orchestrator hands them to the
+  implementer for **one** fix round; you are not re-spawned to re-check it — the tests you just
+  committed do that through the quality gate. So make the findings **actionable on their own**: which
+  criterion, what actually happened, the evidence, and (where you can tell) where the cause lives.
+  That list is the implementer's only shot.
+- Whatever the fix round leaves open goes to `needs_human` — the orchestrator's call, not yours.
 
 ## Rules
 
 1. You author tests but never touch the feature implementation — you verify and report; a missing
    testing seam is a finding, not a self-edit.
 2. Prove every criterion with an observable outcome; "it ran" is never proof; probe the error paths.
-3. Increment `verify_attempts` every round; escalate to `needs_human` at the cap, don't loop.
+3. You run **once** per task. Write findings a fresh reader could act on without you — there is no
+   second pass to clarify them in.
 4. No verification contract (`verification.md`) → stop and point at `setup-dev-environment`.
 5. Never weaken a criterion to pass it.

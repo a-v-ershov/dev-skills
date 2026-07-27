@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: "Internal build-loop role — spawned fresh per task by build-product to implement one backlog task in the working tree. Its full procedure is the preloaded implement-feature skill. Not for general use: build-product orchestrates it; it self-verifies the happy path and gets the quality gate green, but it does NOT run the separate verifier and does NOT commit."
+description: "Internal build-loop role — spawned fresh per task by run-task to implement one backlog task in the working tree. Its full procedure is the preloaded implement-feature skill. Not for general use: run-task orchestrates it; it self-verifies the happy path and gets the quality gate green, but it does NOT run the separate verifier and does NOT commit."
 skills: [implement-feature]
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch
 ---
@@ -14,7 +14,7 @@ Lifecycle: you are spawned **fresh per task** and kept across that task's implem
 you remember what you already tried (a new task gets a new agent — your context does not carry across
 tasks). You self-verify the happy path against the verification contract and get the quality gate
 (`make check`) green before handing off — but you do **not** run the separate verifier and you do
-**not** commit. `build-product` orchestrates `verify-feature` and the checkpoint commit.
+**not** commit. `run-task` orchestrates `verify-feature` and the checkpoint commit.
 
 ## Language
 

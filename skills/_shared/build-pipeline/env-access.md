@@ -1,10 +1,10 @@
 # Environment access (shared — build pipeline)
 
 The local dev environment is a **single stateful resource** — the running stack, the bound ports, the
-local DB, the seed state. More than one actor can reach for it (a second `build-product` run, a
+local DB, the seed state. More than one actor can reach for it (a second `build-tasks` run, a
 standalone skill, a human at the keyboard), so access must be **coordinated or isolated**, or the
 actors clobber each other. `design-dev-architecture` chooses, per stack, between two complementary
-mechanisms; `setup-dev-environment` implements whichever; `build-product` holds the lease across a task.
+mechanisms; `setup-dev-environment` implements whichever; `build-tasks` holds the lease across a task.
 
 ## Two mechanisms (chosen per stack)
 
@@ -38,7 +38,7 @@ per run and skip the lock.
 
 ## Who coordinates
 
-- **`build-product`** holds the lease for a task's span (implement → verify → gate), releases it after
+- **`build-tasks`** holds the lease for a task's span (implement → verify → gate), releases it after
   the checkpoint commit, and **reclaims a stale lock** left by its own killed run on resume. Its
   subagents inherit the held lease (same holder id → the entrypoint sees the lock is already theirs and
   proceeds).

@@ -22,8 +22,6 @@ the blockers a task carries are the graph.
   system UI feature tasks build against. Reference it in a UI task's `## Description` so the implementer
   applies it; do **not** emit "mockup" tasks — mockups are on-demand (`generate-mockups`), never backlog
   work.
-- `.dev-skills/project-spec/codebase-map.research.md` (existing projects only) — the as-is facts the spec was
-  reconstructed from; in **delta mode** (below) the backlog is the diff of the TARGET spec against this.
 
 Planning never re-opens product or technical decisions. A gap in the spec is surfaced back, not
 invented here.
@@ -96,7 +94,7 @@ decides and records, per `build-config.md`.
 
 ## Amend mode (change propagation)
 
-When `propagate-changes` reaches the backlog after a spec change, it invokes `plan-development` in
+After a spec change, re-running `plan-development` against an existing backlog puts it in
 **amend mode** with the upstream change. Do **not** regenerate the backlog — that would destroy task
 status and history. Instead, diff the new spec against the current tasks and emit **deltas**:
 
@@ -114,52 +112,41 @@ status and history. Instead, diff the new spec against the current tasks and emi
   rework task, never a silent revert.
 
 After applying deltas, regenerate `board.md`. Amend mode never builds code — it only updates the
-backlog; the actual rebuild happens later through the normal `build-product` loop.
+backlog; the actual rebuild happens later through a normal `build-tasks` run.
 
-## Existing-project (delta) mode
+## When the repo already has code (delta planning)
 
-When `project_type: existing` (see `../spec-pipeline/pipeline-config.md`), the spec was reconstructed
-from an already-built codebase: the spec describes the **TARGET** state, and
-`.dev-skills/project-spec/codebase-map.research.md` records the **as-is** code. So the *initial* backlog is
-not "one task per feature" — most features already exist. Instead, **diff TARGET against as-is and
-emit only the gap.** This is the brownfield create mode; it shares the add/modify/cancel/reopen
-vocabulary with amend mode above.
+If the project already has working code, the initial backlog is **not** "one task per feature" — most
+of them exist. Plan only the gap. Two inputs, both already available:
 
-The diff is already done for you: each phase's `## Forks / Decisions log` carries the **drift columns**
-(`AS-IS` / `TARGET` / `Drift?`) for every reconciled feature/flow/component (see
-`../spec-pipeline/existing-project-mode.md`). Read `Drift?` and emit one task per entry:
+- **the spec's `## Divergences (code vs intended)` sections** — what the phases found different
+  between the code and the intent, each marked `change` / `remove` / `not built yet`;
+- **the code itself** — read it to confirm what genuinely works before planning anything. A feature
+  the spec assumes exists but that isn't really implemented is a `not built yet`, whatever the
+  divergence table says.
 
-- **`no` (keep — built & matches TARGET)** → a `feature` task with **`status: done`**, a `history`
-  note `"pre-existing, adopted from codebase-map"`, and the acceptance criteria copied in — but **no
-  implementation work**. It exists for traceability and so dependent tasks see their blocker satisfied.
-  Adopted-done is **provisional** (the map read the code, it didn't run it) — see the verification
-  tasks below.
-- **`change` (built but divergent)** → a **`rework`** task (`status: todo`), `traces_to` the changed
-  spec section + the map's as-is finding; `## Description` states what exists and what the target is.
-- **`new` (intended, not yet built)** → a normal `feature` task (`status: todo`), exactly as in create
-  mode.
-- **`remove` (built but not wanted)** → a `rework` task ("remove <feature>") or a recorded non-goal.
-  **Destructive — always confirm with the human** (both modes), like an amend cancel.
+Emit per line:
 
-Then add the **gap-closing setup/verify work** the map surfaced (the "missing tests + quality gate"
-delta):
+- **`change` (built but divergent)** → a **`rework`** task, `traces_to` the spec section; its
+  `## Description` states what exists now and what the target is.
+- **`not built yet`** → a normal `feature` task, exactly as in create mode.
+- **`remove` (built, not wanted)** → a `rework` task ("remove <feature>") or a recorded non-goal.
+  **Destructive — always confirm with the human**, in both modes.
 
-- **Regression coverage for adopted-done features.** From the map's *Tests & quality gate* section,
-  for each adopted-done feature **not** already covered by existing tests, emit a `verify` task
-  (`status: todo`, `traces_to` the feature) so `verify-feature` proves the pre-existing implementation
-  against its acceptance criteria. This is what makes "adopted-done" real rather than assumed — a
-  failure here files a `rework` task. (Where existing tests already cover a feature, no verify task is
-  needed.)
-- **Quality gate.** If the map shows no enforced gate (lint/format/type-check/test behind one
-  `make check` + hooks — see `quality-gate.md`), emit a `setup` task to stand it up over the existing
-  code, an early blocker for the rest.
-- **Design-system reskin.** If `create-design-system` adopt mode logged a **token/reskin drift** in
-  `.dev-skills/project-setup/design-system.md` (the realized system the user wants evolved — a `change`), emit
-  a `rework` task `traces_to` the design system: apply the new `DESIGN.md` tokens to the affected
-  surfaces. (No drift → the realized system is kept as-is, no task.)
+A feature that already works and matches the intent gets a `feature` task with **`status: done`** and
+a `history` note `"pre-existing"` — no implementation work, but dependent tasks see their blocker
+satisfied and the traceability holds. That "done" is **provisional**: reading code is not running it,
+so for each such feature **not** already covered by tests, add a `verify` task so `verify-feature`
+proves it against its acceptance criteria (a failure there files a `rework` task).
 
-Blockers are derived as in create mode, with one shortcut: an adopted-`done` task is a
-**pre-satisfied** blocker, so a TARGET-only feature depending on an already-built entity is
-immediately `ready`. Net result: the backlog holds **only** the gap — rework + new +
-regression-coverage + gate — with matching features represented as `done`. Log the delta basis (which
-drift entries produced which tasks) in `plan.summary.md`'s Forks / Decisions log.
+Then the two gap-closers:
+
+- **Quality gate.** No enforced gate (lint/format/type-check/test behind one `make check` + hooks —
+  see `quality-gate.md`)? Emit a `setup` task to stand it up over the existing code — an early blocker
+  for everything else.
+- **Design-system reskin.** If `setup-dev-environment` recorded that the realized design system is to
+  be evolved, emit a `rework` task to apply the new `DESIGN.md` tokens to the affected surfaces.
+
+Blockers derive as in create mode, with one shortcut: a pre-existing `done` task is a **pre-satisfied**
+blocker. Net result: the backlog holds only the gap — rework + new + regression coverage + gate. Log
+which divergence produced which task in `plan.summary.md`'s Forks / Decisions log.

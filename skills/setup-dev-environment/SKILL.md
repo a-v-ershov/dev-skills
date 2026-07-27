@@ -1,7 +1,7 @@
 ---
 name: setup-dev-environment
 disable-model-invocation: true
-description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .dev-skills/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. For an existing project (project_type: existing) it runs in adopt mode: it reads the reverse-engineered codebase-map, adopts and extends what's already there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .dev-skills/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-product."
+description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .dev-skills/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. For a UI project it also installs the UI kit and icon set the spec chose and writes the committed root DESIGN.md (tokens + rationale) straight from the spec's design decisions and the installed kit's own theme — no candidate systems, no mockups, no picking: the design decisions were made in the spec. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. In a repo that already has a working setup it adopts and extends what's there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .dev-skills/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-tasks."
 ---
 
 # Setup Dev Environment Skill
@@ -54,11 +54,18 @@ settled in the spec; orphan setup that traces to nothing is a defect.
   — frontmatter `name` + discoverable `description` and a thin body invoking the wrapped script, with
   the procedure left as a TODO; full authoring is a backlog task). See
   **`../_shared/build-pipeline/env-access.md`**.
-- **The design system** (UI projects only): for a UI project, once the scaffold is up, invoke
-  **`create-design-system`** (via the Skill tool) to produce the committed root **`DESIGN.md`** + a
-  `.dev-skills/project-setup/design-system.md` record — it proposes several candidate systems, renders each as
-  mockups (via `generate-mockups`) so the human picks one. You **conduct** this step; you do not
-  duplicate it. Self-skips for a no-UI project or when `design-decisions` says no system is needed.
+- **The design system** (UI projects only) — the spec already decided it, so here you just make it
+  real, in this order:
+  1. **Install** the UI kit and icon set `design-decisions` named, per the kit's **current official
+     instructions** (check them — install commands go stale; don't run them from memory).
+  2. **Write the committed root `DESIGN.md`** — tokens + rationale, straight from the spec's design
+     direction and the installed kit's own theme values. **No candidates, no mockups, no picking:**
+     the choice was made in the spec. Format: `references/design-md-format.md`; per-kit token mapping:
+     `references/adoption-recipes.md`. Plus the short `.dev-skills/project-setup/design-system.md` record.
+  3. **Write the UI rule into the project `CLAUDE.md`** — components come from the kit, colors and
+     spacing come from the design tokens, icons come from the one chosen set. Without that rule the
+     next session's agent hand-rolls its own button.
+  Skipped entirely for a no-UI project or when `design-decisions` says no system is needed.
 - **`.dev-skills/project-setup/setup-plan.md`** — the approvable plan (4 sections, each item traced).
 - **`.dev-skills/project-setup/setup-log.md`** — what was done / skipped (already present) / deferred to the
   human (secrets, accounts).
@@ -125,7 +132,7 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
 - [ ] Stage 3: Approve — interactive: show plan, get approval · autopilot: proceed (global/secrets/plugins still gate)
 - [ ] Stage 4: Execute — back up before overwrite, skip what's done, log each; repo-local auto, global/secrets/plugins confirmed
 - [ ] Stage 5: Smoke-test — run the one-command bring-up; prove the stack is green and drivable
-- [ ] Stage 5b: Design system (UI only) — invoke create-design-system → root DESIGN.md + design-system.md (self-skips for no-UI / no system)
+- [ ] Stage 5b: Design system (UI only) — write root DESIGN.md straight from the spec's design decisions + the installed kit's theme; render one screen to prove it; design-system.md (skip for no-UI / no system)
 - [ ] Stage 6: Record — setup-log.md (done/skipped/manual TODO) + verification.md (run/drive/prove commands); hand off
 ```
 
@@ -194,16 +201,37 @@ deliberately-introduced error makes it fail and the pre-commit hook blocks the c
 error). "No error in the logs" is not proof. If it fails, report what failed and offer to fix it
 (adjust the compose file, fix a port clash, re-seed) — the environment is not "done" until this is green.
 
-### Stage 5b: Design system (UI projects only)
-Now that the stack is up, settle the **concrete design system** before features are built. Read
+### Stage 5b: Design system → `DESIGN.md` (UI projects only)
+Now that the stack is up and the kit is installed, write the design system down. Read
 `.dev-skills/project-spec/design-decisions.research.md`: if this is a no-UI project or it recorded **Design
-system / Needed? = no**, **skip** this stage (note it in the setup log) and go to Stage 6. Otherwise, if
-there is no committed root `DESIGN.md` yet, **invoke `create-design-system`** (via the Skill tool) — it
-proposes several candidate `DESIGN.md` variants, renders each as mockups (via `generate-mockups`, now
-that there's a real stack to render in), lets the human pick, and writes the chosen **root `DESIGN.md`**
-plus `.dev-skills/project-setup/design-system.md`. **Conduct, don't duplicate** — let `create-design-system`
-run its own procedure; you just trigger it at the right moment and continue once it hands back. (If a
-`DESIGN.md` already exists, leave it; re-running is idempotent.)
+system / Needed? = no**, **skip** this stage (note it in the setup log) and go to Stage 6. If a root
+`DESIGN.md` already exists, leave it alone and note that (idempotent).
+
+Otherwise **write the root `DESIGN.md` directly from the spec** — no candidates, no mockups, no
+picking. The design decisions are already made: `define-design-decisions` chose the UI kit, the icon
+set, the theming approach, and the type/color/spacing/motion intent; this stage only makes them
+concrete and machine-readable.
+
+- **Source of the tokens:** the theming approach from the spec. "Start from the kit's ready-made
+  theme" → read that theme's actual token values from the installed kit (its theme file / CSS
+  variables / config in the repo — the kit is installed now, so read the real values rather than
+  recalling them) and record them. "Author from brand intent" → derive a coherent token set from the
+  design direction + the product's audience and brand notes.
+- **Format:** the Google open format — YAML token front matter + prose rationale, canonical section
+  order: **`references/design-md-format.md`**. Per-kit token mapping (which of the kit's variables
+  becomes which token): **`references/adoption-recipes.md`**.
+- **Also record** the icon set, the installed kit and its version, and how tokens are wired into the
+  stack (Tailwind `theme.extend`, CSS custom properties, a `components.json`, a Material theme file)
+  so `implement-feature` uses tokens rather than literals.
+- **Then prove it renders.** Apply the tokens to one real screen or the scaffold's start page, take
+  a screenshot, and put it in the setup log — a `DESIGN.md` nobody has rendered is paper. If the
+  tokens don't actually take effect, fix the wiring before moving on.
+- Write the short record `.dev-skills/project-setup/design-system.md`: which kit + icon set, where the
+  tokens came from, how they're wired, the screenshot path.
+
+Deviating from the spec's design decisions here is **out of scope** — if the kit turns out to be
+wrong (a needed component genuinely doesn't exist), stop and say so: that is a spec change
+(`/define-design-decisions`, then `/plan-development` to reconcile the plan), not a call to make during setup.
 
 ### Stage 6: Record + handoff
 Write `.dev-skills/project-setup/setup-log.md` — three lists: **done**, **skipped (already present)**, and
@@ -218,33 +246,29 @@ outcome; the dummy-auth token and seed/reset commands; where logs are). This is 
 - **autopilot:** record the same and hand back to the orchestrator (or, standalone, report the files
   and any outstanding manual TODOs).
 
-## Adopt mode (existing project)
+## When the repo already has a working setup
 
-When `project_type: existing` (in `.dev-skills/project-spec/.spec-config.md`), the repo already has a working
-dev setup — adopt mode is mostly this skill's **detect-state-first idempotency doing its job**, with
-three brownfield specifics. (No re-scaffolding: an existing project very likely already has a
-`CLAUDE.md`, a compose file, a Makefile.)
+Nothing special is configured for this — it is this skill's **detect-state-first idempotency doing
+its job**. Three specifics:
 
-1. **The map seeds detection.** At Stage 0, also read `.dev-skills/project-spec/codebase-map.research.md` —
-   its *Build / run / CI / env* and *Tests & quality gate* sections — so the plan starts from
-   **documented** present-state, not only live probing (it catches a CI workflow that defines the real
-   gate, a `.env.example` listing required secrets, an existing run command). The Stage-2 plan is then
-   computed as **(what the TARGET inner loop in `dev-architecture` needs) minus (what the map + live
-   probe already show present)**.
+1. **Probe, then plan the difference.** Stage 1 already inventories what's present (compose file,
+   Makefile, CI config, lint/type tools, `.env.example`, existing run command). The Stage-2 plan is
+   **(what the dev-architecture inner loop needs) minus (what's already there)** — and read the CI
+   config, not just the local files: it often defines the real gate.
 2. **Fill gaps, adopt & extend — never overwrite.** An existing `Dockerfile` / compose / `Makefile` is
-   adopted and extended (back up before any edit, per the standard rule), never blown away. The
-   **quality gate** wires the *existing* lint/format/type-check tools the map found behind one
-   `make check` + the hooks, rather than installing new ones (the gate "executes the chosen tools, it
-   doesn't re-pick" — here the chosen tools are the ones already in the repo). Env-access helper,
-   dev-script skeletons, and custom-skill skeletons are scaffolded only where absent; an existing
-   lock/isolation scheme is adopted, and an existing `.claude/skills/` skill the dev-architecture names
-   is adopted and extended, not overwritten.
-   `verification.md` is still written **fresh** from the now-real stack (an existing repo without it is
-   "unfinished" by rule 6).
-3. **Smoke-test includes the existing gate's honesty.** "Green" means the existing stack comes up via
-   the one command **and** the gate now has teeth — which may require fixing a gate the repo had red
-   (the map said tests exist; do they pass?). A red pre-existing gate is **surfaced**, not silently
-   accepted — report it and offer to fix, or file it for `plan-development` delta mode as a gap.
+   adopted and extended (back up before any edit), never blown away. The **quality gate** wires the
+   *existing* lint/format/type-check tools behind one `make check` + the hooks rather than installing
+   new ones (the gate "executes the chosen tools, it doesn't re-pick" — here they're the ones already
+   in the repo). Env-access helper, dev-script skeletons, and custom-skill skeletons are scaffolded
+   only where absent; an existing `.claude/skills/` skill named by the dev-architecture is extended,
+   not overwritten. `verification.md` is still written **fresh** from the now-real stack.
+   For a UI project with a kit already installed, keep it and write `DESIGN.md` from its actual theme
+   values — replacing an installed kit is a spec decision, not a setup one.
+3. **The smoke-test includes the existing gate's honesty.** "Green" means the stack comes up via the
+   one command **and** the gate has teeth — which may mean fixing a gate the repo had red (tests exist;
+   do they pass?). A red pre-existing gate is **surfaced**, not silently accepted: report it and offer
+   to fix, or file it as a gap for `plan-development`.
+
 
 ## Rules
 

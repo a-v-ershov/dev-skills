@@ -1,6 +1,6 @@
 ---
 name: implement-feature
-description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by build-product, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.dev-skills/project-setup/verification.md) — optionally writing its own tests and running the environment for a fast inner loop — and gets the quality gate (make check) green before handing off, to catch obvious breakage before the independent verifier runs. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — build-product orchestrates verify-feature and the checkpoint commit. On a re-round after a failed verification, it reads the verifier's findings and runs the verifier's committed tests to reproduce them, then fixes them."
+description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by run-task, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.dev-skills/project-setup/verification.md) — optionally writing its own tests and running the environment for a fast inner loop — and gets the quality gate (make check) green before handing off, to catch obvious breakage before the independent verifier runs. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — run-task orchestrates verify-feature and the checkpoint commit. After a failed verification it gets exactly ONE fix round: it reads the verifier's findings, runs the tests the verifier just committed to reproduce them, and fixes them — there is no second attempt, so anything it cannot close it says so plainly instead of guessing, and the task escalates to needs_human."
 argument-hint: "[task-id]"
 ---
 
@@ -11,8 +11,8 @@ no scope creep, no adjacent refactors the task didn't ask for. You write code th
 code already around it, you follow the project's conventions, and you self-check the happy path before
 handing the work to the independent verifier.
 
-You build on a single working tree on the current branch (no worktrees, no parallelism). `build-product`
-spawns you **fresh for a task** and keeps you for that task's rounds, so you remember what you already
+You build on a single working tree on the current branch (no worktrees, no parallelism). `run-task`
+spawns you **fresh for a task** and keeps you for that task's single fix round, so you remember what you already
 tried (see `../_shared/build-pipeline/build-config.md`). You do not run the separate verifier and you do
 not commit — those are the orchestrator's job.
 
@@ -55,7 +55,7 @@ language and think in it too. Never translate code, identifiers, commands, or fi
 - **Stay in style and in scope.** Match the codebase; touch only what this task needs.
 - **Leave a clear trail.** The `## Log` note tells the verifier (a fresh agent) what you did and where.
 - **Tidy your own diff when asked (the solve pass).** After the feature passes verification,
-  `build-product` may ask you for a *solve pass*: re-read the diff you produced for this task and
+  `run-task` may ask you for a *solve pass*: re-read the diff you produced for this task and
   remove what you over-built — dead or duplicated code, needless abstraction, speculative generality
   — keeping behaviour identical (every test stays green). Scope is **your own diff only**; pre-existing
   rot elsewhere is a finding to note, not your cleanup. This fights the bloat agents accumulate by
@@ -71,9 +71,9 @@ language and think in it too. Never translate code, identifiers, commands, or fi
 ```
 
 ### Stage 0: Intake
-Read the task's `## Description`, `acceptance`, and `## Log` (on a re-round, the verifier's failures are
-there, and its tests are now in the tree — run them to reproduce the failures, then fix to green; make
-those the priority). Read the spec sections it `traces_to` and the project `CLAUDE.md`.
+Read the task's `## Description`, `acceptance`, and `## Log` (in the **fix round**, the verifier's
+failures are there and its tests are now in the tree — run them to reproduce each failure, then fix to
+green; that is the whole priority). Read the spec sections it `traces_to` and the project `CLAUDE.md`.
 Confirm the task is `ready` (its `blocked_by` are all `done`); if a blocker isn't done, stop and report
 — don't build on an unmet dependency. Set the task `status: in_progress` with a `history` entry.
 
@@ -84,7 +84,12 @@ keep the change scoped to this task's acceptance criteria. **For UI work, build 
 system; apply them rather than inventing styles. If the task's `## Description` carries a **design-note**
 from `generate-mockups` (a chosen mockup variant — layout, hierarchy, component usage, with a screenshot
 path), follow that arrangement; the mockup is the reference, you build the real, wired version. On a
-re-round, fix exactly the verifier's findings (and any obvious related breakage), not a wholesale rewrite.
+fix round, fix exactly the verifier's findings (and any obvious related breakage), never a wholesale
+rewrite. **You get one round.** Fix causes, not symptoms — weakening a test or special-casing the
+assertion is not a fix. If a finding is something you genuinely cannot close (it needs a decision, a
+missing dependency, or the criterion itself looks wrong), say so explicitly in the log instead of
+guessing: the task goes to a human, which is the correct outcome and costs far less than a plausible
+wrong fix.
 
 ### Stage 2: Self-check
 Using the commands in `.dev-skills/project-setup/verification.md`, bring the stack up if needed and drive the
@@ -98,7 +103,7 @@ a fast inner loop — the adversarial tests are the verifier's job, not yours. T
 Append a dated `## Log` note (tagged `[implement-feature]`): what you built, which files, and the
 happy-path self-check result. Leave the task `in_progress` — do **not** set it `done`, do **not** run
 `verify-feature`, and do **not** commit. Report that the task is ready for verification; the
-orchestrator (`build-product`) spawns the independent verifier next and commits on pass.
+orchestrator (`run-task`) spawns the independent verifier next and commits on pass.
 
 ## Rules
 

@@ -1,6 +1,6 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.dev-skills/project-spec/product-requirements.research.md), the user flows, the architecture, and the dev-architecture (incl. its developer/test scripts and the custom project skills that wrap them, which become build-out/authoring tasks), and emit a kanban backlog under .dev-skills/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. For an existing project (project_type: existing) it runs in delta mode: it diffs the target spec against the reverse-engineered codebase-map and emits ONLY the gap (rework for divergent code, new tasks for unbuilt features, verify tasks for adopted features, a quality-gate setup task), marking already-matching features done. Also runs in amend mode (driven by propagate-changes) to reconcile the backlog with a changed spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate. Run before build-product."
+description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.dev-skills/project-spec/product-requirements.research.md), the user flows, the architecture, and the dev-architecture (incl. its developer/test scripts and the custom project skills that wrap them, which become build-out/authoring tasks), and emit a kanban backlog under .dev-skills/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. When the repo already has working code it plans only the gap: it reads the spec's Divergences sections plus the code itself and emits rework tasks for divergent code, new tasks for what isn't built, verify tasks to prove pre-existing features against their criteria, and a quality-gate setup task if none is enforced — features that already work and match are recorded done. Re-run it after the spec changes and it works in amend mode instead: it reconciles the backlog with the new spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate, and clears spec_sync flags the spec now covers. Run before build-tasks."
 ---
 
 # Plan Development Skill
@@ -21,7 +21,7 @@ and no conflict tracking: blockers, and the build loop's one-at-a-time disciplin
   `.dev-skills/project-spec/`. A spec gap is surfaced back, not patched here.
 - **No prioritization tiers.** The product spec already committed the full feature set — everything
   in it becomes a task. You order by dependency, not by priority.
-- **You don't build.** Output is the backlog only. Building is `build-product` + `implement-feature`.
+- **You don't build.** Output is the backlog only. Building is `build-tasks` + `implement-feature`.
 
 ## Inputs and outputs
 
@@ -30,7 +30,7 @@ and no conflict tracking: blockers, and the build loop's one-at-a-time disciplin
   **custom project skills** that wrap them — both become build-out/authoring tasks), and
   `.dev-skills/project-setup/setup-log.md` if present. The root `DESIGN.md` + `.dev-skills/project-setup/design-system.md` if present (the design system UI
   feature tasks build against — note it in their `## Description`; don't create mockup tasks, mockups are
-  on-demand via `generate-mockups`). For an existing project, also `.dev-skills/project-spec/codebase-map.research.md`
+  on-demand via `generate-mockups`). When the repo already has code, the code itself
   (the as-is code the spec was reconstructed from — delta mode diffs the target spec against it).
 - **Writes:** `.dev-skills/build-plan/tasks/<id>-<slug>.md` (one per task), `.dev-skills/build-plan/board.md`
   (derived), `.dev-skills/build-plan/plan.summary.md` (human). Schema + lifecycle:
@@ -98,7 +98,9 @@ dependencies (the spine); in autopilot, log any assumed dependency as a fork.
 
 ### Stage 3: Write the backlog
 Create `.dev-skills/build-plan/tasks/` and write each task file (schema: `backlog-format.md`). Regenerate
-`.dev-skills/build-plan/board.md`. Write `.dev-skills/build-plan/plan.summary.md` (template in `planning-method.md`).
+`.dev-skills/build-plan/board.md` — including its **Reconciled with spec** header line, carrying the
+current HEAD sha and date: that anchor is how `build-tasks` later detects that the spec has moved past
+the plan. Write `.dev-skills/build-plan/plan.summary.md` (template in `planning-method.md`).
 Then **refresh the project documentation map** in the root `CLAUDE.md` so the now-present
 `.dev-skills/build-plan/` (board + tasks) appears in it — re-render only the marker block, idempotently, per
 **`../_shared/agent-guide.md`**. (In amend mode, refresh it too, so the map tracks the live backlog.)
@@ -106,26 +108,23 @@ Then **refresh the project documentation map** in the root `CLAUDE.md` so the no
 ### Stage 4: Gate
 - **interactive:** present the task breakdown, the dependency spine, and any open questions, then STOP:
   > "Backlog ready → <N> tasks under .dev-skills/build-plan/tasks/, board.md, plan.summary.md. Review it.
-  > When you approve, run `/build-product` to start building. I will not build automatically."
+  > When you approve, run `/build-tasks` to start building. I will not build automatically."
 - **autopilot:** log the planning forks in `plan.summary.md`, record auto-pass, and hand back to the
   orchestrator (or, standalone, report the files + must-answer forks).
 
 ## Existing-project (delta) mode
 
-When `project_type: existing` (in `.dev-skills/project-spec/.spec-config.md`), the spec describes the
-**TARGET** state of an already-built codebase. The initial backlog is **not** one task per feature —
-most features already exist. Instead, **diff the target spec against `codebase-map.research.md` and
-emit only the gap**, reading the **drift columns** (`AS-IS`/`TARGET`/`Drift?`) the spec phases logged:
-`no` → an adopted `feature` task `status: done` (no implementation); `change` → a `rework` task;
-`new` → a normal `feature` task; `remove` → a `rework`/non-goal (destructive — confirm). Then add
-`verify` tasks proving adopted features that lack test coverage, and a `setup` task for the quality
-gate if the map shows none. Full mechanics: **`planning-method.md`** ("Existing-project (delta) mode").
-This is a first-backlog mode (not amend) — it runs at the start, like create mode, but against
-existing code.
+When the project already has working code, don't plan "one task per feature" — most already exist.
+Plan **only the gap**, from the spec's `## Divergences (code vs intended)` sections plus a read of the
+code to confirm what genuinely works: `change` → a `rework` task, `not built yet` → a normal feature
+task, `remove` → a confirmed removal, already-working-and-matching → a task recorded `done` (with a
+`verify` task where no test covers it). Full method:
+**`../_shared/build-pipeline/planning-method.md`** → "When the repo already has code".
+
 
 ## Amend mode (change propagation)
 
-When invoked by `propagate-changes` with an upstream spec change, switch to amend mode: diff the new
+Run against an existing backlog after a spec change and you are in amend mode: diff the new
 spec against the current tasks and apply **deltas** — add / modify / cancel / reopen-as-rework — per
 **`planning-method.md`**. Never regenerate the backlog. Destructive deltas (cancel a task, reopen a
 `done` one) **always confirm with the human**, in both modes. Then regenerate `board.md`. Amend mode

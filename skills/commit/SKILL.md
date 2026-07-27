@@ -33,14 +33,14 @@ into git. Likewise, never translate code, identifiers, file paths, or commands.
 
 If the change relates to a build-backlog task (one of `.dev-skills/build-plan/tasks/T###-*.md`), include the
 task id and what was done in the commit message — the id as a `[T###]` tag in the subject line. This
-makes each commit traceable to the task it advances. `build-product` checkpoint commits always pass
+makes each commit traceable to the task it advances. `run-task` checkpoint commits always pass
 the id of the task they finalize.
 
 - **Relates to a task:** `<type>: <description> [T012]`. Put what was done in the body if the subject
   doesn't capture it.
 - **Not backlog-related** (tooling, docs, a one-off fix that maps to no task): omit the id — never
   invent one.
-- Determine the id from the `build-product` invocation that triggered the commit, or from the task
+- Determine the id from the `run-task` invocation that triggered the commit, or from the task
   whose files the change implements; if a change clearly maps to no task, treat it as not-backlog-related.
 
 ## Input

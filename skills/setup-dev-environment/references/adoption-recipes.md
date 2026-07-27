@@ -45,7 +45,7 @@ General recipe (every kit):
 - Radix primitives are unstyled — the `components` mappings + Do's/Don'ts carry the styling intent.
 
 ## Existing project (reverse-engineer the realized system)
-In `project_type: existing`, the kit is already wired. Read the **actual** config `map-codebase`
+When the kit is already installed in the repo, read the **actual** config the setup probe
 charted — `tailwind.config`, `components.json` + the CSS variables, a Material theme file, design-token
 JSON, a Storybook — and codify the **as-built** tokens into an AS-IS `DESIGN.md` (cite the file each
 value came from). Then propose TARGET candidates only where the user wants to evolve it; log the

@@ -45,7 +45,7 @@ For each acceptance criterion the verifier produces **two independent proofs**, 
    runs (**`quality-gate.md`**).
 1. **Run it** — bring the stack up with the one command from the contract (or confirm it's up). This
    goes through the **coordinated entrypoint** (env lock or per-run isolation — `env-access.md`); when
-   spawned by `build-product` the lease is already held, a standalone verifier acquires/releases it
+   spawned by `build-tasks` the lease is already held, a standalone verifier acquires/releases it
    itself. Reset to a known seeded state if the criterion needs it.
 2. **Drive it** — exercise the behavior the way the contract specifies (Playwright / Claude-in-Chrome
    for UX, `curl` for an endpoint, the e2e harness for a flow), using the dummy-auth/seed unblocks so
@@ -76,18 +76,25 @@ evidence link:
 Set the verdict: **pass** (all criteria proven → the task can go `done`) or **fail** (≥1 criterion
 unmet → back to the implementer with the findings).
 
-## The bounded loop + escalation
+## One round, then a decision (no loop)
 
-`verify_attempts` guards against an infinite implement↔verify cycle:
+The cycle per task is fixed and short: **build once → verify once → fix once → decide.** There is no
+iteration counter and no cap to tune, because there is no loop to bound.
 
-- On each verification round, increment the task's `verify_attempts`.
-- **Fail** → hand the findings back to `implement-feature` for another round (the orchestrator drives
-  this), unless the cap is reached.
-- When `verify_attempts` reaches **`max_verify_iterations`** (default 4, from `.build-config.md`) with
-  a **critical** acceptance criterion still failing, **stop looping**: set the task `status:
-  needs_human`, append a `## Log` summary of what's still failing and what was tried, and surface it on
-  the board. This is one of the two things that always stops regardless of mode (`build-config.md`).
-  Do not keep burning rounds — escalate.
+- **Pass** → the task proceeds to acceptance and commit.
+- **Fail** → the findings go back to the **same** implementer agent for **one** fix round. It keeps
+  its context, so it is fixing code it just wrote against a concrete list — the round where most
+  findings actually close.
+- **After the fix**, the verifier is *not* re-spawned. Its tests are already written and committed, so
+  the fix is checked by running the **quality gate** (`make check`, which now includes those tests).
+  Green → the task proceeds. Red, or a critical criterion the implementer couldn't close → **`status:
+  needs_human`** with a `## Log` entry naming what still fails and what was tried. This is one of the
+  two things that always stops regardless of mode (`build-config.md`).
+
+Why one round rather than a loop: the second round is where an agent stops fixing the cause and starts
+fighting the test. A finding that survives its own author's targeted fix is a signal about the task or
+the criterion, not something more attempts will resolve — and a human reading it once is cheaper than
+four rounds of burn.
 
 A non-critical/cosmetic miss with all critical criteria met may pass with the issue noted in the log,
 at the verifier's judgement — but never weaken a criterion to make it pass.

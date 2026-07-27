@@ -7,7 +7,7 @@ adversarial `verify-feature` drive/prove runs — and the **accumulating test su
 net** that keeps a later task from silently breaking an earlier one.
 
 This doc defines the gate once. `setup-dev-environment` builds it; `implement-feature`, `verify-feature`
-and `build-product` enforce it. They reference this file rather than restating the rule.
+and `build-tasks` enforce it. They reference this file rather than restating the rule.
 
 ## What the gate runs
 
@@ -41,7 +41,7 @@ The gate is only effective for AI-written code if it cannot be silently sidestep
 - **Enforced at three points:**
   1. `implement-feature` self-check — runs the gate before handing off; does not hand off on red.
   2. `verify-feature` — its authored tests become part of the suite the gate runs.
-  3. `build-product` — the **full gate must be green before the checkpoint commit**; a red gate routes
+  3. `build-tasks` — the **full gate must be green before the checkpoint commit**; a red gate routes
      the task back to `implement-feature` (counts as a round), it is never committed red. The
      pre-commit hook is the belt-and-suspenders backstop.
 

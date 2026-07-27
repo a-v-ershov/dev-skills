@@ -38,7 +38,7 @@ column · B — dense table for scanning many · C — split master-detail for f
 ## How many
 
 Default **3** — enough for a genuine spread, few enough to compare at a glance. Two is fine for a small
-screen; more than four dilutes the choice. For a `--showcase` system comparison, render the **same** 1–2
+screen; more than four dilutes the choice. When comparing the same screen across contexts, render the **same** 1–2
 representative screens across the candidates so the systems (not the screens) are what's compared.
 
 ## After the pick
