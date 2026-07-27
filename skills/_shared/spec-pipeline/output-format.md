@@ -1,13 +1,11 @@
 # Output format (shared — spec pipeline)
 
-Every phase keeps **two** documents and produces them from the merged result: a detailed
-AI-facing **research** doc and a maximally compressed, decisions-first **human report**
-(`<artifact>.summary.md`). The reviewer's `.review.md` is a
-**working artifact only** — the merge stage applies it and then **deletes it**, so it does not
-survive into the final spec.
+Every phase keeps **two** documents: a detailed AI-facing **research** doc and a maximally
+compressed, decisions-first **human report** (`<artifact>.summary.md`). The reviewer writes no file
+at all — it returns its findings and the phase applies them to the research doc in place (see
+`review-method.md`).
 
-So per phase, after the merge: **two files remain** — `<artifact>.research.md` and
-`<artifact>.summary.md`.
+So per phase: **two files, both kept** — `<artifact>.research.md` and `<artifact>.summary.md`.
 
 ## 1. Detailed research doc — `<artifact>.research.md`
 
@@ -31,8 +29,8 @@ listed here too, marked as such.
 
 Every decision point the phase hit — **whoever resolved it**. This is non-negotiable in both
 modes: in autopilot it is how the AI's choices stay auditable; in interactive it records what the
-human chose. It is also where the merge stage records the review findings it applied (so the
-deleted `.review.md` leaves a trace).
+human chose. It is also where the fix stage records the review findings it applied — the review's
+only lasting trace, since the reviewer writes no file.
 
 ```
 ## Forks / Decisions log
@@ -45,20 +43,21 @@ deleted `.review.md` leaves a trace).
 - **Needs human confirm?** = `yes` for anything the AI decided at medium/low confidence, or any
   fork with material downside if wrong. These are what the human summary surfaces.
 
-**Existing-project mode adds three optional columns** — `AS-IS`, `TARGET`, `Drift?` — appended after
-`Source`, filled only for forks that reconcile built code against intent (see
-`existing-project-mode.md`). They are **blank or absent in greenfield** (the default). When present:
+### `## Divergences (code vs intended)` — only when the repo already has code
+
+When the phase found existing code and the intent differs from it, the doc carries one extra section
+— a plain list, no special vocabulary and no extra columns anywhere else:
 
 ```
-| # | Fork | Options | Decision | By | Rationale | Confidence | Source | AS-IS | TARGET | Drift? | Needs human confirm? |
-|---|------|---------|----------|----|-----------|-----------|--------|-------|--------|--------|----------------------|
-| 1 | <question> | A / B / C | <chosen> | AI\|human | <why> | high\|med\|low | [S2] or — | <what the code does> | <what's intended> | no\|change\|remove\|new | yes\|no |
+## Divergences (code vs intended)
+| # | What the code does now | What's intended | Kind |
+|---|------------------------|-----------------|------|
+| 1 | <observed behavior / structure> | <what the user wants> | change \| remove \| not built yet |
 ```
 
-- **AS-IS** = what `map-codebase` found in the code · **TARGET** = the intended state · **Drift?** =
-  `no` (keep — AS-IS already matches) · `change` (built but divergent) · `remove` (built, not wanted)
-  · `new` (intended, not yet built). `plan-development` delta mode reads this column to decide each
-  task's fate.
+`plan-development` reads exactly this to decide what work exists. In an empty repo the section is
+absent — don't write a placeholder.
+
 
 ## 2. Human report — `<artifact>.summary.md`
 
@@ -88,20 +87,17 @@ Three sections, in this fixed order (see `summary-template.md`):
 **Decide** comes first on purpose — it is the only part that needs the human's action, so if they
 read nothing else they can still act. **Risks** are the unresolved things the review couldn't close.
 **Key facts** is the compressed essence (the domain model, glossary, acceptance criteria, schemas
-stay in the research doc — name at most a few concepts here). Because the `.review.md` is deleted
-after merge, anything from the review that matters to the human lands here (Risks) or in the research
-doc's Forks / Decisions log + Open questions.
+stay in the research doc — name at most a few concepts here). Because the review is never a file,
+anything from it that matters to the human lands here (Risks) or in the research doc's Forks /
+Decisions log + Open questions.
 
-## 3. The review doc is transient — `<artifact>.review.md`
+## 3. There is no third file
 
-The reviewer writes it (format in `review-template.md`); the merge stage applies its corrections
-into `<artifact>.research.md` (and logs them in the Forks / Decisions log), then **deletes the
-file**. It is never a deliverable and is not referenced by later phases. Delete it in both modes,
-after the merge — its content is fully absorbed into the research doc.
-
-As a belt-and-suspenders guard against an aborted run leaving a stray review behind, the pipeline
-also keeps a local `.dev-skills/project-spec/.gitignore` containing `*.review.md`, created alongside the
-directory (see `pipeline-config.md`). Everything else under `.dev-skills/project-spec/` is committed.
+The reviewer returns its findings in its final message (format: `review-format.md`); the phase's fix
+stage applies them to `<artifact>.research.md` and logs them in the Forks / Decisions log. Nothing
+transient is written, so nothing has to be deleted or gitignored, and an aborted run can never leave
+a stray artifact behind. Everything under `.dev-skills/project-spec/` is committed project
+documentation.
 
 ## 4. Final combined summary — `.dev-skills/project-spec/summary.md` (orchestrator only)
 

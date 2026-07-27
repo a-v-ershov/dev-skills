@@ -29,6 +29,15 @@ person can run and use the product, not only an agent.>
 - **Compose topology:** <services, networks, volumes — the shape of the local stack.>
 - **Seed data:** <how the local stack is populated and reset.>
 - **Env / secrets:** <how config and secrets are provided locally — never real secrets in the repo.>
+- **Build-shape parity with the target platform:** <the artifact the chosen host runs (serverless
+  functions / long-lived process / container image) + the runtime major version, and the one command
+  that produces that same shape locally.>
+- **Schema migrations:** <the mechanism, identical locally and in prod; how the agent applies and
+  rolls back. Seeding is not a migration test.>
+- **Env-var contract:** <the variables the chosen platform requires, mirrored in `.env.example`, and
+  the check that fails loudly at bring-up when one is missing.>
+- **Analytics in checks:** <where events go during verification — a local sink or a no-op, never the
+  production counter.>
 - **Environment access model:** <how concurrent actors avoid clobbering the one shared env — an
   advisory lock baked into bring-up (lease + stale-reclaim) for the shared stack, and/or per-run
   isolation (ephemeral data dir / unique compose project + port offset). Per
@@ -69,6 +78,9 @@ person can run and use the product, not only an agent.>
 | E2E (agent-driven) | <the user flows, no manual steps> | <Playwright / harness> | <...> |
 
 - **Test data:** <how provisioned and reset between runs.>
+- **Design-system enforcement:** <the kit's / stack's own lint rule wired into `make check` (e.g. the
+  Tailwind or kit ESLint config), or "none available — reviewed by eye". Never a custom grep-based
+  color hunt: false positives get the gate disabled.>
 
 **Flow → verification** (from user-flows.research.md) — every flow run → driven → proven, no manual step:
 

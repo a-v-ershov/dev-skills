@@ -49,8 +49,8 @@ carrying a specific question/topic is B.
 - **`project-brief.research.md`** — the detailed discovery dossier (for the AI / next phases).
 - **`project-brief.summary.md`** — the short human summary (essence + forks to answer).
 
-Plus a transient **`project-brief.review.md`** (the coverage critic's gaps), applied at merge and
-then **deleted**. Role B produces no kept files — it returns context to its caller.
+Nothing else — the coverage critic writes no file; it returns its findings and the fix stage applies
+them. Role B produces no kept files either — it returns context to its caller.
 
 ## Language
 
@@ -76,13 +76,12 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 ```
 - [ ] Stage 0: Intake — restate the brief in one sentence + confirm; read mode; read any existing docs/repo
 - [ ] Stage 1: Interview — grill across the brief dimensions per elicitation-method.md (interactive: interview · autopilot: self-answer + log forks)
-- [ ] Stage 2: Research (light) — only to power recommended answers / sanity-check world-claims that change what to build (adaptive)
+- [ ] Stage 2: Research (light) — only to power recommended answers / sanity-check world-claims that change what to build (1–2 searches)
 - [ ] Stage 3: Draft — draft project-brief.research.md from references/brief-template.md
-- [ ] Stage 4: Review — spawn a coverage critic → project-brief.review.md (intermediate)
-- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
-- [ ] Stage 6: Merge — synthesize the final project-brief.research.md, then delete the review doc
-- [ ] Stage 7: Dual output — project-brief.research.md (Sources + Forks log) + project-brief.summary.md
-- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
+- [ ] Stage 4: Review — spawn a coverage critic; it returns findings (no file)
+- [ ] Stage 5: Fix — apply the findings in place + log them (🔴 interactive: stop · autopilot: self-resolve)
+- [ ] Stage 6: Dual output — project-brief.research.md (Sources + Forks log) + project-brief.summary.md
+- [ ] Stage 7: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
 ### Stage 0: Intake
@@ -119,47 +118,48 @@ mirror back to confirm. Dimensions to cover (the human's *context*, not decision
 Track coverage against these eight; stop per the method's stop condition (no material unknown left),
 then give the **shared-understanding summary** for a final confirm.
 
-### Stage 2: Research (light, adaptive)
+### Stage 2: Research (light, budgeted)
 Only when it changes the interview: a quick check to ground a recommended answer ("the usual shape
 for this kind of tool is …"), or to sanity-check a world-claim the human leans on that would change
-*what to build*. Default to a couple of targeted searches; most of this phase is the human, not the
-web. Method — **`../_shared/spec-pipeline/research-method.md`**. Cite anything you carry into the doc.
+*what to build*. This is the lightest research stage in the pipeline — **1–2 searches, rarely an
+open**; most of this phase is the human, not the web, and the budget (≤4 searches / ≤4 opens) is a
+ceiling you should not come close to. Method —
+**`../_shared/spec-pipeline/research-method.md`**. Cite anything you carry into the doc; label
+anything you assert unverified.
 
 ### Stage 3: Draft
 Draft `.dev-skills/project-spec/project-brief.research.md` from `references/brief-template.md`, citing any
 sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Create
-`.dev-skills/project-spec/` if needed (and, on creating the dir, drop a `.dev-skills/project-spec/.gitignore`
-containing `*.review.md` if absent).
+`.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review (coverage critic)
-Delegate to the `spec-reviewer` agent to write `.dev-skills/project-spec/project-brief.review.md` (it does NOT
-edit the draft; this file is intermediate). Method + format:
-**`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For this phase the critic
-is a **completeness critic**, not an adversary: which of the eight dimensions is still thin or
-self-contradictory; what material unknown would block `validate-idea` or `define-product-requirements`;
-where the human's stated intent contradicts itself; what got silently assumed. Each gap it can't
-fill from the draft becomes a fork to confirm.
+Delegate to the `spec-reviewer` agent (offline — it reads the draft and the repo, not the web). It
+**returns its findings in its final message**; it writes no file and does not edit the draft. Method
++ return format: **`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this
+phase the critic is a **completeness critic**, not an adversary: which of the eight dimensions is
+still thin or self-contradictory; what material unknown would block `validate-idea` or
+`define-product-requirements`; where the human's stated intent contradicts itself; what got silently
+assumed. Each gap becomes a fork to confirm.
 
-### Stage 5: Conflict gate
-If the review found 🔴 critical findings (a dimension too thin to proceed, a contradiction):
-- **interactive:** STOP. Show the count + top items and get the user's answers (re-grill as needed).
-- **autopilot:** resolve them yourself (a targeted assumption + log) and mark each `Needs human
+### Stage 5: Fix
+Apply the findings to `project-brief.research.md` **in place** (targeted edits, not a rewrite) and
+log each applied finding in the Forks / Decisions log:
+- **🔴 interactive** (a dimension too thin to proceed, a contradiction): STOP. Show the count + top
+  items and get the user's answers (re-grill as needed).
+- **🔴 autopilot:** resolve them yourself (a targeted assumption + log) and mark each `Needs human
   confirm? = yes`. A 🔴 you can't resolve becomes an open question.
-Clean review (0 🔴) proceeds without stopping.
+- **🟡 / ⚪:** apply by your own judgement.
+What no one could resolve goes to `## Open questions`. A clean review (0 🔴) proceeds without
+stopping.
 
-### Stage 6: Merge
-Synthesize draft + review corrections + filled gaps into the final `project-brief.research.md`. Log
-the applied findings in the Forks / Decisions log. What no one could resolve goes to
-`## Open questions`. **Then delete `.dev-skills/project-spec/project-brief.review.md`**.
-
-### Stage 7: Dual output
+### Stage 6: Dual output
 Finalize `project-brief.research.md` (complete `## Sources` and `## Forks / Decisions log`). Then
 write `.dev-skills/project-spec/project-brief.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the shared understanding in plain language + the
 forks the human must answer + open unknowns. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
 
-### Stage 8: Hard gate
+### Stage 7: Hard gate
 - **interactive:** STOP — this is a hard gate:
   > "Discovery brief done → project-brief.research.md (detail), project-brief.summary.md (for you).
   > Review it. When you approve, run `/validate-idea`. I will not proceed automatically."
@@ -186,15 +186,14 @@ A focused mini-interview on one topic; no pipeline ceremony.
    belongs there, append it (and log a Forks entry). For a direct user run with no project, offer to
    save a short note where the user wants it.
 
-## Existing-project mode
+## When the repo already has code
 
-When `project_type: existing` (set in `.spec-config.md`), `map-codebase` has already run and written
-`.dev-skills/project-spec/codebase-map.research.md` — the as-is facts. At Stage 0, read it, and **reframe the
-intake interview**: not "what do you want to build?" but *"here's what you've built — what's the
-intended direction, what's drift you want fixed, what's deliberate?"* Self-answer the brief dimensions
-from the map (the product, the audience the code serves, the de-facto scope) and spend the human's
-attention only on the intent the code can't show. The brief you write is **target intent**, distinct
-from the map's as-is facts. Full contract: **`../_shared/spec-pipeline/existing-project-mode.md`**.
+Read it at Stage 0 before interviewing (structure, surfaces, stack, README), report what you found in
+a few lines, and **reframe the interview**: not "what do you want to build?" but *"here's what you've
+built — what's the intended direction, what would you change, what's deliberate?"* Self-answer the
+brief's dimensions from the code and spend the human's attention on the intent the code can't show.
+Differences between the code and the intent go in `## Divergences (code vs intended)`. Method:
+**`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
 ## Rules
 
@@ -205,4 +204,5 @@ from the map's as-is facts. Full contract: **`../_shared/spec-pipeline/existing-
    confirm shared understanding (see the elicitation method).
 4. Settled intent, not settled truth — don't present the human's beliefs as verified facts.
 5. Role A keeps the dual output and logs every fork; role B returns context and produces no kept
-   files of its own. The review (role A) always runs in both modes, is merged in, then deleted.
+   files of its own. The review (role A) always runs in both modes and its findings are applied in
+   place — it never becomes a file.

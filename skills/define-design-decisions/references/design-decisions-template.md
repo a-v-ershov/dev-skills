@@ -14,7 +14,20 @@ decisions that matter most for what gets built.>
 - **Needed?** <yes / no — and why, for this category.>
 - **Direction (if yes):** <type scale, color approach, spacing system, motion stance — intent, not
   concrete tokens.>
-- **Component strategy:** <adopt an existing library (which) / bespoke / hybrid — and why.>
+- **Component strategy:** <adopt / bespoke / hybrid — and why.>
+- **UI kit (if adopting):** <name + version line> — <why: coverage, platform fit, ubiquity> (cite [S#]).
+- **Icon set:** <one set for the whole product> — <why> (cite [S#]).
+- **Theming approach:** <start from the kit's ready-made theme / author tokens from brand intent> —
+  <why. `setup-dev-environment` turns this into DESIGN.md; it does not re-decide it.>
+
+### Component coverage check (if adopting a kit)
+
+> Components the key screens actually need, checked against the kit's own component index — not
+> from memory. A gap here is hand-built work, and it is cheaper to know now.
+
+| Component the product needs | Screens that need it | In the kit? | If not — plan |
+|-----------------------------|----------------------|-------------|---------------|
+| <e.g. data table with sorting> | <screens> | <yes / no> | <hand-build / second library / drop the requirement> |
 
 ## Key screens (inventory)
 

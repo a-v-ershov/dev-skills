@@ -1,6 +1,6 @@
 ---
 name: create-project-spec
-description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — gather-context → validate-idea → define-product-requirements → create-user-flows → define-design-decisions → design-architecture → design-dev-architecture — where each phase researches real-world facts, runs an adversarial review (merged in, then removed), and emits a detailed research doc + a short human summary. Opens with gather-context, which interviews the user to turn a short brief into a rich shared understanding the whole pipeline builds on. Works for a NEW (greenfield) project or an EXISTING codebase: for an existing project (project_type: existing) it runs map-codebase first to reverse-engineer the as-is facts, then every phase reconstructs a target spec from them. Asks three setup choices up front (interactive vs autopilot; final combined summary; greenfield vs existing project) and can finish with one human-readable spec summary. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
+description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — gather-context → validate-idea → define-product-requirements → create-user-flows → define-design-decisions → design-architecture → design-dev-architecture — where each phase researches real-world facts within a fixed budget, runs an adversarial review whose findings it applies in place, and emits a detailed research doc + a short human summary. Opens with gather-context, which interviews the user to turn a short brief into a rich shared understanding the whole pipeline builds on. Works on an empty repo or one that already has code: when code is present each phase reads it, reports what it found, and confirms rather than re-asks, recording anything the user wants changed as a divergence. Asks two setup choices up front (interactive vs autopilot; final combined summary) and can finish with one human-readable spec summary. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
 argument-hint: "[--from <step>]"
 ---
 
@@ -11,8 +11,8 @@ phase yourself — you invoke the focused sub-skill for each step (via the Skill
 its own internal pipeline (research → draft → adversarial review → merge → dual output), and move
 on according to the chosen mode.
 
-The pipeline produces, in order — each phase keeping **two** files (the reviewer's `*.review.md`
-is intermediate: applied at merge, then deleted):
+The pipeline produces, in order — **two** files per phase (the reviewer writes none: it returns its
+findings and the phase applies them in place):
 
 | Step | Sub-skill | Detailed doc | Human summary |
 |------|-----------|--------------|---------------|
@@ -26,24 +26,23 @@ is intermediate: applied at merge, then deleted):
 
 All under `.dev-skills/project-spec/`. Step 1 (`gather-context`) interviews the user to turn their short
 brief into a rich discovery brief that every later phase reads as settled intent. Each phase
-researches and reviews itself — there is no separate review step to offer, and no review file
-survives into the final spec.
+researches and reviews itself — there is no separate review step to offer, and the review never
+becomes a file.
 
-**For an existing project (`project_type: existing`),** an extra phase 0 runs first — `map-codebase`
-→ `codebase-map.research.md` — to reverse-engineer the as-is facts from the code; then every phase
-runs in **existing-project mode** (reconstruct a TARGET spec from the map + the user's intent, logging
-drift). The order becomes: `map-codebase → gather-context → validate-idea*  → … → design-dev-architecture`
-(`*` `validate-idea` may self-skip in existing mode). Full method:
-**`../_shared/spec-pipeline/existing-project-mode.md`**.
+**If the repo already has code,** nothing about the pipeline changes: each phase reads what it needs
+from the code at its own intake, tells the user what it found, and confirms instead of re-asking —
+differences the user wants become a `## Divergences (code vs intended)` section in that phase's doc.
+There is no separate mode, no extra phase, and no setting for it. Method:
+**`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
 ## Language
 
 Respond and reason in whatever language the user addressed you in. Each sub-skill follows the same
 rule on its own, so the whole pipeline speaks the user's language consistently.
 
-## Three setup choices (ask once, up front)
+## Two setup choices (ask once, up front)
 
-Before step 1, settle three settings and persist them to `.dev-skills/project-spec/.spec-config.md` so
+Before step 1, settle two settings and persist them to `.dev-skills/project-spec/.spec-config.md` so
 every sub-skill inherits them. Use one `AskUserQuestion` (defaults pre-selected). Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
 
@@ -53,30 +52,23 @@ every sub-skill inherits them. Use one `AskUserQuestion` (defaults pre-selected)
    review + dual output for every phase).
 2. **`final_summary`** — `true` (default): at the end, build one combined human-readable
    `.dev-skills/project-spec/summary.md`. `false`: skip it.
-3. **`project_type`** — `greenfield` (default) | `existing`. **Detect first, then confirm**: probe
-   the repo (Step 0) for non-trivial existing code; pre-select the detected value and let the user
-   override. `existing` inserts the `map-codebase` phase 0 and runs every phase in existing-project
-   mode (see `../_shared/spec-pipeline/existing-project-mode.md`).
 
-Write the file (create `.dev-skills/project-spec/` if needed; when creating the directory, also drop a
-`.dev-skills/project-spec/.gitignore` containing `*.review.md` if absent — everything else there is
-committed project documentation):
+Write the file (create `.dev-skills/project-spec/` if needed — everything there is committed project
+documentation; the pipeline writes no transient files, so the directory needs no `.gitignore`):
 
 ```
 # Spec pipeline config
 
 - mode: <interactive | autopilot>
 - final_summary: <true | false>
-- project_type: <greenfield | existing>
 ```
 
 ## Procedure
 
 ```
-- [ ] Step 0: Detect progress + project_type + settle the three settings → write .spec-config.md + seed the project CLAUDE.md map
-- [ ] Step 0b: map-codebase   (existing only) → gate / auto-advance
+- [ ] Step 0: Detect progress + settle the two settings → write .spec-config.md + seed the project CLAUDE.md map
 - [ ] Step 1: gather-context                  → gate (interactive) / auto-advance (autopilot)
-- [ ] Step 2: validate-idea (may self-skip if existing) → gate / auto-advance
+- [ ] Step 2: validate-idea (may self-skip on an existing product) → gate / auto-advance
 - [ ] Step 3: define-product-requirements      → gate / auto-advance
 - [ ] Step 4: create-user-flows                → gate / auto-advance
 - [ ] Step 5: define-design-decisions           → gate / auto-advance
@@ -90,19 +82,8 @@ List `.dev-skills/project-spec/`. If artifacts already exist, tell the user and 
 first missing step; honor an explicit `--from <step>`. Never silently redo a completed step — ask
 before overwriting.
 
-**Detect `project_type`.** Probe the repo (read-only) for non-trivial existing **code**: a
-dependency manifest (`package.json` / `pyproject.toml` / `go.mod` / `Cargo.toml` / `Gemfile` /
-`pom.xml` …) **and** source files outside `docs/`, `.claude/`, and config. (A `.dev-skills/project-spec/`
-from a prior spec run does NOT count as code.) Pre-select the detected value (`existing` if code is
-present, else `greenfield`); the heuristic is fuzzy (vendored/generated trees, a docs-only repo), so
-**always confirm it with the user** rather than trusting it. Then settle all three settings and write
-`.spec-config.md` (above). If it already exists, reuse it unless the user asks to change a setting.
-
-### Step 0b: map-codebase (existing projects only)
-If `project_type: existing`, invoke `map-codebase` (via the Skill tool) **before** `gather-context`.
-It reverse-engineers `.dev-skills/project-spec/codebase-map.research.md` (the as-is facts) that
-`gather-context` and every later phase read. Advance per the mode, exactly like the steps below. In
-`greenfield`, skip this step entirely.
+Then settle the two settings and write `.spec-config.md` (above). If it already exists, reuse it
+unless the user asks to change a setting.
 
 Then **seed the project documentation map** in the project's root `CLAUDE.md` — the marker-delimited
 block that orients any coding agent to where the spec/backlog/setup docs live and the order to read
@@ -115,17 +96,16 @@ block and never touch content outside the markers.
 For each step in order (step 1 is `gather-context` — the discovery interview that produces the
 project brief; steps 2–7 are the phases that read it):
 
-**In existing mode** (`project_type: existing`), `map-codebase` (step 0b) has already written the
-codebase map. Each phase reads `.spec-config.md`, sees `project_type: existing`, and **self-selects
-its existing-project mode** — you pass no flag. One difference to honor: `validate-idea` may
-**self-skip** in existing mode (a pure "document what exists" run with no new bets) — allow the skip
-and record it; do **not** treat it as the unavailable-skill stop condition below.
+**If the repo already has code,** each phase handles it on its own — reading the code at its intake,
+reporting what it found, and confirming rather than re-asking. You pass no flag and add no step. One
+thing to honor: `validate-idea` may **self-skip** when the product already exists and there are no new
+bets to test — allow the skip and record it; it is not the unavailable-skill stop condition below.
 
 1. **Announce** the step and the sub-skill you are about to invoke.
 2. **Invoke the sub-skill** via the Skill tool. It reads `.spec-config.md`, runs its internal
-   pipeline to completion (research, draft, review → `*.review.md`, merge → applies the review and
-   **deletes** it, and the dual output: detailed `*.research.md` + human `*.summary.md`), and
-   stops at its own gate per the mode.
+   pipeline to completion (elicit, budgeted research, draft, review → the reviewer returns findings,
+   fix → applies them in place, and the dual output: detailed `*.research.md` + human
+   `*.summary.md`), and stops at its own gate per the mode.
 3. **Advance by mode:**
    - **interactive — Hard gate.** Present the two artifact paths and STOP for explicit approval:
      > "Step N (<sub-skill>) finished → <noun>.research.md (detail), <noun>.summary.md (for you).

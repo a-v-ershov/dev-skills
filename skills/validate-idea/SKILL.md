@@ -1,6 +1,6 @@
 ---
 name: validate-idea
-description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited .dev-skills/project-spec/idea-validation.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The first validation step of the create-project-spec pipeline; runs after gather-context (reads .dev-skills/project-spec/project-brief.research.md if present) and before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
+description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited .dev-skills/project-spec/idea-validation.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. The first validation step of the create-project-spec pipeline; runs after gather-context (reads .dev-skills/project-spec/project-brief.research.md if present) and before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
 ---
 
 # Idea Validation Skill
@@ -19,8 +19,8 @@ redirect: "That's a later phase — first we validate whether this should exist.
 - **`idea-validation.research.md`** — the detailed, source-cited validation (for the AI/next phases).
 - **`idea-validation.summary.md`** — the short human summary (essence + forks to answer).
 
-Plus a transient **`idea-validation.review.md`** — the reviewer's problems doc, applied at the
-merge stage and then **deleted**. It is a working artifact, never a deliverable.
+Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
+to the research doc.
 
 ## Language
 
@@ -35,7 +35,7 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
 
-- **interactive** — ask the forcing questions; stop at the conflict gate and the hard gate.
+- **interactive** — ask the forcing questions; stop at the fix stage's 🔴 and at the hard gate.
 - **autopilot** — answer the forcing questions yourself and log every fork; resolve 🔴 review
   findings yourself; do not prompt or stop. Stay adversarial — autopilot can still reach `kill`.
 
@@ -58,13 +58,12 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 ```
 - [ ] Stage 0: Intake — restate the idea; read mode from .spec-config.md
 - [ ] Stage 1: Elicit — KILL/SKIP/SHRINK + 6 forcing questions (interactive: ask · autopilot: self-answer + log forks)
-- [ ] Stage 2: Research — verify demand / market / competitors / status quo (adaptive)
+- [ ] Stage 2: Research — verify demand / market / competitors / status quo (within the budget)
 - [ ] Stage 3: Draft — verdict + draft idea-validation.research.md
-- [ ] Stage 4: Review — spawn reviewer → idea-validation.review.md (intermediate)
-- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
-- [ ] Stage 6: Merge — synthesize the final idea-validation.research.md, then delete the review doc
-- [ ] Stage 7: Dual output — idea-validation.research.md (Sources + Forks log) + idea-validation.summary.md
-- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
+- [ ] Stage 4: Review — spawn reviewer; it returns findings (no file)
+- [ ] Stage 5: Fix — apply the findings in place + log them (🔴 interactive: stop · autopilot: self-resolve)
+- [ ] Stage 6: Dual output — idea-validation.research.md (Sources + Forks log) + idea-validation.summary.md
+- [ ] Stage 7: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
 ### Stage 0: Intake
@@ -107,12 +106,14 @@ If KILL has no honest answer, say so plainly — recommend the user gather deman
   in the Forks / Decisions log with choice, rationale, confidence, source. Mark uncertain ones
   `Needs human confirm? = yes`.
 
-### Stage 2: Research (adaptive)
+### Stage 2: Research (budgeted)
 Verify the world-claims this idea rests on. Topics: real demand signals; market size/trend;
 direct competitors and the status-quo alternative; whether comparable products succeeded or died
-and why; pricing norms for the proposed model. Default to light targeted web search; escalate to
-`/deep-research` only for a genuinely contested landscape or on request. Full method —
-**`../_shared/spec-pipeline/research-method.md`**. Carry findings + source links into the draft.
+and why; pricing norms for the proposed model. **Rank them by what would change the verdict** and
+research top-down until the budget (≤4 searches / ≤4 opens per phase, ~2 opens held in reserve for
+stage 5) is spent; what you don't reach is logged unverified. `/deep-research` only if the user
+explicitly asks. Full method — **`../_shared/spec-pipeline/research-method.md`**. Carry findings +
+source links into the draft.
 
 ### Stage 3: Draft
 Give a direct verdict: **proceed / shrink-then-proceed / gather-evidence-first / kill**, the
@@ -122,36 +123,32 @@ citing sources inline as `[S1]`, `[S2]` and filling the `## Sources` and `## For
 log` sections. Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review
-Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.dev-skills/project-spec/idea-validation.review.md` (it does NOT edit the draft; this file is
-intermediate). Method + problems-doc format: **`../_shared/spec-pipeline/review-method.md`** and
-`review-template.md`. For this phase the reviewer especially probes: is the demand evidence real
-or just interest; is the audience specific; does the "no good alternative" claim survive a web
-check; is the business model viable.
+Delegate to the `spec-reviewer` agent (offline — it reads the draft and the prior docs, not the
+web) to find inconsistencies + gaps. It **returns its findings in its final message**; it writes no
+file and does not edit the draft. Method + return format:
+**`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this phase the reviewer
+especially probes: is the demand evidence real or just interest; is the audience specific; is the
+"no good alternative" claim actually supported by what the doc cites; is the business model viable.
 
-### Stage 5: Conflict gate
-If the review found 🔴 critical findings:
-- **interactive:** STOP. Show the count + the top critical items and get the user's decisions.
-- **autopilot:** resolve them yourself (targeted re-research where needed) and log each
-  resolution in the Forks / Decisions log. A 🔴 you cannot resolve becomes an open question and
-  may move the verdict toward `gather-evidence-first`.
-A clean review (0 🔴) proceeds without stopping in either mode.
+### Stage 5: Fix
+Apply the findings to `idea-validation.research.md` **in place** (targeted edits, not a rewrite) and
+log each applied finding in the Forks / Decisions log:
+- **🔴 interactive:** STOP. Show the count + the critical items and get the user's decisions.
+- **🔴 autopilot:** resolve them yourself and log each resolution. A 🔴 you cannot resolve becomes an
+  open question and may move the verdict toward `gather-evidence-first`.
+- **🟡 / ⚪:** apply by your own judgement.
+Spend a **reserved fetch** only on a `Fix: verify` finding that would actually change the verdict;
+label the rest unverified. What no one could verify goes to `## Open questions`. A clean review
+(0 🔴) proceeds without stopping in either mode.
 
-### Stage 6: Merge
-Synthesize the draft + review corrections + filled gaps into the final
-`idea-validation.research.md`. Apply fixes, integrate the gaps the reviewer filled, log the
-applied findings in the Forks / Decisions log, and re-research **only** still-disputed points
-(targeted, not a fresh full pass). What no one could verify goes to `## Open questions`. **Then
-delete `.dev-skills/project-spec/idea-validation.review.md`** — its content now lives in the research doc.
-
-### Stage 7: Dual output
+### Stage 6: Dual output
 Finalize `idea-validation.research.md` (complete `## Sources` and `## Forks / Decisions log`).
 Then write `.dev-skills/project-spec/idea-validation.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the essence + the forks the human must answer
 (every `Needs human confirm? = yes`) + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
 
-### Stage 8: Hard gate
+### Stage 7: Hard gate
 - **interactive:** STOP — this is a hard gate:
   > "Validation done → idea-validation.research.md (detail), idea-validation.summary.md (for you).
   > Review it. When you approve, run `/define-product-requirements`. I will not proceed
@@ -162,17 +159,15 @@ Then write `.dev-skills/project-spec/idea-validation.summary.md` from
 Do NOT start product-requirements, UX, or architecture work in this session unless the user
 explicitly approves and asks.
 
-## Existing-project mode
+## When the repo already has code
 
-When `project_type: existing`, the product is already built — adversarially asking "should this
-exist?" is theater. Validate the **go-forward, not the existence**: the verdict becomes
-`continue | shrink-the-target | pivot | sunset`, pressure-testing the *new intent* and the *unbuilt
-TARGET delta*, using the codebase map's `## Observations & risks` as adversarial fuel (e.g. "no usage
-instrumentation — you can't claim traction"). For a pure "document what exists to extend it" run with
-no new bets, **self-skip** with a one-line logged rationale (the orchestrator allows the skip in
-existing mode). A `sunset`/`pivot` on a live product is heavier than a greenfield `kill` — in
-autopilot, mark it `Needs human confirm? = yes`. Full contract:
-**`../_shared/spec-pipeline/existing-project-mode.md`**.
+The product partly exists, so adversarially asking "should this exist?" is theater. Validate the
+**go-forward**: the verdict becomes `continue | shrink | pivot | sunset`, pressure-testing the new
+intent and the not-yet-built part, using what the code reveals as fuel (e.g. "there's no usage
+instrumentation — you can't claim traction"). For a pure "document what exists so we can extend it"
+run with no new bets, **self-skip** with a one-line logged rationale. A `sunset`/`pivot` on a live
+product is heavier than a greenfield `kill` — in autopilot mark it `Needs human confirm? = yes`.
+Method: **`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
 ## Rules
 
@@ -180,5 +175,5 @@ autopilot, mark it `Needs human confirm? = yes`. Full contract:
 2. Never propose solutions, features, tech, or UX. Redirect to the right phase.
 3. Be direct to the point of discomfort during questioning; save warmth for the closing verdict.
 4. If the idea fails KILL, say so honestly — a well-argued "don't build this" is a success.
-5. Every world-claim is cited; every fork is logged; the review always runs (both modes), is
-   merged in, and the review file is then deleted.
+5. Every *verified* world-claim is cited and every unverified one is labelled as such; every fork
+   is logged; the review always runs (both modes) and its findings are always applied.

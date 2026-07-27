@@ -1,6 +1,6 @@
 ---
 name: design-dev-architecture
-description: "Design the development-time architecture that lets the product be built fast and well with AI: how to run the whole product locally (Docker Compose topology, local stand-ins for cloud/managed services with prod-equivalent APIs, seed data), how it is tested in an AI-drivable way (test levels + purpose-built developer/test scripts + an e2e harness an agent can run and verify, e.g. Playwright for web), how concurrent access to the single shared local environment is coordinated (lock and/or per-run isolation), and how the AI tooling is configured for the chosen stack (Claude Code config, which Anthropic plugins/skills to install, MCP servers, other agents) — including the custom, project-local Claude Code skills to author that wrap those dev/test scripts and the e2e harness so future agents run the verification loop by name — backed by research into the current tools and an adversarial review pass. Use after design-architecture (reads .dev-skills/project-spec/architecture.research.md and .dev-skills/project-spec/user-flows.research.md) as the final, technical step of the create-project-spec pipeline. Writes a detailed, source-cited .dev-skills/project-spec/dev-architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The inner-loop / developer-experience layer — it never redesigns the production architecture or re-opens stack choices."
+description: "Design the development-time architecture that lets the product be built fast and well with AI: how to run the whole product locally (Docker Compose topology, local stand-ins for cloud/managed services with prod-equivalent APIs, seed data), how it is tested in an AI-drivable way (test levels + purpose-built developer/test scripts + an e2e harness an agent can run and verify, e.g. Playwright for web), how concurrent access to the single shared local environment is coordinated (lock and/or per-run isolation), and how the AI tooling is configured for the chosen stack (Claude Code config, which Anthropic plugins/skills to install, MCP servers, other agents) — including the custom, project-local Claude Code skills to author that wrap those dev/test scripts and the e2e harness so future agents run the verification loop by name — backed by research into the current tools and an adversarial review pass. Use after design-architecture (reads .dev-skills/project-spec/architecture.research.md and .dev-skills/project-spec/user-flows.research.md) as the final, technical step of the create-project-spec pipeline. Writes a detailed, source-cited .dev-skills/project-spec/dev-architecture.research.md (+ adr/*) plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. The inner-loop / developer-experience layer — it never redesigns the production architecture or re-opens stack choices."
 ---
 
 # Design Dev Architecture Skill
@@ -41,8 +41,8 @@ Scope discipline (read carefully):
 - **`dev-architecture.research.md`** + **`adr/*`** — the detailed, source-cited dev architecture & decision records.
 - **`dev-architecture.summary.md`** — the short human summary (essence + forks to answer).
 
-Plus a transient **`dev-architecture.review.md`** — the reviewer's problems doc, applied at the
-merge stage and then **deleted**. It is a working artifact, never a deliverable. (The ADRs stay.)
+Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
+to the research doc and the affected ADRs. (The ADRs stay.)
 
 ## Language
 
@@ -57,7 +57,7 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
 
-- **interactive** — elicit the inner-loop design interactively; stop at the conflict gate and hard gate.
+- **interactive** — elicit the inner-loop design interactively; stop at the fix stage's 🔴 and hard gate.
 - **autopilot** — make the local-run / testing / tooling choices yourself and log every fork;
   resolve 🔴 review findings yourself; do not prompt or stop. Stay opinionated — autopilot still
   rejects parity-breaking shortcuts and resume-driven tooling.
@@ -121,19 +121,22 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 ```
 - [ ] Stage 0: Intake — load architecture.research.md + user-flows.research.md; components/tools, prod services, flows; dev constraints; read mode
 - [ ] Stage 1: Elicit — local-run (Run it; env-access; dev/test scripts) + the verification loop (Drive/Prove/Unblock × UX/Backend/E2E) + AI tooling (incl. custom project skills wrapping the scripts)
-- [ ] Stage 2: Research — verify the tools (local stand-in parity / browser-driving + e2e framework / MCP servers / current plugins) (adaptive)
+- [ ] Stage 2: Research — verify the tools (local stand-in parity / browser-driving + e2e framework / MCP servers / current plugins), within the budget
 - [ ] Stage 3: Draft — assemble; ADRs; draft dev-architecture.research.md (+ adr/*)
-- [ ] Stage 4: Review — spawn reviewer → dev-architecture.review.md (intermediate)
-- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
-- [ ] Stage 6: Merge — synthesize the final dev-architecture.research.md + ADRs, then delete the review doc
-- [ ] Stage 7: Dual output — dev-architecture.research.md (+ adr/*, Sources + Forks log) + dev-architecture.summary.md
-- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
+- [ ] Stage 4: Review — spawn reviewer; it returns findings (no file)
+- [ ] Stage 5: Fix — apply the findings to the doc + ADRs in place + log them (🔴 interactive: stop · autopilot: self-resolve)
+- [ ] Stage 6: Dual output — dev-architecture.research.md (+ adr/*, Sources + Forks log) + dev-architecture.summary.md
+- [ ] Stage 7: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
 ### Stage 0: Intake
 Read `.dev-skills/project-spec/architecture.research.md` and `.dev-skills/project-spec/user-flows.research.md`
 (and, if present, `.dev-skills/project-spec/project-brief.research.md` for the user's original intent and
-constraints, plus any developer preferences — dev tooling, code style — as soft priors). List the components and their concrete technologies, the production/cloud services each maps to
+constraints, plus any developer preferences — dev tooling, code style — as soft priors). From the
+architecture also take the **deployment decision** (which platform, which runtime, which artifact
+shape — the local loop mirrors it), the **analytics decision** (what is measured and by what, so
+checks don't fire at the real counter), and the **design system** (kit + tokens, if any, so the gate
+can enforce it). List the components and their concrete technologies, the production/cloud services each maps to
 (object store, managed database, queue, BaaS, …), and the flows that must be testable. Capture the
 dev-environment constraints: developer OS targets, the AI coding agents actually in use (Claude
 Code, and any others), and existing team tooling. If `architecture.research.md` is missing, tell
@@ -145,11 +148,23 @@ a time, a recommended answer on every question, push past the first answer, mirr
 When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it.
 
 1. **Local-run architecture (prod-parity, one command — "Run it").** Per component: the **local
-   stand-in** for any cloud/managed service, chosen for **API parity** (e.g. an S3-API-compatible
-   container like MinIO/LocalStack for a prod object store; a database container for a managed
-   database; an emulator or containerized OSS equivalent for a BaaS). The **Docker Compose
-   topology** that brings the whole product up, **seed data**, and **env/secrets** handling (no
-   real secrets in the repo). The **single command** that starts everything seeded and ready —
+   stand-in** for any cloud/managed service, chosen for **API parity** with the *specific provider
+   the architecture picked* — the emulator or container that matches that vendor, not a generic
+   equivalent (e.g. an S3-API-compatible container like MinIO/LocalStack for a prod object store; a
+   database container matching the managed database's engine **and major version**; an emulator or
+   containerized OSS equivalent for a BaaS). Three things that come straight from the architecture's
+   deployment decision and are cheap to settle now, expensive to discover at deploy:
+   - **Build-shape parity** — locally you build the *same artifact shape* the chosen platform runs
+     (serverless functions vs a long-lived process vs a container image) on the same major runtime
+     version. Name the one command that produces it, so "works locally" means something.
+   - **Schema migrations** — the same mechanism locally and in production, with the agent able to
+     apply *and* roll back. Seed data is not a substitute: seeding a fresh database never exercises
+     the migration that will run against the real one.
+   - **The env-var contract** — the variables the chosen platform requires, mirrored in
+     `.env.example`, plus a check that names what's missing before anything starts. A missing
+     variable should fail loudly at bring-up, not silently at runtime.
+   Then the **Docker Compose topology** that brings the whole product up, **seed data**, and
+   **env/secrets** handling (no real secrets in the repo). The **single command** that starts everything seeded and ready —
    usable by **both the AI agent and a human developer**: capture how a person brings it up and
    actually opens/uses the running product (the local URL/port, default seeded login, where to
    watch logs), not just an agent-only harness. The **divergences** from prod (each a named risk).
@@ -175,6 +190,18 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
    | **Prove it** (observe the real outcome) | screenshot before/after | query the DB — did the row land? · read structured logs — did the path run? | replay prod traffic; assert |
    | **Unblock it** (remove what forces a human) | dummy auth · seed scripts for known state | structured logs the agent can grep · add log lines to prove the path ran | safe/idempotent test data |
 
+   Two things the architecture's analytics and design decisions add here — both cheap, both
+   correctness rather than extra ceremony:
+   - **Analytics never fires at the real counter during checks.** Point the client at a local sink or
+     a no-op in the test environment; otherwise every verification run pollutes production numbers.
+     Add "prove the event fired" to the loop **only for a flow whose acceptance criteria mention the
+     metric** — elsewhere it's ceremony, and the event is checked by reading the sink, not by
+     asserting on a mock.
+   - **The design system is checked by the gate, not by eye** — but only where the kit or stack
+     already ships a rule for it (a Tailwind/ESLint plugin, the kit's own lint config, a token
+     linter). Wire that existing rule into `make check` so "components from the kit, colors from
+     tokens" is enforced instead of hoped for. **Do not invent a custom grep-based checker** — a
+     home-grown color-literal hunt produces false positives, and a noisy gate gets disabled.
    Plus the **test levels** (unit / integration / e2e) and what each covers, and **test data**
    provisioning/reset. **Map each flow** from `user-flows.research.md` to *how the agent drives it*
    and *how it proves success* (incl. important alternate/error paths). Each flow's **acceptance
@@ -212,7 +239,7 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
   each material choice (stand-in, drive/prove tool per surface, MCP set) in the Forks / Decisions
   log with rationale, confidence, source. Mark uncertain ones `Needs human confirm? = yes`.
 
-### Stage 2: Research (adaptive — verify the tooling that powers the loop)
+### Stage 2: Research (budgeted — verify the tooling that powers the loop)
 Verify the inner-loop and verification tools against what's current. Topics: the candidate local
 stand-in's **API parity & coverage** with the prod service (which APIs it really implements); the
 **browser-driving + e2e** options for the stack (Claude-in-Chrome / a browser MCP / Playwright)
@@ -220,10 +247,12 @@ and their current capabilities; **health-check, DB-assertion, and traffic-replay
 backend; a **structured-logging** library the agent can grep; which **MCP servers** exist and give
 the agent more verification reach (browser / db / cloud-logs / http); which **Claude Code /
 Anthropic plugins & skills** are current and help this stack; container images and their
-maintenance status. Default to light targeted web search of official docs/repos; escalate to
-`/deep-research` for an unfamiliar stack or on request. Method —
-**`../_shared/spec-pipeline/research-method.md`**; an "API-compatible with X" or "the right MCP
-for Y" claim must cite its primary source.
+maintenance status. **Rank them by what would break the loop if wrong** — claimed API parity and
+"this MCP/plugin exists and is current" are worth the budget; nice-to-know tooling trivia is not.
+Research top-down until the budget (≤4 searches / ≤4 opens per phase, ~2 opens held in reserve for
+stage 5) is spent; what you don't reach is logged unverified. `/deep-research` only if the user
+explicitly asks. Method — **`../_shared/spec-pipeline/research-method.md`**; an "API-compatible with
+X" or "the right MCP for Y" claim either cites its primary source or is labelled unverified.
 
 ### Stage 3: Draft (assemble + ADRs)
 Assemble the three pillars into a coherent inner-loop design, and consolidate the **local↔prod
@@ -236,17 +265,21 @@ inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`
 `.dev-skills/project-spec/` and `.dev-skills/project-spec/adr/` if needed.
 
 ### Stage 4: Review
-Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.dev-skills/project-spec/dev-architecture.review.md` (it does NOT edit the draft; this file is
-intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
-`review-template.md`. For this phase the reviewer especially probes, above all, **gaps in the
+Delegate to the `spec-reviewer` agent (offline — it reads the draft, the ADRs and the prior docs,
+not the web) to find inconsistencies + gaps. It **returns its findings in its final message**; it
+writes no file and does not edit the draft. Method + return format:
+**`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this phase the reviewer
+especially probes, above all, **gaps in the
 agent's verification loop**: a surface or flow the agent can run but **cannot prove** the outcome
 of (no screenshot/DB/log assertion — "it ran" passed off as proof); a flow with no autonomous
 drive path; auth or unknown-state friction left in place that forces a human; logs the agent can't
-grep. Then the usual: a local stand-in that does NOT actually match the prod API (claimed parity
-is false); an e2e harness that secretly needs a human; a tool/plugin/MCP that's deprecated or
-doesn't exist; a local service or test that traces to no component or flow; over-built infra
-(reproducing prod HA locally); secrets in the compose file; a divergence that's understated. Also: a
+grep. Then the usual: a claimed local-stand-in parity with no source behind it; an e2e harness that
+secretly needs a human; a tool/plugin/MCP asserted to exist with nothing cited; a local service or
+test that traces to no component or flow; over-built infra
+(reproducing prod HA locally); secrets in the compose file; a divergence that's understated. Then the
+deployment-facing gaps: **a local build shape that doesn't match what the chosen platform runs, no
+migration path (or one seeding can't stand in for), a platform-required env var absent from the local
+contract, or analytics that would fire at the production counter during checks**. Also: a
 developer/test script whose purpose or intentional divergence isn't documented (or one drifting toward
 re-implementing prod); **no fast path**, forcing the agent to run the full expensive stack just to
 verify a small change; an env two actors can clobber with no lock or isolation, or a lock with no
@@ -256,32 +289,27 @@ exist (or isn't a planned dev/test script); a thin one-per-script alias that add
 inverse — a clearly-useful verification job (run integration tests, reset the env, drive a flow
 end-to-end) with **no** skill wrapping it.
 
-### Stage 5: Conflict gate
-If the review found 🔴 critical findings:
-- **interactive:** STOP. Show the count + top items and get the user's decisions. If a finding
+### Stage 5: Fix
+Apply the findings to `dev-architecture.research.md` and the affected ADRs **in place** (targeted
+edits, not a rewrite) and log each applied finding in the Forks / Decisions log:
+- **🔴 interactive:** STOP. Show the count + top items and get the user's decisions. If a finding
   implies the architecture itself is wrong, recommend re-running `/design-architecture` rather than
   patching around it here.
-- **autopilot:** resolve them yourself (swap the stand-in, fix the harness, targeted re-research of
-  the disputed tool fact) and log each resolution; update the affected ADR. A 🔴 you cannot resolve
-  becomes an open question/risk.
-Clean review (0 🔴) proceeds without stopping.
+- **🔴 autopilot:** resolve them yourself (swap the stand-in, fix the harness) and log each
+  resolution; update the affected ADR. A 🔴 you cannot resolve becomes an open question/risk.
+- **🟡 / ⚪:** apply by your own judgement.
+Spend a **reserved fetch** on an unverified parity or "this MCP exists" claim the loop depends on;
+label the rest unverified. What no one could verify goes to `## Open questions`. A clean review
+(0 🔴) proceeds without stopping. (Keep the ADRs.)
 
-### Stage 6: Merge
-Synthesize draft + review corrections + filled gaps into the final `dev-architecture.research.md`
-and ADRs. Apply fixes, correct any tool/parity facts the reviewer disproved, log the applied
-findings in the Forks / Decisions log, re-research **only** still-disputed points. What no one
-could verify goes to `## Open questions`. **Then delete
-`.dev-skills/project-spec/dev-architecture.review.md`** — its content now lives in the research doc and
-the ADRs. (Keep the ADRs.)
-
-### Stage 7: Dual output
+### Stage 6: Dual output
 Finalize `dev-architecture.research.md` (+ ADRs; complete `## Sources` and `## Forks / Decisions
 log`). Then write `.dev-skills/project-spec/dev-architecture.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the inner-loop design in plain language + the
 forks the human must answer + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
 
-### Stage 8: Hard gate
+### Stage 7: Hard gate
 - **interactive:** STOP — this is a hard gate:
   > "Dev architecture done → dev-architecture.research.md (+ ADRs under adr/),
   > dev-architecture.summary.md (for you). This defines how to run the product locally, how it is
@@ -293,20 +321,20 @@ forks the human must answer + open risks. Format rules:
 Do NOT scaffold the project, write the compose files, or install tooling in this session unless
 the user explicitly approves and asks.
 
-## Existing-project mode
+## When the repo already has code
 
-When `project_type: existing`, design the inner loop around **what already runs**: read
-`.dev-skills/project-spec/codebase-map.research.md` for the mapped build/run/CI/test/env, and take the
-existing compose/Dockerfile/Makefile as the starting point — divergences from prod-parity that
-already exist become named risks. Do **not** re-open the stack (settled by `design-architecture`'s
-adopted ADRs). Gaps the map reveals (no e2e harness, no structured logging, no env-access lock)
-become **TARGET items** that `setup-dev-environment` (adopt mode) and `plan-development` (delta mode)
-later fill. Log drift in the Forks / Decisions log with the drift columns. Full contract:
-**`../_shared/spec-pipeline/existing-project-mode.md`**.
+Design the inner loop around **what already runs**: read the existing compose file / Dockerfile /
+Makefile / CI config / tests and take them as the starting point; parity gaps that already exist
+become named risks. Do **not** re-open the stack (settled by `design-architecture`'s adopted ADRs).
+What's missing (no e2e harness, no structured logging, no env lock) becomes an item
+`setup-dev-environment` and `plan-development` fill later. Log differences in
+`## Divergences (code vs intended)`. Method:
+**`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
-## Amend mode (change propagation)
+## Amend mode (an upstream doc changed)
 
-When invoked by `propagate-changes` with an upstream change, switch to **amend mode**: reconcile
+Re-run on an existing document — because an upstream phase was edited, or the user changed their
+mind — and you **amend** rather than regenerate: reconcile
 `dev-architecture.research.md` (+ ADRs) to the change instead of producing it from scratch. Per
 **`../_shared/build-pipeline/propagation-method.md`**:
 
@@ -318,6 +346,9 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
 4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
 5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
+6. **Hand off, don't chase.** Say in one line what's next in the chain (nothing further in the spec) and offer to run it. If
+   `.dev-skills/build-plan/tasks/` exists, add: the plan may now be stale — `/plan-development` will
+   reconcile it with task deltas. The user decides how far to walk; you never edit the backlog here.
 
 ## Rules
 
@@ -334,8 +365,8 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    environment.
 6. Never redesign the production architecture or re-open stack choices — surface gaps back to
    `design-architecture` instead.
-7. Every tool fact is cited; every fork is logged; the review always runs (both modes), is merged
-   in, and the review file is then deleted.
+7. Every *verified* tool fact is cited and every unverified one is labelled as such; every fork is
+   logged; the review always runs (both modes) and its findings are always applied.
 8. Design the **environment-access model** (advisory lock and/or per-run isolation), the
    **developer/test scripts** (fast, intentionally-divergent local paths), and the **custom project
    skills** that wrap those scripts/harness into named verification jobs as first-class deliverables —

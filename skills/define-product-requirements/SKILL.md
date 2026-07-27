@@ -1,6 +1,6 @@
 ---
 name: define-product-requirements
-description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. Use after validate-idea (reads .dev-skills/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/product-requirements.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
+description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. Use after validate-idea (reads .dev-skills/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/product-requirements.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
 ---
 
 # Define Product Requirements Skill
@@ -24,8 +24,8 @@ Scope discipline (read carefully):
 - **`product-requirements.research.md`** — the detailed, source-cited product definition (for the AI/next phases).
 - **`product-requirements.summary.md`** — the short human summary (essence + forks to answer).
 
-Plus a transient **`product-requirements.review.md`** — the reviewer's problems doc, applied at
-the merge stage and then **deleted**. It is a working artifact, never a deliverable.
+Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
+to the research doc.
 
 ## Language
 
@@ -40,7 +40,7 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
 
-- **interactive** — ask the elicitation questions; stop at the conflict gate and the hard gate.
+- **interactive** — ask the elicitation questions; stop at the fix stage's 🔴 and at the hard gate.
 - **autopilot** — answer them yourself and log every fork; resolve 🔴 review findings yourself; do
   not prompt or stop. Stay opinionated — autopilot still cuts features that earn no place.
 
@@ -67,13 +67,12 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 ```
 - [ ] Stage 0: Intake — load idea-validation.research.md; summarize settled inputs; flag gaps; read mode
 - [ ] Stage 1: Elicit — audience, features (+ acceptance criteria), domain model & glossary, metrics, constraints (interactive: ask · autopilot: self-answer + log forks)
-- [ ] Stage 2: Research — comparable feature sets / table-stakes / category norms (adaptive)
+- [ ] Stage 2: Research — comparable feature sets / table-stakes / category norms (within the budget)
 - [ ] Stage 3: Draft — draft product-requirements.research.md
-- [ ] Stage 4: Review — spawn reviewer → product-requirements.review.md (intermediate)
-- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
-- [ ] Stage 6: Merge — synthesize the final product-requirements.research.md, then delete the review doc
-- [ ] Stage 7: Dual output — product-requirements.research.md (Sources + Forks log) + product-requirements.summary.md
-- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
+- [ ] Stage 4: Review — spawn reviewer; it returns findings (no file)
+- [ ] Stage 5: Fix — apply the findings in place + log them (🔴 interactive: stop · autopilot: self-resolve)
+- [ ] Stage 6: Dual output — product-requirements.research.md (Sources + Forks log) + product-requirements.summary.md
+- [ ] Stage 7: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
 ### Stage 0: Intake
@@ -113,12 +112,14 @@ the product definition across the dimensions below:
   every choice in the Forks / Decisions log (especially each feature in-or-out decision) with
   rationale, confidence, source. Mark uncertain ones `Needs human confirm? = yes`.
 
-### Stage 2: Research (adaptive)
+### Stage 2: Research (budgeted)
 Verify category reality. Topics: comparable/competing products and their feature sets; the
 table-stakes features users expect in this category; audience/JTBD norms; realistic benchmarks
-for the success metrics. Default to light targeted web search; escalate to `/deep-research` only
-for a broad landscape or on request. Method — **`../_shared/spec-pipeline/research-method.md`**.
-Carry findings + source links into the draft; a "table-stakes" claim must cite where it's seen.
+for the success metrics. **Rank them by what would change the feature set** and research top-down
+until the budget (≤4 searches / ≤4 opens per phase, ~2 opens held in reserve for stage 5) is spent;
+what you don't reach is logged unverified. `/deep-research` only if the user explicitly asks.
+Method — **`../_shared/spec-pipeline/research-method.md`**. Carry findings + source links into the
+draft; a "table-stakes" claim either cites where it's seen or is labelled unverified.
 
 ### Stage 3: Draft
 Draft `.dev-skills/project-spec/product-requirements.research.md` from `references/product-template.md`,
@@ -126,30 +127,27 @@ citing sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks /
 Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review
-Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.dev-skills/project-spec/product-requirements.review.md` (it does NOT edit the draft; this file is
-intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
-`review-template.md`. For this phase the reviewer especially probes: features that trace to no
-validated need; a feature with no acceptance criterion, or an AC that's untestable or
-implementation-level; an entity a feature references but the domain model lacks; glossary terms
-used inconsistently; missing table-stakes the research surfaced; metrics that aren't measurable; an
-audience too vague to act on; scope creep past the validated wedge.
+Delegate to the `spec-reviewer` agent (offline — it reads the draft and the prior docs, not the web)
+to find inconsistencies + gaps. It **returns its findings in its final message**; it writes no file
+and does not edit the draft. Method + return format:
+**`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this phase the reviewer
+especially probes: features that trace to no validated need; a feature with no acceptance criterion,
+or an AC that's untestable or implementation-level; an entity a feature references but the domain
+model lacks; glossary terms used inconsistently; missing table-stakes; metrics that aren't
+measurable; an audience too vague to act on; scope creep past the validated wedge.
 
-### Stage 5: Conflict gate
-If the review found 🔴 critical findings:
-- **interactive:** STOP. Show the count + top items and get the user's decisions.
-- **autopilot:** resolve them yourself (cut/add features, tighten metrics, targeted re-research)
-  and log each resolution. A 🔴 you cannot resolve becomes an open question.
-Clean review (0 🔴) proceeds without stopping.
+### Stage 5: Fix
+Apply the findings to `product-requirements.research.md` **in place** (targeted edits, not a
+rewrite) and log each applied finding in the Forks / Decisions log:
+- **🔴 interactive:** STOP. Show the count + top items and get the user's decisions.
+- **🔴 autopilot:** resolve them yourself (cut/add features, tighten metrics) and log each
+  resolution. A 🔴 you cannot resolve becomes an open question.
+- **🟡 / ⚪:** apply by your own judgement.
+Spend a **reserved fetch** only on a `Fix: verify` finding that would actually change the feature
+set; label the rest unverified. What no one could verify goes to `## Open questions`. A clean review
+(0 🔴) proceeds without stopping.
 
-### Stage 6: Merge
-Synthesize draft + review corrections + filled gaps into the final
-`product-requirements.research.md`. Apply fixes, integrate missing table-stakes the reviewer
-justified, log the applied findings in the Forks / Decisions log, re-research **only**
-still-disputed points. What no one could verify goes to `## Open questions`. **Then delete
-`.dev-skills/project-spec/product-requirements.review.md`** — its content now lives in the research doc.
-
-### Stage 7: Dual output
+### Stage 6: Dual output
 Finalize `product-requirements.research.md` (complete `## Sources` and `## Forks / Decisions
 log`). Then write `.dev-skills/project-spec/product-requirements.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — essence + the forks the human must answer +
@@ -157,7 +155,7 @@ open risks. Keep the domain model, glossary, and acceptance criteria in the rese
 summary names at most a handful of key concepts in plain language (no schema, fields, or
 relations). Format rules: **`../_shared/spec-pipeline/output-format.md`**.
 
-### Stage 8: Hard gate
+### Stage 7: Hard gate
 - **interactive:** STOP — this is a hard gate:
   > "Product definition done → product-requirements.research.md (detail),
   > product-requirements.summary.md (for you). Review it. When you approve, run
@@ -167,20 +165,20 @@ relations). Format rules: **`../_shared/spec-pipeline/output-format.md`**.
 
 Do NOT start user-flow or architecture work in this session unless the user explicitly approves.
 
-## Existing-project mode
+## When the repo already has code
 
-When `project_type: existing`, read `.dev-skills/project-spec/codebase-map.research.md` at Stage 0 and
-**pre-fill the committed feature set from the implemented surfaces**, and the domain model + glossary
-from the code's actual entities/vocabulary (default: **keep the code's names** — a rename is opt-in
-drift → a refactor task later). Then interview to mark each inferred feature **keep / change /
-remove** and add **TARGET-only** features the code doesn't yet have. Write the doc oriented to TARGET;
-log every change/remove/new in the Forks / Decisions log with the drift columns. Acceptance criteria
-are written for matching features too — they become the verifier's regression net. Full contract:
-**`../_shared/spec-pipeline/existing-project-mode.md`**.
+Read the implemented surfaces at Stage 0 and **pre-fill the feature set** from them, plus the domain
+model and glossary from the code's real entities (**keep the code's names** — a rename is a
+deliberate decision with refactor work attached). Then interview to confirm each inferred feature and
+add the ones the code doesn't have yet. Write acceptance criteria for the already-built features too
+— they become the verifier's regression net. Log the differences in
+`## Divergences (code vs intended)`. Method: **`../_shared/spec-pipeline/elicitation-method.md`** →
+"When the repo already has code".
 
-## Amend mode (change propagation)
+## Amend mode (an upstream doc changed)
 
-When invoked by `propagate-changes` with an upstream change, switch to **amend mode**: reconcile
+Re-run on an existing document — because an upstream phase was edited, or the user changed their
+mind — and you **amend** rather than regenerate: reconcile
 `product-requirements.research.md` to the change instead of producing it from scratch. Per
 **`../_shared/build-pipeline/propagation-method.md`**:
 
@@ -191,6 +189,9 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
 4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
 5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
+6. **Hand off, don't chase.** Say in one line what's next in the chain (`/create-user-flows`) and offer to run it. If
+   `.dev-skills/build-plan/tasks/` exists, add: the plan may now be stale — `/plan-development` will
+   reconcile it with task deltas. The user decides how far to walk; you never edit the backlog here.
 
 ## Rules
 
@@ -203,5 +204,5 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    implementation detail.
 6. Define each domain entity and term once in the domain model + glossary; later phases reference
    it. The summary stays non-technical (key concepts only, no schema).
-7. Every category claim is cited; every fork is logged; the review always runs (both modes), is
-   merged in, and the review file is then deleted.
+7. Every *verified* category claim is cited and every unverified one is labelled as such; every fork
+   is logged; the review always runs (both modes) and its findings are always applied.

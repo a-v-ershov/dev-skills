@@ -56,6 +56,48 @@ investments (infra, accounts, licenses).>
 - **Options:** <table as above>
 - **Recommendation:** <...>
 
+## Deployment & environments
+
+> Where the product actually runs once real people use it. Decided here, with the same
+> options-and-recommendation rigor as any other component, because it bounds what is available and
+> is expensive to reverse (the data moves with it). Gets its own ADR.
+
+- **Operating context (from stage 1):** audience regions · expected users · data residency /
+  compliance requirement · monthly budget · payment method · spike preference (surprise bill vs
+  slowdown) · ops appetite · deadline · pain of data loss.
+
+| Option (platform + database + files) | ≈ cost / month at <N users> | Payment / reachability | Regions & residency | Pricing shape | Ops burden | Lock-in |
+|--------------------------------------|-----------------------------|------------------------|---------------------|---------------|------------|---------|
+| <recommended first> | <≈ $X, free tier ceiling: …> | <…> | <…> | usage-based / fixed | <…> | <…> |
+
+- **Chosen:** <platform> — <why, against which scenarios> (ADR: adr/000N). Cite [S#] for every
+  price, limit, and region claim; label anything unverified.
+- **Environments:** <prod only / prod + staging — and why.>
+- **Domain & TLS:** <who owns it, which zone, how certificates are handled.>
+- **Secrets:** <where they live; never in the repo or in the browser.>
+- **Backups & restore:** <what is backed up, how often, and the tested path back — required if
+  losing data was called painful.>
+- **Manual setup checklist (human, one-time):** <domain purchase & DNS, payment method, store /
+  provider accounts, compliance registration, anything else that cannot be scripted.>
+
+## Analytics & telemetry
+
+> How the committed success metrics from product-requirements actually get answered, and how a
+> production failure becomes visible. Question → metric → event, never the reverse.
+
+| Question the product must answer | Metric | Source | How |
+|----------------------------------|--------|--------|-----|
+| <where do people drop off before paying?> | <funnel completion %> | own database | <query sketch / table + column> |
+| <which landing variant converts?> | <views → signups> | client events | <counter tool, event name> |
+
+- **Own database first:** <the metrics answered by a query — no third-party tool needed for them.>
+- **Client-side events (only what never reaches the backend):** <views, scroll depth, abandoned
+  forms…> → **tool:** <chosen counter, or "none — the database is enough">.
+- **Errors & operational visibility:** <how a production error surfaces — logs, error tracker,
+  alert; who sees it.>
+- **Privacy:** <what user data leaves the system, to whom, and whether the residency decision above
+  permits it; consent obligations that follow from the audience.>
+
 ## Interactions & data flow
 
 - **Component map (textual):** <how the chosen pieces connect.>

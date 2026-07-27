@@ -13,15 +13,6 @@ when no config exists.
     medium-confidence forks are surfaced in the human summary as "must answer".
 - **`final_summary`** — `true` (default) | `false`. Whether the orchestrator builds the combined
   `.dev-skills/project-spec/summary.md` at the end of the run.
-- **`project_type`** — `greenfield` (default) | `existing`.
-  - `greenfield`: the spec is elicited from the user's head; there is no code yet. The pipeline runs
-    exactly as documented elsewhere.
-  - `existing`: the spec is **reconstructed from an already-built codebase**. The orchestrator runs
-    `map-codebase` before `gather-context`, and every phase runs in **existing-project mode** (read
-    the codebase map → draft AS-IS → interview to set TARGET + flag drift). Full method:
-    **`existing-project-mode.md`**.
-  - **Absent ⇒ `greenfield`** — every spec written before this field existed keeps working untouched,
-    and the existing-mode drift columns in the Forks / Decisions log stay blank.
 
 ## Config file — `.dev-skills/project-spec/.spec-config.md`
 
@@ -33,24 +24,21 @@ standalone). Format:
 
 - mode: interactive        # interactive | autopilot
 - final_summary: true      # true | false
-- project_type: greenfield # greenfield | existing
 ```
 
 ## How a phase skill uses it
 
 1. At intake, read `.dev-skills/project-spec/.spec-config.md`.
-2. **Present:** use `mode` for this phase. If `project_type: existing`, also run the phase's
-   existing-project mode (see `existing-project-mode.md`).
+2. **Present:** use `mode` for this phase. Separately, check whether the repo already holds code — if
+   it does, read it and confirm rather than re-ask (see `elicitation-method.md` → "When the repo
+   already has code"). That is a fact about the repo, not a setting.
 3. **Absent (standalone run):** ask the user the settings (one `AskUserQuestion`, defaults
-   pre-selected: interactive + final_summary true + project_type greenfield), then write
+   pre-selected: interactive + final_summary true), then write
    `.spec-config.md` so later standalone phases inherit the choice. If the user just wants the
-   single phase, interactive is the safe default. A standalone phase run in a repo that clearly
-   already has code should default `project_type` to `existing` and confirm.
+   single phase, interactive is the safe default. 
 
-Whenever you create the `.dev-skills/project-spec/` directory (here or when first writing an artifact),
-also create a local `.dev-skills/project-spec/.gitignore` containing `*.review.md` if it is absent — a
-safety net so an aborted run never commits a stray transient review file. Everything else under
-`.dev-skills/project-spec/` is committed project documentation.
+Everything under `.dev-skills/project-spec/` is committed project documentation — the pipeline
+writes no transient files, so the directory needs no local `.gitignore`.
 
 ## Autopilot rules (non-negotiable)
 
@@ -61,8 +49,9 @@ safety net so an aborted run never commits a stray transient review file. Everyt
   if wrong, is marked `Needs human confirm? = yes` and appears in the human summary (and, via the
   orchestrator, in the final `summary.md`).
 - **Still do the work.** Autopilot skips the human prompts and gates — it does **not** skip
-  research, review, the conflict resolution, or the dual output. The reviewer still runs; the AI
-  just resolves the 🔴 findings itself (with targeted re-research) instead of asking.
+  research, review, the fixes, or the dual output. The reviewer still runs; the AI just resolves the
+  🔴 findings itself (spending a reserved fetch where it genuinely changes a decision) instead of
+  asking.
 - **Persona is preserved.** An autopilot `validate-idea` is still adversarial — it pressure-tests
   the idea and can still reach a `kill` verdict. Autopilot means "don't ask the human", not "be
   agreeable".
@@ -70,5 +59,5 @@ safety net so an aborted run never commits a stray transient review file. Everyt
 ## Interactive rules
 
 - Ask at each fork (the phase's forcing questions), one dimension at a time.
-- The conflict gate stops on 🔴 review findings; the phase's hard gate stops for approval before
-  the next phase. The orchestrator owns advancing between phases.
+- The fix stage stops on 🔴 review findings; the phase's hard gate stops for approval before the
+  next phase. The orchestrator owns advancing between phases.

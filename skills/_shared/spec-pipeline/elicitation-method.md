@@ -98,6 +98,32 @@ Every phase reads **`.dev-skills/project-spec/project-brief.research.md`** (the 
   `## Forks / Decisions log` with `Source = preference`; when you override one, record why.
   (Preferences are soft by design — the human can be wrong about what fits *this* project.)
 
+## When the repo already has code
+
+There is **no separate brownfield mode** — no config flag, no front phase, no parallel vocabulary.
+Working against existing code is just "self-answer from evidence before asking", pointed at a
+repository:
+
+1. **Look before you ask.** At intake, check whether the repo holds real code (a dependency manifest
+   plus source outside docs/config). If it does, read what *this phase* needs from it — surfaces and
+   routes for features, routing for flows, manifests and configs for the stack, UI dependencies for
+   the design direction. Never make someone narrate their own codebase to you.
+2. **Say what you found, in a few lines.** "I see Next.js + Postgres, 6 routes, `users`/`documents`
+   tables, no tests." The user corrects you *before* you build on it — and that costs one message
+   instead of a wrong document.
+3. **Confirm instead of re-asking.** Each finding becomes a confirmation: "the code does X — is X
+   what we're keeping, or do you want it changed?" rather than the greenfield form of the question.
+4. **Keep the code's names by default.** The de-facto glossary (tables, models, routes) usually
+   disagrees with the vocabulary you'd invent. Renaming is a decision the user makes deliberately,
+   with refactor work attached — never a silent relabel in the spec.
+5. **Record the differences in one place.** Where intent differs from what's built, add a line to the
+   doc's `## Divergences (code vs intended)` section: what the code does now · what's wanted ·
+   whether it's a change, a removal, or something not built yet. That short list is what
+   `plan-development` later turns into tasks.
+
+Everything else is unchanged: same stages, same outputs, same gates. If the repo is empty, none of
+this applies and the section stays out of the document.
+
 ## Escalate to `gather-context` when a fork blocks understanding
 
 When a fork is genuinely blocked on context only the human holds — you can't answer it from the

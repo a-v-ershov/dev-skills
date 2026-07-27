@@ -1,6 +1,6 @@
 ---
 name: define-design-decisions
-description: "Decide the design direction that shapes scope and architecture — design system (or none), the inventory of key screens, responsive/viewport behavior, target platforms and their conventions, media-heaviness, offline/connectivity expectations, and the accessibility target — WITHOUT producing pixel layouts, colors, components, or mockups (those are implementation). Use after create-user-flows (reads .dev-skills/project-spec/user-flows.research.md and .dev-skills/project-spec/product-requirements.research.md) and before design-architecture, because these decisions feed the architecture's quality-attribute scenarios. Writes a detailed, source-cited .dev-skills/project-spec/design-decisions.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The bridge from the product layer to the technical layer — design decisions only, never visual production."
+description: "Decide the design direction that shapes scope and architecture — design system (or none) including WHICH UI kit to adopt (chosen on component coverage against the key screens, platform fit, and ubiquity), the icon set, and the theming approach, plus the inventory of key screens, responsive/viewport behavior, target platforms and their conventions, media-heaviness, offline/connectivity expectations, and the accessibility target — WITHOUT producing pixel layouts, colors, components, or mockups (those are implementation). Use after create-user-flows (reads .dev-skills/project-spec/user-flows.research.md and .dev-skills/project-spec/product-requirements.research.md) and before design-architecture, because these decisions feed the architecture's quality-attribute scenarios. Writes a detailed, source-cited .dev-skills/project-spec/design-decisions.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. The bridge from the product layer to the technical layer — design decisions only, never visual production."
 ---
 
 # Define Design Decisions Skill
@@ -18,7 +18,7 @@ them into quality-attribute scenarios before the stack is locked.
 
 > **Downstream — where the direction becomes concrete.** You are the **decide** rung of the ladder
 > *decide → systematize → render*. You produce no tokens or design system here. Later, in the build
-> phase (after the project is scaffolded), **`create-design-system`** makes this direction concrete — a
+> phase (after the project is scaffolded), **`setup-dev-environment`** makes this direction concrete — a
 > committed root `DESIGN.md` (real tokens + rules) — and **`generate-mockups`** renders disposable UI
 > options against it. Leave the concrete system to them; your output is the direction they systematize.
 > (This phase's hard gate still hands off to `/design-architecture` — the technical layer is next in the
@@ -44,9 +44,8 @@ Scope discipline (read carefully):
 - **`design-decisions.research.md`** — the detailed, source-cited design decisions (for the AI/next phases).
 - **`design-decisions.summary.md`** — the short human summary (essence + forks to answer).
 
-Plus a transient **`design-decisions.review.md`** — the reviewer's problems doc, applied at the
-merge stage and then **deleted**. It is a working artifact, never a deliverable. (No ADRs here —
-those belong to the technical layer.)
+Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
+to the research doc. (No ADRs here either — those belong to the technical layer.)
 
 ## Language
 
@@ -61,7 +60,7 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
 
-- **interactive** — ask at each fork; stop at the conflict gate and the hard gate.
+- **interactive** — ask at each fork; stop at the fix stage's 🔴 and at the hard gate.
 - **autopilot** — make the design decisions yourself and log every fork; resolve 🔴 review findings
   yourself; do not prompt or stop. Stay opinionated — autopilot still pushes back on cost without
   payoff and on missing accessibility.
@@ -89,14 +88,13 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 
 ```
 - [ ] Stage 0: Intake — load product-requirements.research.md + user-flows.research.md; features, personas, flows, key screens; read mode
-- [ ] Stage 1: Elicit — design system + key-screen inventory + viewport/platform + media/offline/realtime + accessibility (interactive: ask · autopilot: self-answer + log forks)
-- [ ] Stage 2: Research — design-system & platform conventions, WCAG levels, category UX norms (adaptive)
+- [ ] Stage 1: Elicit — design system (incl. UI kit + icons + theming) + key-screen inventory + viewport/platform + media/offline/realtime + accessibility (interactive: ask · autopilot: self-answer + log forks)
+- [ ] Stage 2: Research — design-system & platform conventions, WCAG levels, category UX norms (within the budget)
 - [ ] Stage 3: Draft — assemble decisions; flag the ones that feed architecture scenarios; draft design-decisions.research.md
-- [ ] Stage 4: Review — spawn reviewer → design-decisions.review.md (intermediate)
-- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
-- [ ] Stage 6: Merge — synthesize the final design-decisions.research.md, then delete the review doc
-- [ ] Stage 7: Dual output — design-decisions.research.md (Sources + Forks log) + design-decisions.summary.md
-- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
+- [ ] Stage 4: Review — spawn reviewer; it returns findings (no file)
+- [ ] Stage 5: Fix — apply the findings in place + log them (🔴 interactive: stop · autopilot: self-resolve)
+- [ ] Stage 6: Dual output — design-decisions.research.md (Sources + Forks log) + design-decisions.summary.md
+- [ ] Stage 7: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
 ### Stage 0: Intake
@@ -114,11 +112,28 @@ a time, a recommended answer on every question, push past the first answer, mirr
 When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. Work
 the design decisions across five dimensions:
 1. **Design system** — does the product need one? If yes, the *intent* (type scale, color approach,
-   spacing system, motion stance) and the **component strategy** (adopt an existing library — which —
-   vs bespoke vs hybrid, and why). Decisions and direction, NOT concrete tokens or values. If the
+   spacing system, motion stance) and the **component strategy**: adopt an existing library vs
+   bespoke vs hybrid, and why. Decisions and direction, NOT concrete tokens or values. If the
    brief records a **design-taste preference**, treat it as a **soft prior** here — bias toward it,
    but let the product's needs and the category conventions decide; log it as a fork with
    `Source = preference`.
+   **When the strategy is "adopt", name the kit here** — this is the decision, not a build-time
+   detail, because it fixes a dependency and constrains what the screens can be. Pick it on three
+   criteria, in this order:
+   - **Coverage** — walk the key-screen inventory (dimension 2) for the components the product
+     actually needs (data table with sorting, rich-text editor, date picker, command palette, toast,
+     skeleton…). A kit missing a component the product leans on means hand-building it, which
+     defeats the consistency the kit was for. Say so out loud rather than discovering it in build.
+   - **Platform fit** — the kit must target the platforms from dimension 3.
+   - **Ubiquity** — the more widely used the kit, the more reliably an AI agent writes against it.
+     Prefer boring and common over novel.
+   Also settle two decisions that travel with it: the **icon set** — one for the whole product,
+   mixing two shows immediately — and the **theming approach** (start from a ready-made theme of
+   that kit vs author tokens from the brand intent). Present the kit and the icon set as **closed
+   forks with a recommendation first** (`AskUserQuestion`), each option one line of consequence.
+   A kit already present in the repo's dependencies is the default — replacing it is a
+   rewrite of every screen and needs the user's explicit decision (log it as drift).
+   This dimension is the input `setup-dev-environment` builds `DESIGN.md` from; it does not re-open it.
 2. **Key-screen inventory** — the set of screens/surfaces the product has, drawn from the flows.
    Per screen: name, the flow(s) it serves, its job. Structure and purpose, not layout.
 3. **Viewport & platform behavior** — target platforms (web/responsive, iOS, Android, desktop) and
@@ -134,13 +149,19 @@ the design decisions across five dimensions:
   record each material choice in the Forks / Decisions log with rationale, confidence, source. Mark
   uncertain ones `Needs human confirm? = yes`.
 
-### Stage 2: Research (adaptive)
-Verify the design conventions you adopt. Topics: design-system conventions for this category;
-platform guidelines (Apple HIG, Material) for the target platforms; the appropriate WCAG level and
-its concrete requirements; known UX norms and pitfalls for the key screens. Default to light
-targeted web search; escalate to `/deep-research` only for an unusual platform mix or on request.
-Method — **`../_shared/spec-pipeline/research-method.md`**. Carry the patterns + source links into
-the draft (a "platform convention" or "WCAG requires X" claim must cite its source).
+### Stage 2: Research (budgeted)
+Verify the design conventions you adopt. Topics: **the candidate UI kit's current component
+coverage** against the list from dimension 1 (its own component index is the primary source — do not
+answer from memory, kits gain and drop components) and that the kit and icon set are still
+maintained and target the platform; design-system conventions for this category; platform guidelines
+(Apple HIG, Material) for the target platforms; the appropriate WCAG level and its concrete
+requirements; known UX norms and pitfalls for the key screens. **Rank them by what would change a
+decision** — coverage of a component the product leans on outranks everything else here — and research top-down until the budget (≤4 searches / ≤4 opens per phase,
+~2 opens held in reserve for stage 5) is spent; what you don't reach is logged unverified.
+`/deep-research` only if the user explicitly asks. Method —
+**`../_shared/spec-pipeline/research-method.md`**. Carry the patterns + source links into the draft
+(a "platform convention" or "WCAG requires X" claim either cites its source or is labelled
+unverified).
 
 ### Stage 3: Draft
 Draft `.dev-skills/project-spec/design-decisions.research.md` from
@@ -150,39 +171,39 @@ section explicitly — each weighty decision paired with the quality-attribute s
 Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review
-Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.dev-skills/project-spec/design-decisions.review.md` (it does NOT edit the draft; this file is
-intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
-`review-template.md`. For this phase the reviewer especially probes: a design decision that
-silently forces a costly architecture but isn't flagged as an architecture input; a key screen with
-no flow (or a flow with no screen); a missing accessibility target; media/offline/realtime
-implications left unsurfaced; a design system absent where the category demands one (or bespoke
-where adopting a library would do); and pixel/mockup/copy detail that leaked in (out of scope —
-that's implementation).
+Delegate to the `spec-reviewer` agent (offline — it reads the draft and the prior docs, not the web)
+to find inconsistencies + gaps. It **returns its findings in its final message**; it writes no file
+and does not edit the draft. Method + return format:
+**`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this phase the reviewer
+especially probes: a design decision that silently forces a costly architecture but isn't flagged as
+an architecture input; a key screen with no flow (or a flow with no screen); a missing accessibility
+target; media/offline/realtime implications left unsurfaced; a design system absent where the
+category demands one (or bespoke where adopting a library would do); **an adopted UI kit that
+doesn't cover a component the key screens lean on, a kit that doesn't target one of the stated
+platforms, more than one icon set, or a "we'll adopt a library" with no kit actually named**; and
+pixel/mockup/copy detail that leaked in (out of scope — that's implementation).
 
-### Stage 5: Conflict gate
-If the review found 🔴 critical findings:
-- **interactive:** STOP. Show the count + top items and get the user's decisions. If a finding
+### Stage 5: Fix
+Apply the findings to `design-decisions.research.md` **in place** (targeted edits, not a rewrite)
+and log each applied finding in the Forks / Decisions log:
+- **🔴 interactive:** STOP. Show the count + top items and get the user's decisions. If a finding
   implies a missing feature or flow, recommend updating the product layer (re-run
   `/define-product-requirements` or `/create-user-flows`) rather than inventing it here.
-- **autopilot:** resolve them yourself (set the missing target, flag the architecture input,
-  targeted re-research) and log each resolution. A 🔴 you cannot resolve becomes an open question.
-Clean review (0 🔴) proceeds without stopping.
+- **🔴 autopilot:** resolve them yourself (set the missing target, flag the architecture input) and
+  log each resolution. A 🔴 you cannot resolve becomes an open question.
+- **🟡 / ⚪:** apply by your own judgement.
+Spend a **reserved fetch** only on a `Fix: verify` finding that would actually change a decision;
+label the rest unverified. What no one could verify goes to `## Open questions`. A clean review
+(0 🔴) proceeds without stopping.
 
-### Stage 6: Merge
-Synthesize draft + review corrections + filled gaps into the final `design-decisions.research.md`.
-Apply fixes, log the applied findings in the Forks / Decisions log, re-research **only**
-still-disputed conventions. What no one could verify goes to `## Open questions`. **Then delete
-`.dev-skills/project-spec/design-decisions.review.md`** — its content now lives in the research doc.
-
-### Stage 7: Dual output
+### Stage 6: Dual output
 Finalize `design-decisions.research.md` (complete `## Sources` and `## Forks / Decisions log`).
 Then write `.dev-skills/project-spec/design-decisions.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the design direction in plain language + the
 forks the human must answer + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
 
-### Stage 8: Hard gate
+### Stage 7: Hard gate
 - **interactive:** STOP — this is a hard gate:
   > "Design decisions done → design-decisions.research.md (detail), design-decisions.summary.md
   > (for you). Review it. When you approve, run `/design-architecture` for the technical layer. I
@@ -193,18 +214,19 @@ forks the human must answer + open risks. Format rules:
 Do NOT start architecture work, produce mockups, or write any UI code in this session unless the
 user explicitly approves and asks.
 
-## Existing-project mode
+## When the repo already has code
 
-When `project_type: existing`, read `.dev-skills/project-spec/codebase-map.research.md` and record the
-**realized design direction** (design system / UI libraries / target platforms / viewport behavior as
-present), then interview to set the TARGET. An AS-IS choice the user wants swapped is drift (`change`)
-AND an input to `design-architecture`'s quality-attribute scenarios. Log drift in the Forks /
-Decisions log with the drift columns. Full contract:
-**`../_shared/spec-pipeline/existing-project-mode.md`**.
+Read the realized design direction from the repo (UI kit and icon set in the dependencies, theme
+config or token files, target platforms, viewport behavior) and treat it as the default — **replacing
+an installed UI kit is a rewrite of every screen and needs the user's explicit decision**. Interview
+to confirm or change it; a swap is both a divergence and an input to `design-architecture`'s
+scenarios. Log differences in `## Divergences (code vs intended)`. Method:
+**`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
-## Amend mode (change propagation)
+## Amend mode (an upstream doc changed)
 
-When invoked by `propagate-changes` with an upstream change, switch to **amend mode**: reconcile
+Re-run on an existing document — because an upstream phase was edited, or the user changed their
+mind — and you **amend** rather than regenerate: reconcile
 `design-decisions.research.md` to the change instead of producing it from scratch. Per
 **`../_shared/build-pipeline/propagation-method.md`**:
 
@@ -215,6 +237,9 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
 4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
 5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
+6. **Hand off, don't chase.** Say in one line what's next in the chain (`/design-architecture`) and offer to run it. If
+   `.dev-skills/build-plan/tasks/` exists, add: the plan may now be stale — `/plan-development` will
+   reconcile it with task deltas. The user decides how far to walk; you never edit the backlog here.
 
 ## Rules
 
@@ -227,5 +252,5 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    `design-architecture` quality-attribute scenario.
 6. Set an explicit accessibility (WCAG) target.
 7. Never make technical/architecture decisions — surface gaps back to the product layer instead.
-8. Every adopted standard is cited; every fork is logged; the review always runs (both modes), is
-   merged in, and the review file is then deleted.
+8. Every *verified* adopted standard is cited and every unverified one is labelled as such; every
+   fork is logged; the review always runs (both modes) and its findings are always applied.
