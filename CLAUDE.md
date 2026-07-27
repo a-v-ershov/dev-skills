@@ -41,10 +41,11 @@ NOT edit it on its own initiative — only when the user explicitly asks. Consum
 `/plugin update` only once it's bumped, but the agent never drives the bump (may mention skills changed,
 nothing more). Keep `metadata.version` in `marketplace.json` in sync when the user does bump.
 
-## The three pipelines (overview)
+## The pipelines (overview)
 
 Three sequential pipelines, each conducted by a thin **orchestrator** that sequences focused sub-skills
-(it conducts, it does not duplicate). See [`skills/CLAUDE.md`](skills/CLAUDE.md) for the full map.
+(it conducts, it does not duplicate), plus one manually-invoked production step that no orchestrator
+runs for you. See [`skills/CLAUDE.md`](skills/CLAUDE.md) for the full map.
 
 - **Spec** (`create-project-spec`) — raw idea → buildable spec. Writes docs only. Each phase runs the
   same machine: *elicit → research (cite sources) → draft → adversarial review → merge → research doc +
@@ -52,9 +53,15 @@ Three sequential pipelines, each conducted by a thin **orchestrator** that seque
 - **Build** (`build-tasks`) — spec → working software. **Mutates the repo.** Sequential: one task at a
   time, single working tree, no parallelism. Implement ↔ an independent verifier that authors adversarial
   tests, behind an enforced quality gate (`make check` + hooks).
-- **Release** (`release-product`) — built product → cut release. Read-only audits **fan out in parallel**,
-  file findings as rework (never fix in place), re-audit to confirm, then `cut-release` (gated, stops
-  before prod deploy).
+- **Release** (`release-product`) — built product → cut release. Two halves: `refactor` then
+  `write-tests` **change the repo, sequentially and alone**; then the read-only audits **fan out in
+  parallel** and `manual-test` briefs the human. Findings are filed as rework (never fixed in place),
+  one fix round, one re-audit, then `cut-release` (gated, stops before production).
+- **Production** (`setup-production-environment`) — a fourth, manually-invoked step, never auto-run:
+  everything production-related in one place (platform, database and migrations, config and secrets,
+  spend caps, analytics and error tracking), sorted into **repo · authorized CLI with a yes · human in
+  a dashboard**, ending in a live deploy, a smoke test, and a plain-language runbook. Its existence is
+  what lets the audits stay pure audits: **an audit never installs or configures anything.**
 
 Skills are **verbs**; their outputs are **nouns**. All artifacts are committed project documentation
 under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
@@ -74,11 +81,13 @@ under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release
   `implementer`/`verifier`/`ui-prototyper` are thin wrappers that `skills:`-preload their procedure skill.
 - **`disable-model-invocation: true`** on side-effecting / outward-facing entry points so they don't
   auto-fire from a cold chat: `commit`, `build-tasks`, `run-task`, `setup-dev-environment`,
-  `cut-release`, `release-product`. Not set on the doc-only spec phases, the
-  read-only `audit-*`, the build-loop skills, or `generate-mockups`.
+  `setup-production-environment`, `refactor`, `cut-release`, `release-product`. Not set on the doc-only
+  spec phases, the read-only `audit-*` and `manual-test`, `write-tests`, the build-loop skills, or
+  `generate-mockups`.
 - **Write-scope guard hooks** (declared in a skill's frontmatter, running `scripts/guard-write-scope.sh`)
-  turn a prose invariant into a harness guarantee: `verify-feature` writes tests + `.dev-skills/build-plan/`
-  only; `generate-mockups` the scratch mockups tree only; each `audit-*` `.dev-skills/**` + the backlog only.
+  turn a prose invariant into a harness guarantee: `verify-feature` and `write-tests` write tests +
+  `.dev-skills/` only; `generate-mockups` the scratch mockups tree only; each `audit-*` `.dev-skills/**`
+  + the backlog only; `manual-test` `.dev-skills/**` only.
   **`allowed-tools` is deliberately unused** — we keep the user's permission prompts intact.
 
 ## Authoring language

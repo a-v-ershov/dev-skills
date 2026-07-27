@@ -22,10 +22,11 @@ GitHub. Every skill replies in the language you write to it.
 
 ## What you get
 
-1. **Three pipelines, one command each** — call `create-project-spec`, `build-tasks`, or `release-product` and one meta-skill conducts every phase for you.
+1. **Three pipelines, one command each** — call `create-project-spec`, `build-tasks`, or `release-product` and one meta-skill conducts every phase for you; going live stays a separate, deliberate command.
 2. **It interviews you before it builds** — a discovery grill pulls the maximum context out of your head, down to your stack and style preferences, one question at a time, always with a recommended answer.
 3. **A separate agent always checks the work** — nothing self-certifies: a reviewer on every spec phase, plus a fresh verifier that writes adversarial tests and is hook-blocked from touching the code.
-4. **A real dev loop + release audits that hunt the AI's own bugs** — an enforced quality gate locally, then independent security / performance / quality / accessibility / doc audits before you ship.
+4. **A real dev loop + a release phase that hunts the AI's own bugs** — an enforced quality gate locally, then a refactor pass, a red-first test sweep, independent security / performance / product+accessibility audits, and a hands-on briefing for you, before you ship.
+5. **Production in one deliberate step** — `setup-production-environment` sets up the platform, the database, the caps, and the telemetry, sorting every gap into *repo · authorized CLI with your yes · you in a dashboard*, then deploys, smoke-tests the live version, and leaves a plain-language runbook.
 
 **Plus:** replies in your language · reverse-engineers an existing codebase into a spec (brownfield) ·
 leaves committed project memory — docs, ADRs, backlog, a `CLAUDE.md` map — that doesn't rot · ships as
@@ -35,8 +36,8 @@ a plain Claude Code plugin, no extra runtime or MCP server.
 
 ## How it works
 
-Three pipelines, each a thin **orchestrator** that conducts focused sub-skills; every sub-skill also
-runs on its own.
+Three pipelines, each a thin **orchestrator** that conducts focused sub-skills, plus a manually-invoked
+production step; every sub-skill also runs on its own.
 
 ### 1 — Spec: idea → buildable spec
 
@@ -81,20 +82,34 @@ edit in the same commit.
 
 ### 3 — Release: working software → cut release
 
-`release-product` proves the cross-cutting properties no single task could, then ships; the audits are
-read-only, so they fan out in **parallel** and file findings as rework — they never fix code themselves.
+`release-product` cleans the tree, closes the test gaps, proves the cross-cutting properties no single
+task could, and then ships. The first two steps change the repo, so they run **alone and in order**; the
+audits are read-only, so they fan out in **parallel**. Nothing here fixes code in place, and **no audit
+installs anything**.
 
-| Skill | Proves against |
-|-------|----------------|
-| `audit-security` | the STRIDE-lite threat model — secrets, authz, injection, the lethal trifecta |
-| `audit-performance` | the quality-attribute scenarios — measured p95, throughput, N+1, cost |
-| `audit-product` | the user flows, end-to-end and cross-feature |
-| `audit-code-health` | duplication, dead code, suppression debt, test-suite quality (mutation) |
-| `audit-accessibility` | the WCAG target — keyboard, focus, screen-reader, contrast |
-| `cut-release` | clean tree + no open 🔴 → docs, version, changelog, tag, commit, PR (always confirmed; **stops before prod deploy**) |
+| Step | Skill | Does / proves against |
+|------|-------|------------------------|
+| 1 | `refactor` | Structure without behaviour change — duplication, dead code, size, suppression debt; plan → your approval, small steps, green before and after |
+| 2 | `write-tests` | The coverage map (nothing / happy-path-only / hollow, mutation-tested) and closes the risky gaps **red-first**; a real bug becomes a task and the test stays red |
+| 3 | `audit-security` | the STRIDE-lite threat model — secrets, authz, injection, the lethal trifecta, row-level security, spend caps, production config |
+| 4 | `audit-performance` | the quality-attribute scenarios — measured p95, throughput, N+1, cost |
+| 5 | `audit-product` | the user flows end-to-end and cross-feature, **plus** the WCAG target on the same journeys |
+| 6 | `manual-test` | The briefing for your hands-on pass — starting with everything accepted as `review: auto`, which no human has ever opened |
+| — | `cut-release` | clean tree + no open 🔴 → docs, version, changelog, tag, commit, PR (always confirmed; **stops before production**) |
 
-A blocker becomes a rework task, fixed by a `build-tasks` run, then **re-audited to confirm it
-closed**.
+A blocker becomes a rework task, fixed by **one** `build-tasks` run, then **re-audited once to confirm
+it closed**; anything still open is escalated to you rather than looped on.
+
+### 4 — Production: cut release → live product
+
+`setup-production-environment` is invoked **by hand** — no orchestrator ships anything for you. It reads
+the architecture's deployment and analytics decisions and makes them real: platform and release channel,
+the production database with its migrations and backups, configuration and secrets in the target
+environment, **hard** spending caps, analytics events and error tracking, optional CI. Every gap is
+sorted before anything happens — **① it fixes in the repo · ② it runs through an authorized provider
+CLI, one explicit yes per action · ③ only you, in a dashboard** — and it finishes by deploying,
+**opening the live version and walking the short path**, then writing a runbook that says which button
+to press next time and how to roll back.
 
 ---
 
@@ -172,15 +187,23 @@ also runs on its own.
 
 ### Release — working software → cut release
 
+
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
-| `release-product` | Release captain | Runs the audits, files rework, drives fixes, re-audits, then cuts | the release loop |
+| `release-product` | Release captain | Runs the chain, files rework, drives one fix round, re-audits once, then cuts | the release chain |
 | `audit-security` | Security engineer | Proves the STRIDE-lite threat model on the running system | `security-audit.md` |
 | `audit-performance` | Performance engineer | Measures the system against the quality-attribute scenarios | `performance-audit.md` |
-| `audit-product` | QA lead | Drives the user flows end-to-end, across features | `qa-report.md` |
-| `audit-code-health` | Staff engineer | Measures rot, suppression debt, and test-suite quality | `code-health-audit.md` |
-| `audit-accessibility` | Accessibility specialist | *(UI)* Drives the UI against the WCAG target | `accessibility-audit.md` |
-| `cut-release` | Release engineer | Bumps version, changelog, tag, commit, PR — gated, stops before deploy | release docs + PR |
+| `audit-product` | QA lead | Drives the user flows end-to-end across features, and the same journeys keyboard-only against the WCAG target | `qa-report.md` |
+| `refactor` | Staff engineer | Cleans structure without changing behaviour; measures rot, dead code, suppression debt | `refactor.md` |
+| `write-tests` | Test engineer | Maps coverage gaps and closes them red-first; a real bug is filed, never patched | tests + `test-gaps.md` |
+| `manual-test` | Test lead | *(read-only)* Briefs you on what only a person can judge | `manual-test-brief.md` |
+| `cut-release` | Release engineer | Bumps version, changelog, tag, commit, PR — gated, stops before production | release docs + PR |
+
+### Production — cut release → live product
+
+| Skill | Role | What it does | Writes |
+|-------|------|--------------|--------|
+| `setup-production-environment` | Platform engineer | *(by hand)* Sets up the platform, database, config, caps, and telemetry in three groups, deploys, and smoke-tests the live version | `production-setup.md` + `production-runbook.md` |
 
 ### Cross-cutting — used across the pipelines
 
@@ -189,6 +212,7 @@ also runs on its own.
 | `commit` | Git helper | Splits session changes into well-structured commits (English messages) | commits |
 
 Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,
-audits under `.dev-skills/release/`. *(existing)* = brownfield projects only, *(UI)* = UI projects (self-skips
-otherwise), *(on demand)* = not auto-run in a pipeline. `gather-context` is also reusable on demand as
-a scoped grill.
+the release phase's findings under `.dev-skills/release/`, setup records under
+`.dev-skills/project-setup/`. *(existing)* = brownfield projects only, *(UI)* = UI projects (self-skips
+otherwise), *(on demand)* = not auto-run in a pipeline, *(by hand)* = never auto-run at all.
+`gather-context` is also reusable on demand as a scoped grill.

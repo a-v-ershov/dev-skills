@@ -79,27 +79,46 @@ The design ladder is **decide → systematize → render**: `define-design-decis
 direction (including the UI kit), `setup-dev-environment` (build) systematizes it into `DESIGN.md`, and `generate-mockups`
 (on demand) renders disposable stub UI variants against it to compare before building.
 
-### 3. Release pipeline — working software → cut release (audits, then ship)
+### 3. Release pipeline — working software → cut release (clean, prove, then ship)
 
-Entry point: **`release-product`** (conducts the release). It proves the **system-level** properties no
-single task could — the counterpart of `verify-feature` at the scale of the whole product — then cuts
-the release. The audits are **read-only**, so (uniquely here) they **fan out in parallel**; findings are
-**filed as `rework` tasks, never fixed in place** (a separate `build-tasks` run fixes them, then the
-audit re-runs). Config in `.dev-skills/release/.release-config.md`.
+Entry point: **`release-product`** (conducts the release). It cleans the tree, closes the test gaps,
+proves the **system-level** properties no single task could — the counterpart of `verify-feature` at the
+scale of the whole product — briefs the human on what only a person can judge, and then cuts the
+release. Config in `.dev-skills/release/.release-config.md`.
 
-| # | Skill | Proves against / does |
+The chain has two halves. Steps 1–2 **change the repository**, so they run **sequentially and alone**.
+Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**. Findings are **filed as
+`rework` tasks, never fixed in place**; the audits also **never install or configure anything** —
+tooling is `setup-dev-environment`'s job, production capabilities are `setup-production-environment`'s.
+
+| # | Skill | Does / proves against |
 |---|-------|------------------------|
-| 1 | `audit-security` | the STRIDE-lite threat model → `.dev-skills/release/security-audit.md` |
-| 2 | `audit-performance` | the quality-attribute scenarios → `.dev-skills/release/performance-audit.md` |
-| 3 | `audit-product` | the user flows end-to-end (cross-feature) → `.dev-skills/release/qa-report.md` |
-| 4 | `audit-code-health` | rot signals + test-suite quality → `.dev-skills/release/code-health-audit.md` |
-| 5 | `audit-accessibility` | the accessibility decisions (WCAG); self-skips with no UI → `.dev-skills/release/accessibility-audit.md` |
-| — | `cut-release` | clean tree + no open 🔴 → docs + version bump + changelog + tag/commit/PR (always confirmed; stops before prod deploy) |
+| 1 | `refactor` | Structure without behaviour change: duplication, dead code, size, suppression debt; plan → approval, small steps, green before and after → `.dev-skills/release/refactor.md` |
+| 2 | `write-tests` | Maps the coverage gaps (none / happy-path-only / hollow, mutation-tested) and closes the risky ones **red-first**; a real bug becomes a task and the test stays red → `.dev-skills/release/test-gaps.md` |
+| 3 | `audit-security` | the STRIDE-lite threat model + the production surfaces (caps, RLS, prod config) → `.dev-skills/release/security-audit.md` |
+| 4 | `audit-performance` | the quality-attribute scenarios → `.dev-skills/release/performance-audit.md` |
+| 5 | `audit-product` | the user flows end-to-end (cross-feature) **and** the WCAG target on the same journeys → `.dev-skills/release/qa-report.md` |
+| 6 | `manual-test` | Read-only briefing for the human's hands-on pass — starting with everything accepted as `review: auto` → `.dev-skills/release/manual-test-brief.md` |
+| — | `cut-release` | clean tree + no open 🔴 → docs + version bump + changelog + tag/commit/PR (always confirmed; stops before production) |
 
-`release-product` fans out the enabled audits, ranks findings by severity, files 🔴/🟡 as `rework`
-tasks, drives `build-tasks` to fix them and re-audits (bounded by `max_audit_iterations`; a 🔴 at the
-cap → `needs_human`), and when no 🔴 remains invokes `cut-release`. Only a 🔴 blocks the cut; the cut is
-the one outward-facing step and always confirms.
+`release-product` runs the chain, ranks findings by severity, files 🔴/🟡 as `rework` tasks, drives
+**one** `build-tasks` run to fix them and re-runs only the affected audits **once**; anything still open
+then is `needs_human` — there is no iteration counter. When no 🔴 remains it invokes `cut-release`. Only
+a 🔴 blocks the cut; the cut is the one outward-facing step and always confirms.
+
+**Putting the product live is not part of this run.** `setup-production-environment` is invoked by hand.
+
+### Production environment — the outward-facing sibling of `setup-dev-environment`
+
+**`setup-production-environment`** (manual, never auto-run) executes the architecture's **Deployment &
+environments** and **Analytics & telemetry** decisions: platform and release channel, the production
+database with migrations and backups, configuration and secrets in the target environment, hard spending
+caps, analytics events and error tracking, optional CI. Every gap is sorted into three groups before
+anything happens — **① repo · ② an authorized provider CLI, one explicit yes per action · ③ only the
+human, in a dashboard** — and it ends by **deploying and smoke-testing the live version**, then writing
+`.dev-skills/project-setup/production-setup.md` (done / your turn / open) and
+`production-runbook.md` ("how to ship", in plain language). This is where everything production-related
+lives, so the audits can stay pure audits.
 
 ## Standalone skills
 
@@ -128,11 +147,13 @@ the one outward-facing step and always confirms.
   `mockups/` — throwaway stub UI variants from `generate-mockups` (gitignored; only the chosen
   screenshot is kept).
 - `.dev-skills/project-setup/` — setup log + the verification contract `verify-feature` reads + the
-  `design-system.md` record (committed).
+  `design-system.md` record, plus `production-setup.md` and `production-runbook.md` from
+  `setup-production-environment` (all committed).
 - **Root `DESIGN.md`** *(UI projects)* — the committed, tool-neutral design system (tokens + rules)
   `setup-dev-environment` writes and `implement-feature` / `generate-mockups` read.
-- `.dev-skills/release/` — per-audit findings docs + `release-summary.md` + `.release-config.md` (committed); the
-  audit trail of why a release was, or wasn't, cut.
+- `.dev-skills/release/` — the release phase's findings (`refactor.md`, `test-gaps.md`, the per-audit
+  docs, `manual-test-brief.md`) + `release-summary.md` + `.release-config.md` (committed); the audit
+  trail of why a release was, or wasn't, cut.
 - The project's **root `CLAUDE.md`** carries a marker-delimited *project documentation map* indexing the
   above and the order to read them before changing code; the spec/setup/plan/release skills keep it current.
 
