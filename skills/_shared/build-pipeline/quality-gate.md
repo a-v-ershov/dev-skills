@@ -11,7 +11,7 @@ and `build-product` enforce it. They reference this file rather than restating t
 
 ## What the gate runs
 
-One command (`make check` or the stack's equivalent — recorded in `.buildloop/project-setup/verification.md`)
+One command (`make check` or the stack's equivalent — recorded in `.dev-skills/project-setup/verification.md`)
 that runs, fast and deterministically:
 
 - **Format** — the formatter in check mode (e.g. `ruff format --check`, `prettier --check`).

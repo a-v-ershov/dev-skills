@@ -100,10 +100,10 @@ file**. It is never a deliverable and is not referenced by later phases. Delete 
 after the merge — its content is fully absorbed into the research doc.
 
 As a belt-and-suspenders guard against an aborted run leaving a stray review behind, the pipeline
-also keeps a local `.buildloop/project-spec/.gitignore` containing `*.review.md`, created alongside the
-directory (see `pipeline-config.md`). Everything else under `.buildloop/project-spec/` is committed.
+also keeps a local `.dev-skills/project-spec/.gitignore` containing `*.review.md`, created alongside the
+directory (see `pipeline-config.md`). Everything else under `.dev-skills/project-spec/` is committed.
 
-## 4. Final combined summary — `.buildloop/project-spec/summary.md` (orchestrator only)
+## 4. Final combined summary — `.dev-skills/project-spec/summary.md` (orchestrator only)
 
 Built by `create-project-spec` at the end of a run when `final_summary: true`. Same rule as the
 per-phase report: **decisions-first, maximally compressed**. One short document the human reads
@@ -114,7 +114,7 @@ after the whole pipeline (especially an autopilot run):
 
 > <date> · Mode: interactive | autopilot
 > Detail (for the AI): project-brief · idea-validation · product-requirements · user-flows ·
-> design-decisions · architecture · dev-architecture (.research.md, under .buildloop/project-spec/)
+> design-decisions · architecture · dev-architecture (.research.md, under .dev-skills/project-spec/)
 
 ## Decide — what I need from you
 <Consolidated across all phases: every "Needs human confirm? = yes" fork, one line each, grouped by

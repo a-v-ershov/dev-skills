@@ -1,6 +1,6 @@
 ---
 name: create-user-flows
-description: "Map how users actually move through the product to get value — the customer journey and the step-by-step flows for each feature, informed by conventional patterns for the category and an adversarial review pass. Use after define-product-requirements (reads .buildloop/project-spec/product-requirements.research.md) and before design-architecture. Writes a detailed, source-cited .buildloop/project-spec/user-flows.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The second product-layer step: it describes the experience (WHAT the user does), never the technical HOW and never visual UI design."
+description: "Map how users actually move through the product to get value — the customer journey and the step-by-step flows for each feature, informed by conventional patterns for the category and an adversarial review pass. Use after define-product-requirements (reads .dev-skills/project-spec/product-requirements.research.md) and before design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/user-flows.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The second product-layer step: it describes the experience (WHAT the user does), never the technical HOW and never visual UI design."
 ---
 
 # Create User Flows Skill
@@ -19,7 +19,7 @@ Scope discipline (read carefully):
 - **Inherit, don't redefine.** Features and personas come from `product-requirements.research.md`.
   Every flow traces back to a feature there.
 
-## Outputs in `.buildloop/project-spec/` (two kept files)
+## Outputs in `.dev-skills/project-spec/` (two kept files)
 
 - **`user-flows.research.md`** — the detailed, source-cited flows (for the AI/next phases).
 - **`user-flows.summary.md`** — the short human summary (essence + forks to answer).
@@ -35,7 +35,7 @@ same. This never translates code or identifiers.
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -80,8 +80,8 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/product-requirements.research.md` and, if present,
-`.buildloop/project-spec/project-brief.research.md` (the user's original intent and preferences — settled
+Read `.dev-skills/project-spec/product-requirements.research.md` and, if present,
+`.dev-skills/project-spec/project-brief.research.md` (the user's original intent and preferences — settled
 input, don't re-ask what it answers). List the features, primary/secondary personas, and
 jobs-to-be-done. If the requirements doc is missing, tell the user and offer to run
 `/define-product-requirements` first. Do not invent features here. Read the mode.
@@ -116,14 +116,14 @@ for an unusual domain. Method — **`../_shared/spec-pipeline/research-method.md
 patterns + source links into the draft.
 
 ### Stage 3: Draft
-Draft `.buildloop/project-spec/user-flows.research.md` from `references/user-flows-template.md`, citing
+Draft `.dev-skills/project-spec/user-flows.research.md` from `references/user-flows-template.md`, citing
 sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Run the
-coverage check (every feature has a flow; every flow's needs exist). Create `.buildloop/project-spec/`
+coverage check (every feature has a flow; every flow's needs exist). Create `.dev-skills/project-spec/`
 if needed.
 
 ### Stage 4: Review
 Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.buildloop/project-spec/user-flows.review.md` (it does NOT edit the draft; this file is intermediate).
+`.dev-skills/project-spec/user-flows.review.md` (it does NOT edit the draft; this file is intermediate).
 Method + format: **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For
 this phase the reviewer especially probes: a flow needing a capability not in the requirements; a
 feature with no flow; missing error/empty/auth states; a success outcome or critical state with no
@@ -145,12 +145,12 @@ Clean review (0 🔴) proceeds without stopping.
 Synthesize draft + review corrections + filled gaps into the final `user-flows.research.md`. Apply
 fixes, add the missing states/paths the reviewer found, log the applied findings in the Forks /
 Decisions log, re-research **only** still-disputed conventions. What no one could verify goes to
-`## Open questions`. **Then delete `.buildloop/project-spec/user-flows.review.md`** — its content now
+`## Open questions`. **Then delete `.dev-skills/project-spec/user-flows.review.md`** — its content now
 lives in the research doc.
 
 ### Stage 7: Dual output
 Finalize `user-flows.research.md` (complete `## Sources` and `## Forks / Decisions log`). Then
-write `.buildloop/project-spec/user-flows.summary.md` from
+write `.dev-skills/project-spec/user-flows.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — essence + the forks the human must answer +
 open risks. Format rules: **`../_shared/spec-pipeline/output-format.md`**.
 
@@ -167,7 +167,7 @@ explicitly approves.
 
 ## Existing-project mode
 
-When `project_type: existing`, read `.buildloop/project-spec/codebase-map.research.md` and **reconstruct
+When `project_type: existing`, read `.dev-skills/project-spec/codebase-map.research.md` and **reconstruct
 the de-facto flows** from the mapped routing + navigation + auth touchpoints first, then interview to
 mark each step **keep / change / remove** and add **TARGET-only** flows. The doc describes the target
 flows; drift (a flow that exists but isn't wanted, or a wanted flow not yet built) is logged in the

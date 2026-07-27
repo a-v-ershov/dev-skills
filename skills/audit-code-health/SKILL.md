@@ -1,13 +1,13 @@
 ---
 name: audit-code-health
-description: "Audit whether the built codebase ages well — the whole-codebase health the per-commit quality gate does not measure. Use in the release phase (run by release-product, or standalone). A fresh, independent staff engineer: where the gate fails a single red commit (lint/type/format/tests), this measures the rot the gate can't see across the whole tree — duplication clusters and the refactor-vs-clone ratio (GitClear-style signals), oversized files/functions, dead code, standing suppression debt (accumulated eslint-disable / type:ignore / noqa the gate only blocks when NEW), and TEST-SUITE QUALITY (coverage on critical modules + mutation testing — does the suite actually catch an injected bug, not just execute the line). Read-only: it measures and ranks (mostly major/minor; blocker only when rot is a real reliability risk) but NEVER edits product code — it files majors as rework tasks and writes .buildloop/release/code-health-audit.md. Mostly static, so it fans out freely. Re-runs after a fix to confirm the signal moved."
+description: "Audit whether the built codebase ages well — the whole-codebase health the per-commit quality gate does not measure. Use in the release phase (run by release-product, or standalone). A fresh, independent staff engineer: where the gate fails a single red commit (lint/type/format/tests), this measures the rot the gate can't see across the whole tree — duplication clusters and the refactor-vs-clone ratio (GitClear-style signals), oversized files/functions, dead code, standing suppression debt (accumulated eslint-disable / type:ignore / noqa the gate only blocks when NEW), and TEST-SUITE QUALITY (coverage on critical modules + mutation testing — does the suite actually catch an injected bug, not just execute the line). Read-only: it measures and ranks (mostly major/minor; blocker only when rot is a real reliability risk) but NEVER edits product code — it files majors as rework tasks and writes .dev-skills/release/code-health-audit.md. Mostly static, so it fans out freely. Re-runs after a fix to confirm the signal moved."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.buildloop/*' '*/.buildloop/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.dev-skills/*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Code Health Skill
@@ -28,12 +28,12 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
 ## Inputs and outputs
 
 - **Reads:** the **quality bar** — the gate config + the codebase's own conventions
-  (**`../_shared/build-pipeline/quality-gate.md`**, and `.buildloop/project-setup/verification.md` for the
+  (**`../_shared/build-pipeline/quality-gate.md`**, and `.dev-skills/project-setup/verification.md` for the
   `make check` / coverage / test commands). Your contract is "does this hold the standard the gate sets,
   *at the scale of the whole codebase*". The source tree + git history (for churn/duplication trend).
-- **Writes:** `.buildloop/release/code-health-audit.md` (findings, template in `report-template.md`); rework
+- **Writes:** `.dev-skills/release/code-health-audit.md` (findings, template in `report-template.md`); rework
   tasks for 🟡 (and a rare 🔴) via `plan-development` amend; reports (coverage, duplication, mutation)
-  under `.buildloop/release/artifacts/`. Never the product's code.
+  under `.dev-skills/release/artifacts/`. Never the product's code.
 
 ## Language
 
@@ -75,7 +75,7 @@ re-measure only the signals whose findings had filed tasks.
 Run the analyzers (duplication, dead code, size/complexity, suppression count) over the tree — these are
 static, so you need no running stack and don't take the env lease. Run **mutation testing** on the
 critical modules and read the coverage report. Capture every report and number under
-`.buildloop/release/artifacts/`. A finding is a measured signal (a duplication cluster, a mutation score, a
+`.dev-skills/release/artifacts/`. A finding is a measured signal (a duplication cluster, a mutation score, a
 suppression count), never a vibe.
 
 ### Stage 2: Rank + file
@@ -87,7 +87,7 @@ core flow depends on. File 🔴/🟡 as `type: rework` tasks (signal + number + 
 failure mode (`severity-rubric.md`).
 
 ### Stage 3: Record + verdict
-Write `.buildloop/release/code-health-audit.md` (**`report-template.md`**): the verdict, the findings table
+Write `.dev-skills/release/code-health-audit.md` (**`report-template.md`**): the verdict, the findings table
 (each row with the measured number + location + the filed task), the trend where git history shows one
 (duplication/refactor over time), what you **measured**, what you **skipped and why**. Return the verdict
 to `release-product`. On a re-audit, a 🔴 clears only when the number is **re-measured** past the bar.

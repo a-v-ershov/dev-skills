@@ -20,19 +20,19 @@ and a fix for `build-product`, not a patch here. You touch docs, version files, 
 ## Preconditions (refuse if unmet)
 
 - **A clean working tree** — no uncommitted product changes. If dirty, stop and report.
-- **No open 🔴 blocker.** Read the audit verdicts (`.buildloop/release/*-audit.md` / `release-summary.md`).
+- **No open 🔴 blocker.** Read the audit verdicts (`.dev-skills/release/*-audit.md` / `release-summary.md`).
   If any 🔴 is open and unwaived (**`../_shared/release-pipeline/severity-rubric.md`**), **refuse** and
   point back at `release-product` — a release is not cut over an open blocker. Open 🟡 do not block, but
   surface their count so the human cuts with eyes open.
 
 ## Inputs and outputs
 
-- **Reads:** `.buildloop/release/.release-config.md` (mode + ship targets); the audit verdicts /
-  `release-summary.md`; the backlog (`.buildloop/build-plan/`) and git log since the last tag (to derive the
+- **Reads:** `.dev-skills/release/.release-config.md` (mode + ship targets); the audit verdicts /
+  `release-summary.md`; the backlog (`.dev-skills/build-plan/`) and git log since the last tag (to derive the
   changelog); the existing version file, README, and CHANGELOG.
 - **Writes:** updated **README**, **CHANGELOG**, **release notes**, the **version file**, a refreshed
   **project documentation map** block (per **`../_shared/agent-guide.md`**, idempotent), and the
-  `## Shipped` section of `.buildloop/release/release-summary.md`. Then a **commit + tag + PR** via the
+  `## Shipped` section of `.dev-skills/release/release-summary.md`. Then a **commit + tag + PR** via the
   `commit` skill. Never product code.
 
 ## Language
@@ -44,7 +44,7 @@ follow the user's language.
 
 ## Modes
 
-Read `.buildloop/release/.release-config.md` for `mode`. Full rules:
+Read `.dev-skills/release/.release-config.md` for `mode`. Full rules:
 **`../_shared/release-pipeline/release-config.md`**. The version bump and the push/PR **always confirm,
 in both modes** — `cut-release` is the release phase's "always stops regardless of mode" step.
 
@@ -95,7 +95,7 @@ the PR** (English title + a body summarizing the release and linking the changel
 push and PR** — in both modes. Do not deploy.
 
 ### Done: stop before deploy + report
-Update the `## Shipped` section of `.buildloop/release/release-summary.md` (version · tag · PR link · changelog
+Update the `## Shipped` section of `.dev-skills/release/release-summary.md` (version · tag · PR link · changelog
 updated). Report what shipped and state plainly that **production deploy is the human's next step**
 (out of scope here). If preconditions blocked the cut, report exactly what's open and point at
 `release-product`.

@@ -44,4 +44,4 @@ per run and skip the lock.
   proceeds).
 - **Standalone** runs of `implement-feature` / `verify-feature` / `setup-dev-environment` acquire and
   release the env themselves.
-- The concrete commands and which mechanism applies are recorded in `.buildloop/project-setup/verification.md`.
+- The concrete commands and which mechanism applies are recorded in `.dev-skills/project-setup/verification.md`.

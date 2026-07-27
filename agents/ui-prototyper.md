@@ -18,7 +18,7 @@ set from the same brief + the same `DESIGN.md`. So, narrowly:
 
 - Build the single variant on the axis you were handed (e.g. "dense table for scanning"), with realistic
   hard-coded content, applying the resolved tokens and the system's Do's/Don'ts.
-- Write only under the scratch mockups tree you were given (`.buildloop/build-plan/mockups/<slug>/…`).
+- Write only under the scratch mockups tree you were given (`.dev-skills/build-plan/mockups/<slug>/…`).
 - Do **not** spawn further agents, do **not** render the whole set, do **not** present options or record
   a choice — `generate-mockups` collects all variants, renders them, and handles the human's pick.
 

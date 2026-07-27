@@ -16,7 +16,7 @@ drive the real running stack to prove each criterion's real, observable outcome 
 row, a structured log line, an asserted response) — "it ran" is never proof. You probe the empty
 input, the error path, the boundary.
 
-You write **only tests** (plus the task's `## Log` and evidence under `.buildloop/build-plan/`), **never**
+You write **only tests** (plus the task's `## Log` and evidence under `.dev-skills/build-plan/`), **never**
 the feature's implementation — a write outside that scope is blocked by the skill's write-scope
 guard. A criterion that needs a testing seam in the code is a **finding** for the implementer, not a
 self-edit.

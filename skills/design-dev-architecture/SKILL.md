@@ -1,6 +1,6 @@
 ---
 name: design-dev-architecture
-description: "Design the development-time architecture that lets the product be built fast and well with AI: how to run the whole product locally (Docker Compose topology, local stand-ins for cloud/managed services with prod-equivalent APIs, seed data), how it is tested in an AI-drivable way (test levels + purpose-built developer/test scripts + an e2e harness an agent can run and verify, e.g. Playwright for web), how concurrent access to the single shared local environment is coordinated (lock and/or per-run isolation), and how the AI tooling is configured for the chosen stack (Claude Code config, which Anthropic plugins/skills to install, MCP servers, other agents) — including the custom, project-local Claude Code skills to author that wrap those dev/test scripts and the e2e harness so future agents run the verification loop by name — backed by research into the current tools and an adversarial review pass. Use after design-architecture (reads .buildloop/project-spec/architecture.research.md and .buildloop/project-spec/user-flows.research.md) as the final, technical step of the create-project-spec pipeline. Writes a detailed, source-cited .buildloop/project-spec/dev-architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The inner-loop / developer-experience layer — it never redesigns the production architecture or re-opens stack choices."
+description: "Design the development-time architecture that lets the product be built fast and well with AI: how to run the whole product locally (Docker Compose topology, local stand-ins for cloud/managed services with prod-equivalent APIs, seed data), how it is tested in an AI-drivable way (test levels + purpose-built developer/test scripts + an e2e harness an agent can run and verify, e.g. Playwright for web), how concurrent access to the single shared local environment is coordinated (lock and/or per-run isolation), and how the AI tooling is configured for the chosen stack (Claude Code config, which Anthropic plugins/skills to install, MCP servers, other agents) — including the custom, project-local Claude Code skills to author that wrap those dev/test scripts and the e2e harness so future agents run the verification loop by name — backed by research into the current tools and an adversarial review pass. Use after design-architecture (reads .dev-skills/project-spec/architecture.research.md and .dev-skills/project-spec/user-flows.research.md) as the final, technical step of the create-project-spec pipeline. Writes a detailed, source-cited .dev-skills/project-spec/dev-architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The inner-loop / developer-experience layer — it never redesigns the production architecture or re-opens stack choices."
 ---
 
 # Design Dev Architecture Skill
@@ -32,11 +32,11 @@ Scope discipline (read carefully):
   unknown state, or unreadable logs would otherwise force a human in. If the agent can't verify a
   surface without you, this phase has failed it.
 - **Inherit, don't redefine.** Components and concrete technologies come from
-  `.buildloop/project-spec/architecture.research.md`; the flows to test come from
-  `.buildloop/project-spec/user-flows.research.md`. Every local service, test, and tool traces to one of
+  `.dev-skills/project-spec/architecture.research.md`; the flows to test come from
+  `.dev-skills/project-spec/user-flows.research.md`. Every local service, test, and tool traces to one of
   them.
 
-## Outputs in `.buildloop/project-spec/` (two kept files + ADRs)
+## Outputs in `.dev-skills/project-spec/` (two kept files + ADRs)
 
 - **`dev-architecture.research.md`** + **`adr/*`** — the detailed, source-cited dev architecture & decision records.
 - **`dev-architecture.summary.md`** — the short human summary (essence + forks to answer).
@@ -52,7 +52,7 @@ This never translates code or identifiers (technology and tool names stay as-is)
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -131,8 +131,8 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/architecture.research.md` and `.buildloop/project-spec/user-flows.research.md`
-(and, if present, `.buildloop/project-spec/project-brief.research.md` for the user's original intent and
+Read `.dev-skills/project-spec/architecture.research.md` and `.dev-skills/project-spec/user-flows.research.md`
+(and, if present, `.dev-skills/project-spec/project-brief.research.md` for the user's original intent and
 constraints, plus any developer preferences — dev tooling, code style — as soft priors). List the components and their concrete technologies, the production/cloud services each maps to
 (object store, managed database, queue, BaaS, …), and the flows that must be testable. Capture the
 dev-environment constraints: developer OS targets, the AI coding agents actually in use (Claude
@@ -233,11 +233,11 @@ container; which e2e framework), using `references/adr-template.md` and **contin
 numbering already used by `design-architecture`** (do not restart at 0001 if ADRs exist). Draft
 `dev-architecture.research.md` from `references/dev-architecture-template.md`, citing sources
 inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Create
-`.buildloop/project-spec/` and `.buildloop/project-spec/adr/` if needed.
+`.dev-skills/project-spec/` and `.dev-skills/project-spec/adr/` if needed.
 
 ### Stage 4: Review
 Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.buildloop/project-spec/dev-architecture.review.md` (it does NOT edit the draft; this file is
+`.dev-skills/project-spec/dev-architecture.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes, above all, **gaps in the
 agent's verification loop**: a surface or flow the agent can run but **cannot prove** the outcome
@@ -271,12 +271,12 @@ Synthesize draft + review corrections + filled gaps into the final `dev-architec
 and ADRs. Apply fixes, correct any tool/parity facts the reviewer disproved, log the applied
 findings in the Forks / Decisions log, re-research **only** still-disputed points. What no one
 could verify goes to `## Open questions`. **Then delete
-`.buildloop/project-spec/dev-architecture.review.md`** — its content now lives in the research doc and
+`.dev-skills/project-spec/dev-architecture.review.md`** — its content now lives in the research doc and
 the ADRs. (Keep the ADRs.)
 
 ### Stage 7: Dual output
 Finalize `dev-architecture.research.md` (+ ADRs; complete `## Sources` and `## Forks / Decisions
-log`). Then write `.buildloop/project-spec/dev-architecture.summary.md` from
+log`). Then write `.dev-skills/project-spec/dev-architecture.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the inner-loop design in plain language + the
 forks the human must answer + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
@@ -296,7 +296,7 @@ the user explicitly approves and asks.
 ## Existing-project mode
 
 When `project_type: existing`, design the inner loop around **what already runs**: read
-`.buildloop/project-spec/codebase-map.research.md` for the mapped build/run/CI/test/env, and take the
+`.dev-skills/project-spec/codebase-map.research.md` for the mapped build/run/CI/test/env, and take the
 existing compose/Dockerfile/Makefile as the starting point — divergences from prod-parity that
 already exist become named risks. Do **not** re-open the stack (settled by `design-architecture`'s
 adopted ADRs). Gaps the map reveals (no e2e harness, no structured logging, no env-access lock)

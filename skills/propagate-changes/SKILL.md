@@ -1,7 +1,7 @@
 ---
 name: propagate-changes
 disable-model-invocation: true
-description: "Reconcile the downstream documents after an upstream spec change. Use when a stage document in .buildloop/project-spec/ has been edited (e.g. product vision changed) and the later stages — architecture, dev-architecture — and the build backlog need to be brought back in line. A thin cross-cutting conductor: it walks the dependency chain FORWARD from the changed stage, invoking each downstream stage's own skill in amend mode to surgically update its document (preserving the Forks/Decisions log), then continues into the backlog via plan-development (add/modify/cancel/reopen-as-rework task deltas). Runs automatically — no 'do you want to propagate?' gate — and pauses only for critical or destructive questions (cancelling a task, reopening a done one). It never writes code; rebuilding the affected features is a separate build-product run."
+description: "Reconcile the downstream documents after an upstream spec change. Use when a stage document in .dev-skills/project-spec/ has been edited (e.g. product vision changed) and the later stages — architecture, dev-architecture — and the build backlog need to be brought back in line. A thin cross-cutting conductor: it walks the dependency chain FORWARD from the changed stage, invoking each downstream stage's own skill in amend mode to surgically update its document (preserving the Forks/Decisions log), then continues into the backlog via plan-development (add/modify/cancel/reopen-as-rework task deltas). Runs automatically — no 'do you want to propagate?' gate — and pauses only for critical or destructive questions (cancelling a task, reopening a done one). It never writes code; rebuilding the affected features is a separate build-product run."
 argument-hint: "[--from <stage>]"
 ---
 
@@ -16,7 +16,7 @@ The chain you walk:
 
 ```
 idea-validation → product-requirements → user-flows → design-decisions → architecture
-   → dev-architecture → [ backlog (.buildloop/build-plan) ]
+   → dev-architecture → [ backlog (.dev-skills/build-plan) ]
 ```
 
 A change at stage N may ripple to N+1, N+2, … through to the backlog — or be absorbed early, in which
@@ -30,7 +30,7 @@ rule on its own. Never translate code, identifiers, file paths, or commands.
 
 ## Modes
 
-Read `.buildloop/build-plan/.build-config.md` (or `.buildloop/project-spec/.spec-config.md`) for `mode`. Full
+Read `.dev-skills/build-plan/.build-config.md` (or `.dev-skills/project-spec/.spec-config.md`) for `mode`. Full
 rules: **`../_shared/build-pipeline/build-config.md`**.
 
 - The forward walk over the **spec** documents runs **automatically** in both modes — routine,
@@ -81,7 +81,7 @@ confirm with the human** (both modes). No code is written.
 ### Done: report
 Summarize: which stages amended (and which self-skipped), the backlog deltas applied, and — because
 some `done` tasks may have been reopened as rework — whether a `build-product` run is now needed to
-rebuild the affected features. Point the user at the changed docs and `.buildloop/build-plan/board.md`.
+rebuild the affected features. Point the user at the changed docs and `.dev-skills/build-plan/board.md`.
 
 ## Rules
 

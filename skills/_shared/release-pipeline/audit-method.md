@@ -16,10 +16,10 @@ phase wrote it.
 
 | Audit | Contract it proves against (from the spec) |
 |-------|--------------------------------------------|
-| `audit-security` | the STRIDE-lite threat model + trust boundaries in `.buildloop/project-spec/architecture.research.md` |
-| `audit-performance` | the quality-attribute scenarios (latency, throughput, cost, scale) in `.buildloop/project-spec/architecture.research.md` |
-| `audit-accessibility` | the accessibility decisions in `.buildloop/project-spec/design-decisions.research.md` |
-| `audit-product` | the user flows + their acceptance criteria in `.buildloop/project-spec/user-flows.research.md` |
+| `audit-security` | the STRIDE-lite threat model + trust boundaries in `.dev-skills/project-spec/architecture.research.md` |
+| `audit-performance` | the quality-attribute scenarios (latency, throughput, cost, scale) in `.dev-skills/project-spec/architecture.research.md` |
+| `audit-accessibility` | the accessibility decisions in `.dev-skills/project-spec/design-decisions.research.md` |
+| `audit-product` | the user flows + their acceptance criteria in `.dev-skills/project-spec/user-flows.research.md` |
 | `audit-code-health` | the quality bar — the gate config + the codebase's own conventions |
 
 If the contract doc is missing, the audit says so and proves against sensible defaults for its domain,
@@ -50,7 +50,7 @@ For each item in its contract the audit produces evidence, then ranks it:
    reproduced 500, a failing axe rule with its node, a duplicate-block report. **"Looks fine" / "no
    obvious issue" is not a verdict** — a pass is proven and a fail is proven.
 3. **Rank** — assign severity per `severity-rubric.md` (🔴 blocker / 🟡 major / ⚪ minor) against the
-   contract, not against taste. Save evidence under `.buildloop/release/artifacts/`.
+   contract, not against taste. Save evidence under `.dev-skills/release/artifacts/`.
 
 ## Filing rework (how a finding becomes a fix)
 
@@ -67,7 +67,7 @@ audit↔fix loop.
 
 ## Recording — the findings doc
 
-Write `.buildloop/release/<noun>-audit.md` (template: `report-template.md`): the verdict (clean / N blockers /
+Write `.dev-skills/release/<noun>-audit.md` (template: `report-template.md`): the verdict (clean / N blockers /
 N majors), a findings table (id · severity · what · evidence · contract item · filed task), what was
 checked, what was **skipped and why** (a silent cap reads as "all clear" when it isn't), and a
 `## Sources` section for any world-claim the audit leaned on. This doc is committed project

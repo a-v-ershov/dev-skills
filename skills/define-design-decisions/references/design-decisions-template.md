@@ -1,7 +1,7 @@
 # Design Decisions — <Product name>
 
 > Status: Draft | Date: <YYYY-MM-DD>
-> Source: .buildloop/project-spec/product-requirements.research.md, .buildloop/project-spec/user-flows.research.md
+> Source: .dev-skills/project-spec/product-requirements.research.md, .dev-skills/project-spec/user-flows.research.md
 > Scope: design direction that shapes scope & architecture — NOT pixel layouts, colors, or mockups.
 
 ## Summary

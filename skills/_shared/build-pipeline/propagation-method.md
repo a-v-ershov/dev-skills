@@ -9,7 +9,7 @@ skills too (their `## Amend mode` sections) and driven by the `propagate-changes
 
 ```
 idea-validation → product-requirements → user-flows → design-decisions → architecture
-   → dev-architecture → [ backlog (.buildloop/build-plan) ]
+   → dev-architecture → [ backlog (.dev-skills/build-plan) ]
 ```
 
 Each arrow is a dependency: the downstream document is derived from the upstream one. A change at

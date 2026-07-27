@@ -7,22 +7,22 @@ the blockers a task carries are the graph.
 
 ## Inputs (read, never re-decide)
 
-- `.buildloop/project-spec/product-requirements.research.md` — the committed feature set; each feature has
+- `.dev-skills/project-spec/product-requirements.research.md` — the committed feature set; each feature has
   ≥1 behavioral **acceptance criterion** and a "serves (validated need)" trace. These become tasks.
-- `.buildloop/project-spec/user-flows.research.md` — flows + their per-flow acceptance criteria; they sharpen
+- `.dev-skills/project-spec/user-flows.research.md` — flows + their per-flow acceptance criteria; they sharpen
   a feature task's criteria and surface cross-feature ordering.
-- `.buildloop/project-spec/architecture.research.md` + `dev-architecture.research.md` — the components and
+- `.dev-skills/project-spec/architecture.research.md` + `dev-architecture.research.md` — the components and
   the local stack, to size tasks and seed `setup` tasks and dependencies (e.g. auth before features
   that need a logged-in user); also the **developer/test scripts** and the **custom project skills**
   that wrap them to build out (their skeletons are scaffolded by `setup-dev-environment`; the full
   implementation/authoring is backlog work).
-- `.buildloop/project-setup/setup-log.md` (if present) — what the environment already has, so `setup` tasks
+- `.dev-skills/project-setup/setup-log.md` (if present) — what the environment already has, so `setup` tasks
   aren't re-created.
-- The root `DESIGN.md` + `.buildloop/project-setup/design-system.md` (if present) — the committed design
+- The root `DESIGN.md` + `.dev-skills/project-setup/design-system.md` (if present) — the committed design
   system UI feature tasks build against. Reference it in a UI task's `## Description` so the implementer
   applies it; do **not** emit "mockup" tasks — mockups are on-demand (`generate-mockups`), never backlog
   work.
-- `.buildloop/project-spec/codebase-map.research.md` (existing projects only) — the as-is facts the spec was
+- `.dev-skills/project-spec/codebase-map.research.md` (existing projects only) — the as-is facts the spec was
   reconstructed from; in **delta mode** (below) the backlog is the diff of the TARGET spec against this.
 
 Planning never re-opens product or technical decisions. A gap in the spec is surfaced back, not
@@ -72,8 +72,8 @@ so there is **no `conflicts_with`** — blockers are the only ordering tool.
 
 ## Output
 
-Write each task to `.buildloop/build-plan/tasks/<id>-<slug>.md` (schema: `backlog-format.md`), regenerate
-`.buildloop/build-plan/board.md`, and write `.buildloop/build-plan/plan.summary.md` — a short human view:
+Write each task to `.dev-skills/build-plan/tasks/<id>-<slug>.md` (schema: `backlog-format.md`), regenerate
+`.dev-skills/build-plan/board.md`, and write `.dev-skills/build-plan/plan.summary.md` — a short human view:
 
 ```markdown
 # Build plan — <Product name>
@@ -120,7 +120,7 @@ backlog; the actual rebuild happens later through the normal `build-product` loo
 
 When `project_type: existing` (see `../spec-pipeline/pipeline-config.md`), the spec was reconstructed
 from an already-built codebase: the spec describes the **TARGET** state, and
-`.buildloop/project-spec/codebase-map.research.md` records the **as-is** code. So the *initial* backlog is
+`.dev-skills/project-spec/codebase-map.research.md` records the **as-is** code. So the *initial* backlog is
 not "one task per feature" — most features already exist. Instead, **diff TARGET against as-is and
 emit only the gap.** This is the brownfield create mode; it shares the add/modify/cancel/reopen
 vocabulary with amend mode above.
@@ -154,7 +154,7 @@ delta):
   `make check` + hooks — see `quality-gate.md`), emit a `setup` task to stand it up over the existing
   code, an early blocker for the rest.
 - **Design-system reskin.** If `create-design-system` adopt mode logged a **token/reskin drift** in
-  `.buildloop/project-setup/design-system.md` (the realized system the user wants evolved — a `change`), emit
+  `.dev-skills/project-setup/design-system.md` (the realized system the user wants evolved — a `change`), emit
   a `rework` task `traces_to` the design system: apply the new `DESIGN.md` tokens to the affected
   surfaces. (No drift → the realized system is kept as-is, no task.)
 

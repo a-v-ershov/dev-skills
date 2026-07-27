@@ -1,8 +1,8 @@
-# Buildloop — webinar demo runbook
+# dev-skills — webinar demo runbook
 
-> **Temporary demo bundle.** This is a stripped-down teaching variant of Buildloop for a live
+> **Temporary demo bundle.** This is a stripped-down teaching variant of dev-skills for a live
 > vibe-coding webinar. It is **not** the real method. It currently lives on `main` **temporarily**, so it
-> installs cleanly on another machine (`/plugin marketplace add a-v-ershov/buildloop` pulls the default
+> installs cleanly on another machine (`/plugin marketplace add a-v-ershov/dev-skills` pulls the default
 > branch) — remove it after the webinar. Three demo
 > skills — `demo-spec`, `demo-build`, `demo-release` — show the same before/after arcs the real
 > pipelines do, but fast enough for a live slot. Where the mechanism itself is the "wow" (the
@@ -27,7 +27,7 @@ articles** (with a user dashboard). Alexander provides that project repo separat
   between each — (1) **gather-context** interview + critical pushback → recap gate; (2) **functional
   requirements** presented → ok/not-ok gate → write doc; (3) **architecture** proposed (options + trust
   boundaries + STRIDE-lite) → gate → write doc; (4) **dev-architecture** (the verification tooling, e.g.
-  Playwright) → gate → write doc. Under `.buildloop/project-spec/`. Cuts only the slow machinery (research
+  Playwright) → gate → write doc. Under `.dev-skills/project-spec/`. Cuts only the slow machinery (research
   subagents, adversarial review, dual outputs) and the extra phases (validate-idea, user-flows, design) —
   never a stage or a gate. The architecture doc carries the trust boundaries + STRIDE-lite so Act 3 has a
   contract; the dev-architecture doc names the concrete verification tools so Act 2 can run.
@@ -57,9 +57,9 @@ For the live slot:
 
 ## Setup for the demo project
 
-- Install this branch's plugin into the SEO-service repo (`/plugin marketplace add ./` from this repo on
-  the `buildloop-simple-demo` branch, or copy `skills/` into the project's `.claude/skills/`).
-- **Act 2 needs a verification contract** — `.buildloop/project-setup/verification.md` (how to bring the
+- Install this plugin into the SEO-service repo (`/plugin marketplace add ./` from this repo on `main`,
+  or copy `skills/` into the project's `.claude/skills/`).
+- **Act 2 needs a verification contract** — `.dev-skills/project-setup/verification.md` (how to bring the
   stack up + drive/prove a surface). Either run the real `setup-dev-environment` once on the SEO repo, or
   let `demo-build` write a minimal one inline. Without it the verifier can't drive the stack.
 - **Act 3 needs the project present** so the audits can probe (and the stack up for dynamic checks — the

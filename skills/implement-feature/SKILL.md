@@ -1,6 +1,6 @@
 ---
 name: implement-feature
-description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by build-product, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.buildloop/project-setup/verification.md) — optionally writing its own tests and running the environment for a fast inner loop — and gets the quality gate (make check) green before handing off, to catch obvious breakage before the independent verifier runs. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — build-product orchestrates verify-feature and the checkpoint commit. On a re-round after a failed verification, it reads the verifier's findings and runs the verifier's committed tests to reproduce them, then fixes them."
+description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by build-product, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.dev-skills/project-setup/verification.md) — optionally writing its own tests and running the environment for a fast inner loop — and gets the quality gate (make check) green before handing off, to catch obvious breakage before the independent verifier runs. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — build-product orchestrates verify-feature and the checkpoint commit. On a re-round after a failed verification, it reads the verifier's findings and runs the verifier's committed tests to reproduce them, then fixes them."
 argument-hint: "[task-id]"
 ---
 
@@ -29,13 +29,13 @@ not commit — those are the orchestrator's job.
 
 - **Reads:** the task file (`## Description`, `acceptance`, `## Log`), the spec sections it
   `traces_to`, the project `CLAUDE.md`, the root `DESIGN.md` (the design system, for UI work), and
-  `.buildloop/project-setup/verification.md` (to self-check). On a re-round, the verifier's failure findings
+  `.dev-skills/project-setup/verification.md` (to self-check). On a re-round, the verifier's failure findings
   already in the task `## Log`.
 - **Writes:** code in the working tree; the task's `status` → `in_progress` (with a `history` entry); a
   `## Log` note of what was built and the happy-path self-check result.
 
 Task schema: **`../_shared/build-pipeline/backlog-format.md`**. Self-check uses the run/drive/prove
-commands in `.buildloop/project-setup/verification.md` (method: **`../_shared/build-pipeline/verification-method.md`**).
+commands in `.dev-skills/project-setup/verification.md` (method: **`../_shared/build-pipeline/verification-method.md`**).
 
 ## Language
 
@@ -87,7 +87,7 @@ path), follow that arrangement; the mockup is the reference, you build the real,
 re-round, fix exactly the verifier's findings (and any obvious related breakage), not a wholesale rewrite.
 
 ### Stage 2: Self-check
-Using the commands in `.buildloop/project-setup/verification.md`, bring the stack up if needed and drive the
+Using the commands in `.dev-skills/project-setup/verification.md`, bring the stack up if needed and drive the
 happy path of the acceptance criteria, confirming a real observable outcome (a page renders, a row
 lands, a response asserts). You **may** also write your own tests and exercise the environment here for
 a fast inner loop — the adversarial tests are the verifier's job, not yours. Then run the quality gate

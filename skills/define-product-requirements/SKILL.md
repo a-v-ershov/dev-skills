@@ -1,6 +1,6 @@
 ---
 name: define-product-requirements
-description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. Use after validate-idea (reads .buildloop/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .buildloop/project-spec/product-requirements.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
+description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. Use after validate-idea (reads .dev-skills/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/product-requirements.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
 ---
 
 # Define Product Requirements Skill
@@ -19,7 +19,7 @@ Scope discipline (read carefully):
   does not belong in the product, remove it; do not park it.
 - **Defer user flows to `create-user-flows`** and technical decisions to `design-architecture`.
 
-## Outputs in `.buildloop/project-spec/` (two kept files)
+## Outputs in `.dev-skills/project-spec/` (two kept files)
 
 - **`product-requirements.research.md`** — the detailed, source-cited product definition (for the AI/next phases).
 - **`product-requirements.summary.md`** — the short human summary (essence + forks to answer).
@@ -35,7 +35,7 @@ same. This never translates code or identifiers.
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -77,8 +77,8 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/idea-validation.research.md` and, if present,
-`.buildloop/project-spec/project-brief.research.md` (the discovery brief — the user's intent, scope, and
+Read `.dev-skills/project-spec/idea-validation.research.md` and, if present,
+`.dev-skills/project-spec/project-brief.research.md` (the discovery brief — the user's intent, scope, and
 preferences; treat it as settled input and don't re-ask what it answers). Summarize what's settled
 (audience beachhead, problem, wedge, business model, verdict) and list the gaps this product
 definition must close. If the validation doc is missing, tell the user and offer to run
@@ -121,13 +121,13 @@ for a broad landscape or on request. Method — **`../_shared/spec-pipeline/rese
 Carry findings + source links into the draft; a "table-stakes" claim must cite where it's seen.
 
 ### Stage 3: Draft
-Draft `.buildloop/project-spec/product-requirements.research.md` from `references/product-template.md`,
+Draft `.dev-skills/project-spec/product-requirements.research.md` from `references/product-template.md`,
 citing sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`.
-Create `.buildloop/project-spec/` if needed.
+Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review
 Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.buildloop/project-spec/product-requirements.review.md` (it does NOT edit the draft; this file is
+`.dev-skills/project-spec/product-requirements.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes: features that trace to no
 validated need; a feature with no acceptance criterion, or an AC that's untestable or
@@ -147,11 +147,11 @@ Synthesize draft + review corrections + filled gaps into the final
 `product-requirements.research.md`. Apply fixes, integrate missing table-stakes the reviewer
 justified, log the applied findings in the Forks / Decisions log, re-research **only**
 still-disputed points. What no one could verify goes to `## Open questions`. **Then delete
-`.buildloop/project-spec/product-requirements.review.md`** — its content now lives in the research doc.
+`.dev-skills/project-spec/product-requirements.review.md`** — its content now lives in the research doc.
 
 ### Stage 7: Dual output
 Finalize `product-requirements.research.md` (complete `## Sources` and `## Forks / Decisions
-log`). Then write `.buildloop/project-spec/product-requirements.summary.md` from
+log`). Then write `.dev-skills/project-spec/product-requirements.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — essence + the forks the human must answer +
 open risks. Keep the domain model, glossary, and acceptance criteria in the research doc only; the
 summary names at most a handful of key concepts in plain language (no schema, fields, or
@@ -169,7 +169,7 @@ Do NOT start user-flow or architecture work in this session unless the user expl
 
 ## Existing-project mode
 
-When `project_type: existing`, read `.buildloop/project-spec/codebase-map.research.md` at Stage 0 and
+When `project_type: existing`, read `.dev-skills/project-spec/codebase-map.research.md` at Stage 0 and
 **pre-fill the committed feature set from the implemented surfaces**, and the domain model + glossary
 from the code's actual entities/vocabulary (default: **keep the code's names** — a rename is opt-in
 drift → a refactor task later). Then interview to mark each inferred feature **keep / change /

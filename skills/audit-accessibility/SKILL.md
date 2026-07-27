@@ -1,13 +1,13 @@
 ---
 name: audit-accessibility
-description: "Audit the built product's accessibility against the spec's accessibility decisions. Use in the release phase (run by release-product, or standalone) for a product with a UI; it self-skips cleanly for a CLI / library / API with no UI. A fresh, independent accessibility specialist: it reads the target conformance (e.g. WCAG 2.2 AA), viewports, and platforms from .buildloop/project-spec/design-decisions.research.md and drives the real UI to prove them — automated checks (axe-core) PLUS what automation misses: keyboard-only operability and focus order, visible focus, screen-reader semantics (roles/labels/landmarks/alt), color contrast, motion / reduced-motion, and forms + error messaging. Read-only: it drives and ranks (blocker = a WCAG-A failure on a core journey, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .buildloop/release/accessibility-audit.md. Brings the UI up through the coordinated entrypoint (env lease). Re-runs after a fix to confirm."
+description: "Audit the built product's accessibility against the spec's accessibility decisions. Use in the release phase (run by release-product, or standalone) for a product with a UI; it self-skips cleanly for a CLI / library / API with no UI. A fresh, independent accessibility specialist: it reads the target conformance (e.g. WCAG 2.2 AA), viewports, and platforms from .dev-skills/project-spec/design-decisions.research.md and drives the real UI to prove them — automated checks (axe-core) PLUS what automation misses: keyboard-only operability and focus order, visible focus, screen-reader semantics (roles/labels/landmarks/alt), color contrast, motion / reduced-motion, and forms + error messaging. Read-only: it drives and ranks (blocker = a WCAG-A failure on a core journey, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/accessibility-audit.md. Brings the UI up through the coordinated entrypoint (env lease). Re-runs after a fix to confirm."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.buildloop/*' '*/.buildloop/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.dev-skills/*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Accessibility Skill
@@ -28,20 +28,20 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
 ## Self-skip when there is no UI
 
 This audit applies to products with a user interface. If the product is a CLI, library, or headless API
-with no UI surface, **record a clean skip** in `.buildloop/release/accessibility-audit.md` ("no UI surface —
+with no UI surface, **record a clean skip** in `.dev-skills/release/accessibility-audit.md` ("no UI surface —
 N/A, per design-decisions") and return — do not invent findings. (Terminal output legibility / CLI
 ergonomics, if the spec cares, belong to `audit-product`, not here.)
 
 ## Inputs and outputs
 
-- **Reads:** the **accessibility decisions** in `.buildloop/project-spec/design-decisions.research.md` — your
+- **Reads:** the **accessibility decisions** in `.dev-skills/project-spec/design-decisions.research.md` — your
   contract: the target conformance level (e.g. WCAG 2.2 AA), the viewports, and the target platforms.
-  The **core journeys** in `.buildloop/project-spec/user-flows.research.md` (the paths that must work
-  assistively). `.buildloop/project-setup/verification.md` for how to bring the UI up + drive it. If the spec
+  The **core journeys** in `.dev-skills/project-spec/user-flows.research.md` (the paths that must work
+  assistively). `.dev-skills/project-setup/verification.md` for how to bring the UI up + drive it. If the spec
   set no explicit target, default to **WCAG 2.2 AA** and record that assumption.
-- **Writes:** `.buildloop/release/accessibility-audit.md` (findings, template in `report-template.md`); rework
+- **Writes:** `.dev-skills/release/accessibility-audit.md` (findings, template in `report-template.md`); rework
   tasks for 🔴/🟡 (via `plan-development` amend); evidence (axe output, screenshots of focus/contrast
-  failures) under `.buildloop/release/artifacts/`. Never the product's code.
+  failures) under `.dev-skills/release/artifacts/`. Never the product's code.
 
 ## Language
 
@@ -89,7 +89,7 @@ do the **manual** checks automation can't: drive each core journey **keyboard-on
 accessibility tree / run a screen reader where the harness allows, measure contrast, toggle
 reduced-motion and text zoom. **Prove a barrier by hitting it** (a trap you can't escape, an unlabeled
 control a screen reader announces as "button", failing contrast) and capture it under
-`.buildloop/release/artifacts/`.
+`.dev-skills/release/artifacts/`.
 
 ### Stage 2: Rank + file
 Rank per **`severity-rubric.md`** against the target level: a **WCAG level-A failure on a core journey**
@@ -98,7 +98,7 @@ a **level-AA gap** or a barrier off the core path is 🟡; a cosmetic improvemen
 `type: rework` tasks (the success-criterion id + the barrier + evidence) via `plan-development` amend.
 
 ### Stage 3: Record + verdict
-Write `.buildloop/release/accessibility-audit.md` (**`report-template.md`**): the verdict, the findings table
+Write `.dev-skills/release/accessibility-audit.md` (**`report-template.md`**): the verdict, the findings table
 (each row with the WCAG criterion + evidence + the filed task), the journeys you drove assistively, what
 you **skipped and why** (or the clean N/A skip). Return the verdict to `release-product`. On a re-audit,
 a 🔴 clears only when you **re-drive the journey assistively and the barrier is gone** — never by assumption.

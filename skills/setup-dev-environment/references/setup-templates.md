@@ -1,6 +1,6 @@
 # Setup templates
 
-Three documents `setup-dev-environment` produces under `.buildloop/project-setup/`. Fill the angle-bracket
+Three documents `setup-dev-environment` produces under `.dev-skills/project-setup/`. Fill the angle-bracket
 placeholders from the spec and the detected state.
 
 > The project `CLAUDE.md` it scaffolds (section B above) is **not** templated here: its stack notes +
@@ -216,7 +216,7 @@ two settings blocks are the mechanism.
 ## 6. `.claude/skills/<name>/SKILL.md` — custom project-skill skeleton
 
 For each **custom project skill** the dev-architecture's *Custom project skills* table named, scaffold a
-skeleton at `.claude/skills/<name>/SKILL.md` in the **built project's** repo (not buildloop's). These are
+skeleton at `.claude/skills/<name>/SKILL.md` in the **built project's** repo (not dev-skills's). These are
 **committed**, project-local, and **complement `verification.md`** — they wrap a dev/test script or the
 e2e harness into a named, invocable verification job; they never duplicate `verify-feature`. The skeleton
 carries the discoverable frontmatter and a thin body that calls the wrapped script, with the procedure
@@ -234,7 +234,7 @@ description: "<Third-person: WHAT it does and WHEN to use it — this is how Cla
 # <Verb-name>
 
 <!-- TODO (backlog: author fully) — wraps: <script / harness, e.g. `make test:int`>.
-     Complements .buildloop/project-setup/verification.md; does NOT duplicate verify-feature. -->
+     Complements .dev-skills/project-setup/verification.md; does NOT duplicate verify-feature. -->
 
 1. Bring up / ensure the local env (acquire the env-access lock — see verification.md).
 2. Run the wrapped script: `<command>`.

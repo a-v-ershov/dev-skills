@@ -1,6 +1,6 @@
-# Buildloop — using this skill set
+# dev-skills — using this skill set
 
-This directory holds the **Buildloop** set: opinionated, reusable coding-workflow skills for
+This directory holds the **dev-skills** set: opinionated, reusable coding-workflow skills for
 Claude Code. This file is an **orientation map** for an agent that finds these skills available in a
 project — it points at the skills and the order to use them; it does not duplicate their logic. Each
 skill carries its own full procedure in its `SKILL.md`.
@@ -20,8 +20,8 @@ messages are always written in English.
 
 ## How to invoke
 
-Installed as a plugin, the skills are namespaced — invoke them as `buildloop:<name>`
-(e.g. `buildloop:create-project-spec`). If the directory was copied straight into
+Installed as a plugin, the skills are namespaced — invoke them as `dev-skills:<name>`
+(e.g. `dev-skills:create-project-spec`). If the directory was copied straight into
 `.claude/skills/`, the names are bare (`create-project-spec`). Below they are written bare. Prefer the
 **orchestrators** as entry points; every sub-skill is also runnable on its own.
 
@@ -33,9 +33,9 @@ Entry point: **`create-project-spec`** (a thin conductor that sequences the phas
 elicits → researches real-world facts → drafts → runs an adversarial self-review → merges → emits a
 detailed `*.research.md` + a short `*.summary.md`. Run settings chosen once (`mode`: `interactive`
 pauses at each gate / `autopilot` runs through and logs every decision; `final_summary`;
-`project_type`: `greenfield` / `existing`); config in `.buildloop/project-spec/.spec-config.md`.
+`project_type`: `greenfield` / `existing`); config in `.dev-skills/project-spec/.spec-config.md`.
 
-| # | Skill | Produces (under `.buildloop/project-spec/`) |
+| # | Skill | Produces (under `.dev-skills/project-spec/`) |
 |---|-------|----------------------------------------|
 | 0 | `map-codebase` *(existing projects only)* | `codebase-map.research.md` — reverse-engineered as-is facts (structure, stack, domain, surfaces) |
 | 1 | `gather-context` | `project-brief.research.md` — discovery interview; settled intent the rest reads |
@@ -55,13 +55,13 @@ artifacts, so the build pipeline runs unchanged. Method: `_shared/spec-pipeline/
 
 Entry point: **`build-product`** (conducts the build loop). Unlike the spec phase, this one scaffolds,
 runs commands, and writes code. **Sequential**: one task at a time, single working tree, no parallelism.
-Config in `.buildloop/build-plan/.build-config.md`.
+Config in `.dev-skills/build-plan/.build-config.md`.
 
 | # | Skill | Role |
 |---|-------|------|
 | 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check` + hooks) |
 | 1b | `create-design-system` *(UI projects)* | After the scaffold is up, make the design direction concrete: a root `DESIGN.md` (Google's tool-neutral tokens+prose). Proposes several candidates, renders each via `generate-mockups`, commits the chosen one. Invoked by setup; self-skips for no-UI |
-| 2 | `plan-development` | Turn the spec into a kanban backlog under `.buildloop/build-plan/tasks/` (one file per task) |
+| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) |
 | 3 | `implement-feature` | Build one task into code (fresh per-task agent), UI built against `DESIGN.md` |
 | 4 | `verify-feature` | A **separate, unbiased** agent: authors adversarial tests, proves observable outcomes, pass/fail |
 
@@ -78,15 +78,15 @@ Entry point: **`release-product`** (conducts the release). It proves the **syste
 single task could — the counterpart of `verify-feature` at the scale of the whole product — then cuts
 the release. The audits are **read-only**, so (uniquely here) they **fan out in parallel**; findings are
 **filed as `rework` tasks, never fixed in place** (a separate `build-product` run fixes them, then the
-audit re-runs). Config in `.buildloop/release/.release-config.md`.
+audit re-runs). Config in `.dev-skills/release/.release-config.md`.
 
 | # | Skill | Proves against / does |
 |---|-------|------------------------|
-| 1 | `audit-security` | the STRIDE-lite threat model → `.buildloop/release/security-audit.md` |
-| 2 | `audit-performance` | the quality-attribute scenarios → `.buildloop/release/performance-audit.md` |
-| 3 | `audit-product` | the user flows end-to-end (cross-feature) → `.buildloop/release/qa-report.md` |
-| 4 | `audit-code-health` | rot signals + test-suite quality → `.buildloop/release/code-health-audit.md` |
-| 5 | `audit-accessibility` | the accessibility decisions (WCAG); self-skips with no UI → `.buildloop/release/accessibility-audit.md` |
+| 1 | `audit-security` | the STRIDE-lite threat model → `.dev-skills/release/security-audit.md` |
+| 2 | `audit-performance` | the quality-attribute scenarios → `.dev-skills/release/performance-audit.md` |
+| 3 | `audit-product` | the user flows end-to-end (cross-feature) → `.dev-skills/release/qa-report.md` |
+| 4 | `audit-code-health` | rot signals + test-suite quality → `.dev-skills/release/code-health-audit.md` |
+| 5 | `audit-accessibility` | the accessibility decisions (WCAG); self-skips with no UI → `.dev-skills/release/accessibility-audit.md` |
 | — | `cut-release` | clean tree + no open 🔴 → docs + version bump + changelog + tag/commit/PR (always confirmed; stops before prod deploy) |
 
 `release-product` fans out the enabled audits, ranks findings by severity, files 🔴/🟡 as `rework`
@@ -123,16 +123,16 @@ cross-machine install — remove it after the webinar. The real skills are untou
 
 ## Where things live
 
-- `.buildloop/project-spec/` — spec research docs, summaries, `adr/`, `.spec-config.md` (committed; transient
+- `.dev-skills/project-spec/` — spec research docs, summaries, `adr/`, `.spec-config.md` (committed; transient
   `*.review.md` is deleted after merge and gitignored).
-- `.buildloop/build-plan/` — backlog (`tasks/`), `board.md`, `.build-config.md` (committed); plus
+- `.dev-skills/build-plan/` — backlog (`tasks/`), `board.md`, `.build-config.md` (committed); plus
   `mockups/` — throwaway stub UI variants from `generate-mockups` (gitignored; only the chosen
   screenshot is kept).
-- `.buildloop/project-setup/` — setup log + the verification contract `verify-feature` reads + the
+- `.dev-skills/project-setup/` — setup log + the verification contract `verify-feature` reads + the
   `design-system.md` record (committed).
 - **Root `DESIGN.md`** *(UI projects)* — the committed, tool-neutral design system (tokens + rules)
   `create-design-system` writes and `implement-feature` / `generate-mockups` read.
-- `.buildloop/release/` — per-audit findings docs + `release-summary.md` + `.release-config.md` (committed); the
+- `.dev-skills/release/` — per-audit findings docs + `release-summary.md` + `.release-config.md` (committed); the
   audit trail of why a release was, or wasn't, cut.
 - The project's **root `CLAUDE.md`** carries a marker-delimited *project documentation map* indexing the
   above and the order to read them before changing code; the spec/setup/plan/release skills keep it current.

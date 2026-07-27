@@ -1,6 +1,6 @@
 ---
 name: design-architecture
-description: "Design the system's technical architecture from the product spec: elicit measurable quality-attribute scenarios first, then co-design the components AND the concrete technologies that realize them together — researching each candidate tool's current capabilities/pricing/limits, weighing 2–3 integrated options against the scenarios, and recording significant choices as ADRs. Use after create-user-flows (reads .buildloop/project-spec/user-flows.research.md and .buildloop/project-spec/product-requirements.research.md) as the first technical step, before design-dev-architecture. Writes a detailed, source-cited .buildloop/project-spec/architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. Requirements-first: scenarios always precede any tool talk, but the available toolbox is allowed to shape the decomposition."
+description: "Design the system's technical architecture from the product spec: elicit measurable quality-attribute scenarios first, then co-design the components AND the concrete technologies that realize them together — researching each candidate tool's current capabilities/pricing/limits, weighing 2–3 integrated options against the scenarios, and recording significant choices as ADRs. Use after create-user-flows (reads .dev-skills/project-spec/user-flows.research.md and .dev-skills/project-spec/product-requirements.research.md) as the first technical step, before design-dev-architecture. Writes a detailed, source-cited .dev-skills/project-spec/architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. Requirements-first: scenarios always precede any tool talk, but the available toolbox is allowed to shape the decomposition."
 ---
 
 # Design Architecture Skill
@@ -28,7 +28,7 @@ Scope discipline (read carefully):
 - **Inherit, don't redefine.** Features/personas/constraints from `product-requirements.research.md`;
   flows from `user-flows.research.md`. Every component traces to a flow or a scenario.
 
-## Outputs in `.buildloop/project-spec/` (two kept files + ADRs)
+## Outputs in `.dev-skills/project-spec/` (two kept files + ADRs)
 
 - **`architecture.research.md`** + **`adr/*`** — the detailed, source-cited architecture & decision records.
 - **`architecture.summary.md`** — the short human summary (essence + forks to answer).
@@ -45,7 +45,7 @@ This never translates code or identifiers (technology names stay as-is).
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -101,9 +101,9 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/user-flows.research.md`, `.buildloop/project-spec/product-requirements.research.md`,
-`.buildloop/project-spec/design-decisions.research.md`, and, if present,
-`.buildloop/project-spec/project-brief.research.md` (the user's original intent and constraints, plus any developer preferences as soft priors). State in one paragraph what the system must
+Read `.dev-skills/project-spec/user-flows.research.md`, `.dev-skills/project-spec/product-requirements.research.md`,
+`.dev-skills/project-spec/design-decisions.research.md`, and, if present,
+`.dev-skills/project-spec/project-brief.research.md` (the user's original intent and constraints, plus any developer preferences as soft priors). State in one paragraph what the system must
 do, and list the constraints that bound the technology choice: product constraints + raw technical
 expectations (budget, platforms, compliance, "must feel instant", "data stays in EU"); the **design
 decisions that carry technical weight** (media-heaviness, offline/connectivity, realtime UI, target
@@ -158,11 +158,11 @@ model section of `references/architecture-template.md`); for a product with no s
 that you skipped it and why. Write an **ADR** for each significant, hard-to-reverse decision
 (`references/adr-template.md`, numbered `adr/0001-<slug>.md`). Draft `architecture.research.md` from `references/architecture-template.md`,
 citing sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`.
-Create `.buildloop/project-spec/` and `.buildloop/project-spec/adr/` if needed.
+Create `.dev-skills/project-spec/` and `.dev-skills/project-spec/adr/` if needed.
 
 ### Stage 4: Review
 Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.buildloop/project-spec/architecture.review.md` (it does NOT edit the draft; this file is intermediate).
+`.dev-skills/project-spec/architecture.review.md` (it does NOT edit the draft; this file is intermediate).
 Method + format: **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For
 this phase the reviewer especially probes: a tool choice not justified by a scenario; a
 pricing/limit/"scales to N" claim that's untrue or outdated; a deprecated/renamed technology;
@@ -183,12 +183,12 @@ Clean review (0 🔴) proceeds without stopping.
 Synthesize draft + review corrections + filled gaps into the final `architecture.research.md` and
 ADRs. Apply fixes, correct any tool facts the reviewer disproved, log the applied findings in the
 Forks / Decisions log, re-research **only** still-disputed points. What no one could verify goes to
-`## Open questions / risks`. **Then delete `.buildloop/project-spec/architecture.review.md`** — its
+`## Open questions / risks`. **Then delete `.dev-skills/project-spec/architecture.review.md`** — its
 content now lives in the research doc and the ADRs. (Keep the ADRs.)
 
 ### Stage 7: Dual output
 Finalize `architecture.research.md` (+ ADRs; complete `## Sources` and `## Forks / Decisions
-log`). Then write `.buildloop/project-spec/architecture.summary.md` from
+log`). Then write `.dev-skills/project-spec/architecture.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the chosen stack in plain language + the
 forks the human must answer + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
@@ -207,7 +207,7 @@ unless the user explicitly approves and asks.
 ## Existing-project mode
 
 When `project_type: existing`, **still elicit the quality-attribute scenarios first** (Stage 1 — the
-guard against tool-first design is preserved), then read `.buildloop/project-spec/codebase-map.research.md`
+guard against tool-first design is preserved), then read `.dev-skills/project-spec/codebase-map.research.md`
 for the realized component map + stack, document the **AS-IS architecture as one integrated option**,
 and weigh **keep-as-is vs change** per component against the scenarios. Record a ratified existing
 decision as an ADR with status **`adopted`** (we keep what's there, now documented); a decision to

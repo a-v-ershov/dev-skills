@@ -24,7 +24,7 @@ is intermediate: applied at merge, then deleted):
 | 6 | `design-architecture` | `architecture.research.md` (+ `adr/*`) | `architecture.summary.md` |
 | 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
 
-All under `.buildloop/project-spec/`. Step 1 (`gather-context`) interviews the user to turn their short
+All under `.dev-skills/project-spec/`. Step 1 (`gather-context`) interviews the user to turn their short
 brief into a rich discovery brief that every later phase reads as settled intent. Each phase
 researches and reviews itself — there is no separate review step to offer, and no review file
 survives into the final spec.
@@ -43,7 +43,7 @@ rule on its own, so the whole pipeline speaks the user's language consistently.
 
 ## Three setup choices (ask once, up front)
 
-Before step 1, settle three settings and persist them to `.buildloop/project-spec/.spec-config.md` so
+Before step 1, settle three settings and persist them to `.dev-skills/project-spec/.spec-config.md` so
 every sub-skill inherits them. Use one `AskUserQuestion` (defaults pre-selected). Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
 
@@ -52,14 +52,14 @@ every sub-skill inherits them. Use one `AskUserQuestion` (defaults pre-selected)
    Forks / Decisions log, and runs phases back-to-back without stopping (still does research +
    review + dual output for every phase).
 2. **`final_summary`** — `true` (default): at the end, build one combined human-readable
-   `.buildloop/project-spec/summary.md`. `false`: skip it.
+   `.dev-skills/project-spec/summary.md`. `false`: skip it.
 3. **`project_type`** — `greenfield` (default) | `existing`. **Detect first, then confirm**: probe
    the repo (Step 0) for non-trivial existing code; pre-select the detected value and let the user
    override. `existing` inserts the `map-codebase` phase 0 and runs every phase in existing-project
    mode (see `../_shared/spec-pipeline/existing-project-mode.md`).
 
-Write the file (create `.buildloop/project-spec/` if needed; when creating the directory, also drop a
-`.buildloop/project-spec/.gitignore` containing `*.review.md` if absent — everything else there is
+Write the file (create `.dev-skills/project-spec/` if needed; when creating the directory, also drop a
+`.dev-skills/project-spec/.gitignore` containing `*.review.md` if absent — everything else there is
 committed project documentation):
 
 ```
@@ -86,13 +86,13 @@ committed project documentation):
 ```
 
 ### Step 0: Detect progress, settle settings
-List `.buildloop/project-spec/`. If artifacts already exist, tell the user and propose resuming from the
+List `.dev-skills/project-spec/`. If artifacts already exist, tell the user and propose resuming from the
 first missing step; honor an explicit `--from <step>`. Never silently redo a completed step — ask
 before overwriting.
 
 **Detect `project_type`.** Probe the repo (read-only) for non-trivial existing **code**: a
 dependency manifest (`package.json` / `pyproject.toml` / `go.mod` / `Cargo.toml` / `Gemfile` /
-`pom.xml` …) **and** source files outside `docs/`, `.claude/`, and config. (A `.buildloop/project-spec/`
+`pom.xml` …) **and** source files outside `docs/`, `.claude/`, and config. (A `.dev-skills/project-spec/`
 from a prior spec run does NOT count as code.) Pre-select the detected value (`existing` if code is
 present, else `greenfield`); the heuristic is fuzzy (vendored/generated trees, a docs-only repo), so
 **always confirm it with the user** rather than trusting it. Then settle all three settings and write
@@ -100,7 +100,7 @@ present, else `greenfield`); the heuristic is fuzzy (vendored/generated trees, a
 
 ### Step 0b: map-codebase (existing projects only)
 If `project_type: existing`, invoke `map-codebase` (via the Skill tool) **before** `gather-context`.
-It reverse-engineers `.buildloop/project-spec/codebase-map.research.md` (the as-is facts) that
+It reverse-engineers `.dev-skills/project-spec/codebase-map.research.md` (the as-is facts) that
 `gather-context` and every later phase read. Advance per the mode, exactly like the steps below. In
 `greenfield`, skip this step entirely.
 
@@ -140,13 +140,13 @@ and let the user decide whether to skip the step or build the skill first.
 ### Done: final summary + handoff
 When the last available step completes:
 
-1. **If `final_summary: true`,** build `.buildloop/project-spec/summary.md` — one human-readable
+1. **If `final_summary: true`,** build `.dev-skills/project-spec/summary.md` — one human-readable
    document combining each phase's `*.summary.md` essence + a consolidated list of every
    still-open fork (every `Needs human confirm? = yes`) across all phases + consolidated open
    risks. Do not re-derive — concatenate and roll up. Format:
    **`../_shared/spec-pipeline/output-format.md`** (section 4).
 2. **Refresh the project documentation map** in the root `CLAUDE.md` — re-render the marker block so
-   the now-real `.buildloop/project-spec/` artifacts (and `summary.md`) show as present. Spec + marker
+   the now-real `.dev-skills/project-spec/` artifacts (and `summary.md`) show as present. Spec + marker
    discipline: **`../_shared/agent-guide.md`** (idempotent — replace the block in place).
 3. **Summarize the documentation set** (paths + one-line status each) and hand off: the project is
    ready for implementation. In autopilot, point the user at `summary.md` first and list the

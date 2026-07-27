@@ -66,8 +66,8 @@ user confirms. (This is the compressed stand-in for `gather-context` — no kept
 From the confirmed understanding, draft the **functional requirements**: 3–6 features, each with one
 testable Given/When/Then acceptance criterion, plus the one-line audience/domain note. **Present them**
 in the chat and **GATE**: "Here are the functional requirements — ok, or what do you change?" Apply the
-user's edits. Only then write **`.buildloop/project-spec/product-requirements.research.md`** (create the
-dir + a `.buildloop/project-spec/.gitignore` with `*.review.md` if absent). This is what the build act's
+user's edits. Only then write **`.dev-skills/project-spec/product-requirements.research.md`** (create the
+dir + a `.dev-skills/project-spec/.gitignore` with `*.review.md` if absent). This is what the build act's
 task traces to.
 
 ### Stage 3: architecture → gate → write
@@ -76,14 +76,14 @@ task traces to.
 architecture questions that actually change the design; don't re-interview. State the **stack, the 2–4
 key components, the trust boundaries** (what's user-facing, where secrets live, what calls external
 APIs), and a **3–5 line STRIDE-lite threat model** (assets → threats → mitigations). **Present** it and
-**GATE** (ok / change what?). Apply edits, then write **`.buildloop/project-spec/architecture.research.md`**.
+**GATE** (ok / change what?). Apply edits, then write **`.dev-skills/project-spec/architecture.research.md`**.
 The threat model here is the contract `demo-release`'s `audit-security` reads — keep it.
 
 ### Stage 4: dev-architecture → gate → write
 **Propose the inner loop** — the concrete tools that let the AI **verify its own work**, since that's
 what the build act pays off: for a web service, a dev server + **Playwright** to drive the UI + `make
 check`; for a script, unit tests + a runner. Name the **exact run/drive/prove commands**. **Present** it
-and **GATE**. Apply edits, then write **`.buildloop/project-spec/dev-architecture.research.md`**. Call out
+and **GATE**. Apply edits, then write **`.dev-skills/project-spec/dev-architecture.research.md`**. Call out
 that these are the tools `demo-build`'s verifier will use to catch bugs.
 
 ### Close

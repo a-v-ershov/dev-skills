@@ -11,8 +11,8 @@ show. This is the single source of truth for that behavior — every phase carri
 
 A phase runs in existing-project mode when **both** hold:
 
-- `.buildloop/project-spec/.spec-config.md` has `project_type: existing` (see `pipeline-config.md`), and
-- `.buildloop/project-spec/codebase-map.research.md` exists — the as-is facts charted by `map-codebase`,
+- `.dev-skills/project-spec/.spec-config.md` has `project_type: existing` (see `pipeline-config.md`), and
+- `.dev-skills/project-spec/codebase-map.research.md` exists — the as-is facts charted by `map-codebase`,
   the brownfield front phase that runs before `gather-context`.
 
 If `project_type` is absent or `greenfield`, every phase runs exactly as before — this doc is inert

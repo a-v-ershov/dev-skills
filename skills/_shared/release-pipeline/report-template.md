@@ -1,10 +1,10 @@
 # Report templates (shared — release pipeline)
 
-Two shapes: the per-audit findings doc (`.buildloop/release/<noun>-audit.md`, written by each `audit-*`) and
-the combined release summary (`.buildloop/release/release-summary.md`, built by `release-product`). Fill in;
+Two shapes: the per-audit findings doc (`.dev-skills/release/<noun>-audit.md`, written by each `audit-*`) and
+the combined release summary (`.dev-skills/release/release-summary.md`, built by `release-product`). Fill in;
 delete the italic guidance.
 
-## Per-audit findings doc — `.buildloop/release/<noun>-audit.md`
+## Per-audit findings doc — `.dev-skills/release/<noun>-audit.md`
 
 ```
 # <Domain> audit — <product>
@@ -34,7 +34,7 @@ delete the italic guidance.
 The findings table is the heart: every row carries **proof** (an evidence link) and a **contract item**
 (what it traces to). A row with neither is a hunch, not a finding — drop it or downgrade to a note.
 
-## Combined release summary — `.buildloop/release/release-summary.md`
+## Combined release summary — `.dev-skills/release/release-summary.md`
 
 Built by `release-product` at the end of a run — decisions-first, for the human:
 
@@ -49,7 +49,7 @@ Built by `release-product` at the end of a run — decisions-first, for the huma
 - waived: <finding> — <who waived it, why>
 
 ## Filed for rework
-- <count> tasks across <audits> — see .buildloop/build-plan/board.md
+- <count> tasks across <audits> — see .dev-skills/build-plan/board.md
 
 ## Audits run
 | audit | verdict | blockers | majors | doc |

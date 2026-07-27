@@ -1,7 +1,7 @@
 # Dev Architecture — <Product name>
 
 > Status: Draft | Date: <YYYY-MM-DD>
-> Source: .buildloop/project-spec/architecture.research.md, .buildloop/project-spec/user-flows.research.md
+> Source: .dev-skills/project-spec/architecture.research.md, .dev-skills/project-spec/user-flows.research.md
 > Scope: the inner loop — local run + AI-drivable testing + AI tooling. NOT the production design.
 
 ## Constraints

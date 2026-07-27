@@ -12,7 +12,7 @@ when no config exists.
     `## Forks / Decisions log`; it does not prompt the human and does not stop at gates. Low- and
     medium-confidence forks are surfaced in the human summary as "must answer".
 - **`final_summary`** — `true` (default) | `false`. Whether the orchestrator builds the combined
-  `.buildloop/project-spec/summary.md` at the end of the run.
+  `.dev-skills/project-spec/summary.md` at the end of the run.
 - **`project_type`** — `greenfield` (default) | `existing`.
   - `greenfield`: the spec is elicited from the user's head; there is no code yet. The pipeline runs
     exactly as documented elsewhere.
@@ -23,7 +23,7 @@ when no config exists.
   - **Absent ⇒ `greenfield`** — every spec written before this field existed keeps working untouched,
     and the existing-mode drift columns in the Forks / Decisions log stay blank.
 
-## Config file — `.buildloop/project-spec/.spec-config.md`
+## Config file — `.dev-skills/project-spec/.spec-config.md`
 
 Small, human-readable. Written by `create-project-spec` (or by the first phase skill run
 standalone). Format:
@@ -38,7 +38,7 @@ standalone). Format:
 
 ## How a phase skill uses it
 
-1. At intake, read `.buildloop/project-spec/.spec-config.md`.
+1. At intake, read `.dev-skills/project-spec/.spec-config.md`.
 2. **Present:** use `mode` for this phase. If `project_type: existing`, also run the phase's
    existing-project mode (see `existing-project-mode.md`).
 3. **Absent (standalone run):** ask the user the settings (one `AskUserQuestion`, defaults
@@ -47,10 +47,10 @@ standalone). Format:
    single phase, interactive is the safe default. A standalone phase run in a repo that clearly
    already has code should default `project_type` to `existing` and confirm.
 
-Whenever you create the `.buildloop/project-spec/` directory (here or when first writing an artifact),
-also create a local `.buildloop/project-spec/.gitignore` containing `*.review.md` if it is absent — a
+Whenever you create the `.dev-skills/project-spec/` directory (here or when first writing an artifact),
+also create a local `.dev-skills/project-spec/.gitignore` containing `*.review.md` if it is absent — a
 safety net so an aborted run never commits a stray transient review file. Everything else under
-`.buildloop/project-spec/` is committed project documentation.
+`.dev-skills/project-spec/` is committed project documentation.
 
 ## Autopilot rules (non-negotiable)
 

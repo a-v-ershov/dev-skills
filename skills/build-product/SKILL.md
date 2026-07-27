@@ -1,7 +1,7 @@
 ---
 name: build-product
 disable-model-invocation: true
-description: "Build the product from the backlog, one task at a time. Use after plan-development, as the execution step of the build/development phase. A thin orchestrator: it reads .buildloop/build-plan/, repeatedly picks one ready task (status todo with all blockers done), and drives it through the loop — implement-feature builds it, then verify-feature runs as a SEPARATE fresh agent (bounded by max_verify_iterations; at the cap the task escalates to needs_human), then a checkpoint commit carrying the task id — regenerating board.md and continuing until no ready task remains. Sequential, single working tree, no parallelism. Resumable: the backlog is the source of truth, so a killed run restarts without rebuilding done tasks. Conducts the focused sub-skills (setup-dev-environment / implement-feature / verify-feature / commit); it does not duplicate their logic."
+description: "Build the product from the backlog, one task at a time. Use after plan-development, as the execution step of the build/development phase. A thin orchestrator: it reads .dev-skills/build-plan/, repeatedly picks one ready task (status todo with all blockers done), and drives it through the loop — implement-feature builds it, then verify-feature runs as a SEPARATE fresh agent (bounded by max_verify_iterations; at the cap the task escalates to needs_human), then a checkpoint commit carrying the task id — regenerating board.md and continuing until no ready task remains. Sequential, single working tree, no parallelism. Resumable: the backlog is the source of truth, so a killed run restarts without rebuilding done tasks. Conducts the focused sub-skills (setup-dev-environment / implement-feature / verify-feature / commit); it does not duplicate their logic."
 argument-hint: "[--task <id>] [--from <id>]"
 ---
 
@@ -35,7 +35,7 @@ always English — the `commit` skill enforces that.)
 
 ## Modes
 
-Read `.buildloop/build-plan/.build-config.md` for `mode` and `max_verify_iterations`. If absent, ask once
+Read `.dev-skills/build-plan/.build-config.md` for `mode` and `max_verify_iterations`. If absent, ask once
 (defaults: interactive + 4) and write it. Full rules:
 **`../_shared/build-pipeline/build-config.md`**. Backlog schema + `ready`/board:
 **`../_shared/build-pipeline/backlog-format.md`**.
@@ -54,7 +54,7 @@ Read `.buildloop/build-plan/.build-config.md` for `mode` and `max_verify_iterati
 ```
 
 ### Step 0: Intake + resume
-Read `.buildloop/build-plan/tasks/*.md` and `.build-config.md` (write the config if absent). Detect progress:
+Read `.dev-skills/build-plan/tasks/*.md` and `.build-config.md` (write the config if absent). Detect progress:
 `done` tasks are finished (never rebuild them); a task left `in_progress` from a killed run is
 re-evaluated (treat it as the next thing to drive — re-verify before committing). Also **reclaim a
 stale env lock** left by a killed run (**`../_shared/build-pipeline/env-access.md`**). Honor
@@ -100,7 +100,7 @@ Repeat until no `ready` task remains:
      `commit` skill splits a substantial cleanup into its own `refactor:` commit, separate from the
      `feat:` change. In interactive you may confirm the commit; in autopilot it commits. **Release
      the env lease** after the commit.
-5. **Regenerate `.buildloop/build-plan/board.md`** from the task files.
+5. **Regenerate `.dev-skills/build-plan/board.md`** from the task files.
 6. **Continue** to the next ready task.
 
 A `needs_human` task is never picked again automatically — it waits for the human. If the only
@@ -109,7 +109,7 @@ remaining tasks are `needs_human`, `cancelled`, or blocked by those, the loop is
 ### Done: report + handoff
 When no `ready` task remains, report: how many tasks are `done`, how many `needs_human` (with their
 ids — the human's action list), and how many are blocked and by what. Point the user at
-`.buildloop/build-plan/board.md`. If everything is `done`, say so plainly.
+`.dev-skills/build-plan/board.md`. If everything is `done`, say so plainly.
 
 ## Rules
 

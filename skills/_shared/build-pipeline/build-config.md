@@ -17,7 +17,7 @@ gracefully when no config exists.
   single task. When `verify-feature` has failed a critical acceptance criterion this many times, the
   task goes to `needs_human` instead of looping again.
 
-## Config file — `.buildloop/build-plan/.build-config.md`
+## Config file — `.dev-skills/build-plan/.build-config.md`
 
 Small, human-readable. Written by `build-product` (or by the first build skill run standalone). Format:
 
@@ -30,13 +30,13 @@ Small, human-readable. Written by `build-product` (or by the first build skill r
 
 ## How a build skill uses it
 
-1. At intake, read `.buildloop/build-plan/.build-config.md`.
+1. At intake, read `.dev-skills/build-plan/.build-config.md`.
 2. **Present:** use `mode` and `max_verify_iterations`.
 3. **Absent (standalone run):** ask the user the two settings (one `AskUserQuestion`, defaults
    pre-selected: interactive + 4), then write `.build-config.md` so later standalone skills inherit
    the choice. Interactive is the safe default.
 
-Whenever you create `.buildloop/build-plan/`, it is committed project documentation — no special gitignore
+Whenever you create `.dev-skills/build-plan/`, it is committed project documentation — no special gitignore
 is needed (unlike the spec pipeline's transient `*.review.md`, the build pipeline keeps no transient
 files).
 

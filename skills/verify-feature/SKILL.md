@@ -1,13 +1,13 @@
 ---
 name: verify-feature
-description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by build-product as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .buildloop/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log, sets a pass/fail verdict, bumps verify_attempts, and at the max_verify_iterations cap escalates the task to needs_human instead of looping. Runs after implement-feature; can also be invoked standalone on a task id."
+description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by build-product as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .dev-skills/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log, sets a pass/fail verdict, bumps verify_attempts, and at the max_verify_iterations cap escalates the task to needs_human instead of looping. Runs after implement-feature; can also be invoked standalone on a task id."
 argument-hint: "[task-id]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/.buildloop/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Verify Feature Skill
@@ -33,14 +33,14 @@ additional to any the implementer wrote — aimed at breaking the feature.
 
 ## Inputs and outputs
 
-- **Reads:** the task file (`acceptance` + `## Description`), `.buildloop/project-setup/verification.md` (the
-  run/drive/prove commands), `.buildloop/build-plan/.build-config.md` (`max_verify_iterations`). If
+- **Reads:** the task file (`acceptance` + `## Description`), `.dev-skills/project-setup/verification.md` (the
+  run/drive/prove commands), `.dev-skills/build-plan/.build-config.md` (`max_verify_iterations`). If
   `verification.md` is missing, stop and point the user at `setup-dev-environment` — verification
   cannot run without it.
 - **Writes:** the adversarial **test files** you author, committed into the project's test structure
   (the convention is in `verification.md`); a batch of findings appended to the task's `## Log`; the
   task's `verify_attempts`; on escalation, the task's `status: needs_human`. Evidence under
-  `.buildloop/build-plan/tasks/artifacts/`.
+  `.dev-skills/build-plan/tasks/artifacts/`.
 
 Method (the loop, recording, escalation): **`../_shared/build-pipeline/verification-method.md`**. Task
 schema: **`../_shared/build-pipeline/backlog-format.md`**.
@@ -78,7 +78,7 @@ language and think in it too. Never translate code, identifiers, commands, or fi
 ```
 
 ### Stage 0: Intake
-Read the task's `acceptance` criteria and `## Description`. Read `.buildloop/project-setup/verification.md`
+Read the task's `acceptance` criteria and `## Description`. Read `.dev-skills/project-setup/verification.md`
 for the concrete commands (bring-up, drive/prove per surface, dummy auth, seed/reset, logs). Read
 `max_verify_iterations`. If the contract is missing, stop and report.
 
@@ -87,7 +87,7 @@ For **each** acceptance criterion, produce two independent proofs. **Author** an
 test (additional to the implementer's), commit it into the project's test structure, and run it. Then
 bring the stack up (or confirm it's up), reset to a known seeded state if needed, **drive** the behavior
 per the contract, and **prove** the real outcome — observe and capture it. Cover the negative/error
-criteria explicitly. Save screenshots/responses to `.buildloop/build-plan/tasks/artifacts/`. Full method:
+criteria explicitly. Save screenshots/responses to `.dev-skills/build-plan/tasks/artifacts/`. Full method:
 **`verification-method.md`**.
 
 ### Stage 2: Record

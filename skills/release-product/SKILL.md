@@ -22,7 +22,7 @@ spawn all enabled audits in parallel (read-only, fresh agents)
    → any open 🔴/🟡?  → file rework tasks (plan-development amend) → build-product fixes → re-audit  ⟲
                         (bounded by max_audit_iterations; a 🔴 at the cap → needs_human, stop)
    → clean (no open 🔴)?  → cut-release (version + changelog + notes + tag + PR, always confirmed)
-   → build .buildloop/release/release-summary.md
+   → build .dev-skills/release/release-summary.md
 ```
 
 The audits are sub-skills run as **subagents** (one fresh agent each, via the Agent/Skill tool). Static
@@ -39,7 +39,7 @@ English — the `commit` skill, invoked by `cut-release`, enforces that.)
 
 ## Modes
 
-Read `.buildloop/release/.release-config.md` for `mode`, `max_audit_iterations`, and the enabled `audits`. If
+Read `.dev-skills/release/.release-config.md` for `mode`, `max_audit_iterations`, and the enabled `audits`. If
 absent, ask once (defaults: interactive + 3 + all applicable) and write it. Full rules:
 **`../_shared/release-pipeline/release-config.md`**. The audit machine, severity, and report shapes:
 **`../_shared/release-pipeline/audit-method.md`**, **`severity-rubric.md`**, **`report-template.md`**.
@@ -61,17 +61,17 @@ absent, ask once (defaults: interactive + 3 + all applicable) and write it. Full
 ```
 
 ### Step 0: Intake + resume
-Confirm the build phase is done (the backlog `.buildloop/build-plan/board.md` shows no `ready`/`in_progress`
+Confirm the build phase is done (the backlog `.dev-skills/build-plan/board.md` shows no `ready`/`in_progress`
 feature tasks left, or the user says so). Read the spec contracts each audit needs
-(`.buildloop/project-spec/architecture.research.md`, `design-decisions.research.md`, `user-flows.research.md`)
-and `.buildloop/project-setup/verification.md` (how to bring the stack up + drive it). Read
-`.release-config.md` (write it if absent). **Detect resume:** existing `.buildloop/release/*-audit.md` with a
+(`.dev-skills/project-spec/architecture.research.md`, `design-decisions.research.md`, `user-flows.research.md`)
+and `.dev-skills/project-setup/verification.md` (how to bring the stack up + drive it). Read
+`.release-config.md` (write it if absent). **Detect resume:** existing `.dev-skills/release/*-audit.md` with a
 clean verdict need not re-run unless their tasks changed; open rework tasks left by a killed run resume
 where they are. Honor `--audit <name>` (run just that one) and `--skip-ship` (audits only, no cut).
 
 ### Step 1: Audit (parallel fan-out)
 Spawn each enabled audit as a **fresh subagent**. They are independent and read-only → launch them
-together. Each reads its contract, probes, proves, ranks, writes `.buildloop/release/<noun>-audit.md`, and
+together. Each reads its contract, probes, proves, ranks, writes `.dev-skills/release/<noun>-audit.md`, and
 returns its verdict (clean / N blockers / N majors). A `--skip-ship` run ends after this step with the
 summary. **A sub-skill not yet available in this collection is a stop condition** regardless of mode:
 report it and let the user decide whether to skip that audit or build the skill first.
@@ -98,10 +98,10 @@ production deploy (out of scope by design). If `cut-release` is not yet availabl
 release is audit-clean and ready to cut by hand, and stop.
 
 ### Done: summary + handoff
-Build `.buildloop/release/release-summary.md` (**`report-template.md`**) — decisions-first: the verdict, open
+Build `.dev-skills/release/release-summary.md` (**`report-template.md`**) — decisions-first: the verdict, open
 blockers + any waivers (the human's action list), the rework filed, the audits run with their verdicts,
 and what shipped if `cut-release` ran. Do not re-derive — roll up each audit's verdict + the cut result.
-Then **refresh the project documentation map** block in the root `CLAUDE.md` so `.buildloop/release/` shows up
+Then **refresh the project documentation map** block in the root `CLAUDE.md` so `.dev-skills/release/` shows up
 — idempotent, only between the markers, per **`../_shared/agent-guide.md`** (this is the release phase's
 primary map refresh; it runs even under `--skip-ship`, where `cut-release` never does). Report the paths
 and hand off.

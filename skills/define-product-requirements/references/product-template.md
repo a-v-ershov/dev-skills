@@ -1,7 +1,7 @@
 # Product Definition — <Product name>
 
 > Status: Draft | Date: <YYYY-MM-DD>
-> Source: .buildloop/project-spec/idea-validation.research.md (<verdict>)
+> Source: .dev-skills/project-spec/idea-validation.research.md (<verdict>)
 
 ## Summary
 

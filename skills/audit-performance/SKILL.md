@@ -1,13 +1,13 @@
 ---
 name: audit-performance
-description: "Audit the built product's performance at the system level, against the spec's quality-attribute scenarios. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent performance engineer: it reads the latency/throughput/cost/scale scenarios from .buildloop/project-spec/architecture.research.md and MEASURES whether the running system meets them — p50/p95 on the hot paths, throughput under the target load, bundle/asset weight and client render cost, query plans (N+1, missing index), and the resource/cost envelope. Read-only: it measures, reproduces the slow path, and ranks (blocker = a missed budget, major = met with no margin, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .buildloop/release/performance-audit.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the number actually moved."
+description: "Audit the built product's performance at the system level, against the spec's quality-attribute scenarios. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent performance engineer: it reads the latency/throughput/cost/scale scenarios from .dev-skills/project-spec/architecture.research.md and MEASURES whether the running system meets them — p50/p95 on the hot paths, throughput under the target load, bundle/asset weight and client render cost, query plans (N+1, missing index), and the resource/cost envelope. Read-only: it measures, reproduces the slow path, and ranks (blocker = a missed budget, major = met with no margin, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/performance-audit.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the number actually moved."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.buildloop/*' '*/.buildloop/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.dev-skills/*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Performance Skill
@@ -28,14 +28,14 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
 
 ## Inputs and outputs
 
-- **Reads:** the **quality-attribute scenarios** in `.buildloop/project-spec/architecture.research.md`
+- **Reads:** the **quality-attribute scenarios** in `.dev-skills/project-spec/architecture.research.md`
   (+ `adr/*`) — your contract: the measurable latency / throughput / cost / scale targets elicited
-  *before* any tool was named. `.buildloop/project-setup/verification.md` for how to bring the stack up + drive
+  *before* any tool was named. `.dev-skills/project-setup/verification.md` for how to bring the stack up + drive
   each surface. The running system. If a scenario has **no measurable budget**, you can measure but not
   blocker it — record the number and flag the missing budget back to the spec (a 🟡 / note).
-- **Writes:** `.buildloop/release/performance-audit.md` (findings, template in `report-template.md`); rework
+- **Writes:** `.dev-skills/release/performance-audit.md` (findings, template in `report-template.md`); rework
   tasks in the backlog for 🔴/🟡 (via `plan-development` amend); evidence (captured numbers, profiles,
-  bundle reports) under `.buildloop/release/artifacts/`. Never the product's code.
+  bundle reports) under `.dev-skills/release/artifacts/`. Never the product's code.
 
 ## Language
 
@@ -80,7 +80,7 @@ Bring the stack up through the coordinated entrypoint (**`../_shared/build-pipel
 load test while another audit shares it). Seed to a realistic volume. Drive each scenario per the
 contract and **capture the number** — percentiles over enough samples, the load knee, the bundle report,
 the query plan. **Reproduce the slow path** so the finding is repeatable, not a fluke. Save the raw
-numbers/profiles under `.buildloop/release/artifacts/`.
+numbers/profiles under `.dev-skills/release/artifacts/`.
 
 ### Stage 2: Rank + file
 Compare each measurement to its budget and rank per **`severity-rubric.md`**: a scenario **measurably
@@ -90,7 +90,7 @@ micro-optimization with no scenario behind it is ⚪ at most. File 🔴/🟡 as 
 with **no budget set** can't be a 🔴 — record the measurement and flag the missing budget to the spec.
 
 ### Stage 3: Record + verdict
-Write `.buildloop/release/performance-audit.md` (**`report-template.md`**): the verdict, the findings table
+Write `.dev-skills/release/performance-audit.md` (**`report-template.md`**): the verdict, the findings table
 (each row with the **measured number vs the budget** + the scenario it traces to + the filed task), what
 you **measured**, what you **skipped and why**, and `## Sources` for any benchmark method you leaned on.
 Return the verdict to `release-product`. On a re-audit, a previously-🔴 scenario is cleared only when you

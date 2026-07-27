@@ -1,6 +1,6 @@
 ---
 name: validate-idea
-description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited .buildloop/project-spec/idea-validation.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The first validation step of the create-project-spec pipeline; runs after gather-context (reads .buildloop/project-spec/project-brief.research.md if present) and before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
+description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited .dev-skills/project-spec/idea-validation.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The first validation step of the create-project-spec pipeline; runs after gather-context (reads .dev-skills/project-spec/project-brief.research.md if present) and before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
 ---
 
 # Idea Validation Skill
@@ -14,7 +14,7 @@ status quo, not a competitor, is the real enemy — and most ideas die here for 
 You do NOT propose solutions, features, UX, or architecture. If the user pushes toward those,
 redirect: "That's a later phase — first we validate whether this should exist."
 
-## Outputs in `.buildloop/project-spec/` (two kept files)
+## Outputs in `.dev-skills/project-spec/` (two kept files)
 
 - **`idea-validation.research.md`** — the detailed, source-cited validation (for the AI/next phases).
 - **`idea-validation.summary.md`** — the short human summary (essence + forks to answer).
@@ -30,7 +30,7 @@ same. This never translates code or identifiers.
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If it is absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -68,7 +68,7 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/project-brief.research.md` if present (the discovery brief from
+Read `.dev-skills/project-spec/project-brief.research.md` if present (the discovery brief from
 `gather-context`) — treat its intent, audience, and constraints as settled input and don't re-ask
 what it answers. Restate the idea in a single sentence and confirm (interactive) or record it
 (autopilot). If you cannot restate it, the idea is too vague — sharpen it (ask, or in autopilot
@@ -117,13 +117,13 @@ and why; pricing norms for the proposed model. Default to light targeted web sea
 ### Stage 3: Draft
 Give a direct verdict: **proceed / shrink-then-proceed / gather-evidence-first / kill**, the
 single biggest risk, and the **one concrete next action** (an action, not a strategy). Draft
-`.buildloop/project-spec/idea-validation.research.md` from `references/validation-doc-template.md`,
+`.dev-skills/project-spec/idea-validation.research.md` from `references/validation-doc-template.md`,
 citing sources inline as `[S1]`, `[S2]` and filling the `## Sources` and `## Forks / Decisions
-log` sections. Create `.buildloop/project-spec/` if needed.
+log` sections. Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review
 Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`.buildloop/project-spec/idea-validation.review.md` (it does NOT edit the draft; this file is
+`.dev-skills/project-spec/idea-validation.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + problems-doc format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes: is the demand evidence real
 or just interest; is the audience specific; does the "no good alternative" claim survive a web
@@ -142,11 +142,11 @@ Synthesize the draft + review corrections + filled gaps into the final
 `idea-validation.research.md`. Apply fixes, integrate the gaps the reviewer filled, log the
 applied findings in the Forks / Decisions log, and re-research **only** still-disputed points
 (targeted, not a fresh full pass). What no one could verify goes to `## Open questions`. **Then
-delete `.buildloop/project-spec/idea-validation.review.md`** — its content now lives in the research doc.
+delete `.dev-skills/project-spec/idea-validation.review.md`** — its content now lives in the research doc.
 
 ### Stage 7: Dual output
 Finalize `idea-validation.research.md` (complete `## Sources` and `## Forks / Decisions log`).
-Then write `.buildloop/project-spec/idea-validation.summary.md` from
+Then write `.dev-skills/project-spec/idea-validation.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the essence + the forks the human must answer
 (every `Needs human confirm? = yes`) + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.

@@ -2,8 +2,8 @@
 # guard-write-scope.sh — a PreToolUse guard for Write|Edit.
 #
 # Enforces a write-scope invariant for skills that must not edit product code:
-#   - verify-feature  → may write tests + the backlog (.buildloop/build-plan), nothing else
-#   - audit-*         → may write findings (.buildloop/**) + the backlog, nothing else
+#   - verify-feature  → may write tests + the backlog (.dev-skills/build-plan), nothing else
+#   - audit-*         → may write findings (.dev-skills/**) + the backlog, nothing else
 #
 # It reads the Claude Code hook JSON from stdin, extracts tool_input.file_path, and
 # ALLOWS the write only if that path matches one of the glob patterns passed as
@@ -11,10 +11,10 @@
 # stderr is fed back to the agent as an actionable message).
 #
 # Usage (from a skill's frontmatter `hooks` block):
-#   guard-write-scope.sh '*/tests/*' '*test*' '*/.buildloop/build-plan/*' '/tmp/*'
+#   guard-write-scope.sh '*/tests/*' '*test*' '*/.dev-skills/build-plan/*' '/tmp/*'
 #
 # Patterns are shell globs matched (whole-string) against the absolute file path,
-# so wrap substrings in '*...*' (e.g. '*/.buildloop/release/*').
+# so wrap substrings in '*...*' (e.g. '*/.dev-skills/release/*').
 
 input=$(cat)
 

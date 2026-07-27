@@ -18,7 +18,7 @@ gracefully when no config exists.
   contract is absent or N/A (e.g. `audit-accessibility` on a product with no UI, `audit-performance`
   with no measurable scenario).
 
-## Config file — `.buildloop/release/.release-config.md`
+## Config file — `.dev-skills/release/.release-config.md`
 
 ```
 # Release pipeline config
@@ -30,12 +30,12 @@ gracefully when no config exists.
 
 ## How a release skill uses it
 
-1. At intake, read `.buildloop/release/.release-config.md`.
+1. At intake, read `.dev-skills/release/.release-config.md`.
 2. **Present:** use `mode`, `max_audit_iterations`, and the enabled `audits`.
 3. **Absent (standalone run):** ask the user once (one `AskUserQuestion`, defaults pre-selected:
    interactive + 3 + all applicable audits), then write the file so later standalone skills inherit it.
 
-`.buildloop/release/` is committed project documentation — no special gitignore; the release pipeline keeps no
+`.dev-skills/release/` is committed project documentation — no special gitignore; the release pipeline keeps no
 transient files (every findings doc is kept as the audit trail).
 
 ## Two things ALWAYS stop, regardless of mode

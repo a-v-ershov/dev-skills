@@ -57,8 +57,8 @@ Three sequential pipelines, each conducted by a thin **orchestrator** that seque
   before prod deploy).
 
 Skills are **verbs**; their outputs are **nouns**. All artifacts are committed project documentation
-under `.buildloop/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
-(UI projects). The transient `*.review.md` and `.buildloop/build-plan/mockups/` are the only gitignored items.
+under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
+(UI projects). The transient `*.review.md` and `.dev-skills/build-plan/mockups/` are the only gitignored items.
 
 ## Skill & agent authoring conventions
 
@@ -77,8 +77,8 @@ under `.buildloop/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/
   `propagate-changes`, `cut-release`, `release-product`. Not set on the doc-only spec phases, the
   read-only `audit-*`, the build-loop skills, or `generate-mockups`.
 - **Write-scope guard hooks** (declared in a skill's frontmatter, running `scripts/guard-write-scope.sh`)
-  turn a prose invariant into a harness guarantee: `verify-feature` writes tests + `.buildloop/build-plan/`
-  only; `generate-mockups` the scratch mockups tree only; each `audit-*` `.buildloop/**` + the backlog only.
+  turn a prose invariant into a harness guarantee: `verify-feature` writes tests + `.dev-skills/build-plan/`
+  only; `generate-mockups` the scratch mockups tree only; each `audit-*` `.dev-skills/**` + the backlog only.
   **`allowed-tools` is deliberately unused** — we keep the user's permission prompts intact.
 
 ## Authoring language

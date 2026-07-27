@@ -1,7 +1,7 @@
 # User Flows — <Product name>
 
 > Status: Draft | Date: <YYYY-MM-DD>
-> Source: .buildloop/project-spec/product-requirements.research.md
+> Source: .dev-skills/project-spec/product-requirements.research.md
 
 ## Customer journey map — <primary persona>
 

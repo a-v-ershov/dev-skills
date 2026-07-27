@@ -1,13 +1,13 @@
 ---
 name: audit-product
-description: "Audit the built product end-to-end against the spec's user flows. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent QA lead: it reads the user flows + their acceptance criteria from .buildloop/project-spec/user-flows.research.md and drives the WHOLE running product through each journey — proving the cross-feature integration that per-task verify-feature could not see (state carried across steps, the seams between features, the flow's success outcome and its significant/error states). Read-only: it drives, observes, and ranks (blocker = a broken core journey, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .buildloop/release/qa-report.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the journey now completes."
+description: "Audit the built product end-to-end against the spec's user flows. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent QA lead: it reads the user flows + their acceptance criteria from .dev-skills/project-spec/user-flows.research.md and drives the WHOLE running product through each journey — proving the cross-feature integration that per-task verify-feature could not see (state carried across steps, the seams between features, the flow's success outcome and its significant/error states). Read-only: it drives, observes, and ranks (blocker = a broken core journey, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/qa-report.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the journey now completes."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.buildloop/*' '*/.buildloop/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.dev-skills/*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Product Skill
@@ -33,13 +33,13 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
 
 ## Inputs and outputs
 
-- **Reads:** the **user flows + their acceptance criteria** in `.buildloop/project-spec/user-flows.research.md`
+- **Reads:** the **user flows + their acceptance criteria** in `.dev-skills/project-spec/user-flows.research.md`
   — your contract: each flow's steps, its success outcome, and the significant/error states it must
-  handle. `.buildloop/project-setup/verification.md` for how to bring the stack up + drive each surface +
+  handle. `.dev-skills/project-setup/verification.md` for how to bring the stack up + drive each surface +
   dummy-auth/seed/reset. The running product.
-- **Writes:** `.buildloop/release/qa-report.md` (findings, template in `report-template.md`); rework tasks in
+- **Writes:** `.dev-skills/release/qa-report.md` (findings, template in `report-template.md`); rework tasks in
   the backlog for 🔴/🟡 (via `plan-development` amend); evidence (screenshots, captured responses, DB
-  rows) under `.buildloop/release/artifacts/`. Never the product's code.
+  rows) under `.dev-skills/release/artifacts/`. Never the product's code.
 
 ## Language
 
@@ -82,7 +82,7 @@ Bring the stack up through the coordinated entrypoint (**`../_shared/build-pipel
 realistic state. Drive each flow **end-to-end** the way the contract specifies (Playwright /
 Claude-in-Chrome for UX, the e2e harness for a multi-step flow, `curl` for an API journey), and **prove
 the real outcome** at the end plus the cross-feature seams. Probe the error/empty/denied states the flow
-names. Save screenshots/responses under `.buildloop/release/artifacts/`. "Each page loaded" is not proof — the
+names. Save screenshots/responses under `.dev-skills/release/artifacts/`. "Each page loaded" is not proof — the
 journey's outcome is.
 
 ### Stage 2: Rank + file
@@ -93,7 +93,7 @@ id + evidence link + the flow + the acceptance criterion it restores) via `plan-
 finding without a driven, observed failure.**
 
 ### Stage 3: Record + verdict
-Write `.buildloop/release/qa-report.md` (**`report-template.md`**): the verdict, the findings table (each row
+Write `.dev-skills/release/qa-report.md` (**`report-template.md`**): the verdict, the findings table (each row
 with evidence + the flow/criterion it traces to + the filed task), which flows you **drove** and to what
 outcome, what you **skipped and why**. Return the verdict to `release-product`. On a re-audit, a
 previously-🔴 flow is cleared only when you **re-drive it end-to-end and it now completes** — never by

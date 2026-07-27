@@ -1,6 +1,6 @@
 ---
 name: gather-context
-description: "Interview the human to extract maximum context before (and during) spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles. As the FIRST step of the create-project-spec pipeline it runs a full intake interview after the user's brief and writes .buildloop/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent. On demand it is a reusable grill: any phase can invoke it scoped to a fork that's blocked on context only the human holds, and the user can invoke it directly at any time to be interviewed on any topic. Captures the user's intent, audience, scope, constraints, and developer preferences (stack, code style, design taste, tooling, architecture leanings — kept as soft priors for later phases) — it does NOT validate the idea or define features (those are validate-idea and define-product-requirements)."
+description: "Interview the human to extract maximum context before (and during) spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles. As the FIRST step of the create-project-spec pipeline it runs a full intake interview after the user's brief and writes .dev-skills/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent. On demand it is a reusable grill: any phase can invoke it scoped to a fork that's blocked on context only the human holds, and the user can invoke it directly at any time to be interviewed on any topic. Captures the user's intent, audience, scope, constraints, and developer preferences (stack, code style, design taste, tooling, architecture leanings — kept as soft priors for later phases) — it does NOT validate the idea or define features (those are validate-idea and define-product-requirements)."
 argument-hint: "[topic or fork to grill on]"
 ---
 
@@ -20,7 +20,7 @@ recommended answer so they can affirm with a word. Stop when nothing material is
 ## Two roles (detect which one you are in)
 
 - **A. Front intake (pipeline phase 1).** Invoked by `create-project-spec` first, or run when no
-  `.buildloop/project-spec/project-brief.research.md` exists yet and the user is starting a project.
+  `.dev-skills/project-spec/project-brief.research.md` exists yet and the user is starting a project.
   **Scope = the whole project.** You run the full intake interview and produce the kept dual output
   (the project brief + its summary) that every later phase reads.
 - **B. On-demand grill.** Invoked with a specific topic or fork — by another phase (a fork blocked
@@ -44,7 +44,7 @@ carrying a specific question/topic is B.
 - **No solutioning.** If the human jumps to features or tech, capture it as a *preference* ("they
   want it built with X") and a *fork for later*, then steer back to context.
 
-## Outputs (role A only) in `.buildloop/project-spec/` (two kept files)
+## Outputs (role A only) in `.dev-skills/project-spec/` (two kept files)
 
 - **`project-brief.research.md`** — the detailed discovery dossier (for the AI / next phases).
 - **`project-brief.summary.md`** — the short human summary (essence + forks to answer).
@@ -60,7 +60,7 @@ never translates code or identifiers.
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -126,13 +126,13 @@ for this kind of tool is …"), or to sanity-check a world-claim the human leans
 web. Method — **`../_shared/spec-pipeline/research-method.md`**. Cite anything you carry into the doc.
 
 ### Stage 3: Draft
-Draft `.buildloop/project-spec/project-brief.research.md` from `references/brief-template.md`, citing any
+Draft `.dev-skills/project-spec/project-brief.research.md` from `references/brief-template.md`, citing any
 sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Create
-`.buildloop/project-spec/` if needed (and, on creating the dir, drop a `.buildloop/project-spec/.gitignore`
+`.dev-skills/project-spec/` if needed (and, on creating the dir, drop a `.dev-skills/project-spec/.gitignore`
 containing `*.review.md` if absent).
 
 ### Stage 4: Review (coverage critic)
-Delegate to the `spec-reviewer` agent to write `.buildloop/project-spec/project-brief.review.md` (it does NOT
+Delegate to the `spec-reviewer` agent to write `.dev-skills/project-spec/project-brief.review.md` (it does NOT
 edit the draft; this file is intermediate). Method + format:
 **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For this phase the critic
 is a **completeness critic**, not an adversary: which of the eight dimensions is still thin or
@@ -150,11 +150,11 @@ Clean review (0 🔴) proceeds without stopping.
 ### Stage 6: Merge
 Synthesize draft + review corrections + filled gaps into the final `project-brief.research.md`. Log
 the applied findings in the Forks / Decisions log. What no one could resolve goes to
-`## Open questions`. **Then delete `.buildloop/project-spec/project-brief.review.md`**.
+`## Open questions`. **Then delete `.dev-skills/project-spec/project-brief.review.md`**.
 
 ### Stage 7: Dual output
 Finalize `project-brief.research.md` (complete `## Sources` and `## Forks / Decisions log`). Then
-write `.buildloop/project-spec/project-brief.summary.md` from
+write `.dev-skills/project-spec/project-brief.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the shared understanding in plain language + the
 forks the human must answer + open unknowns. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
@@ -189,7 +189,7 @@ A focused mini-interview on one topic; no pipeline ceremony.
 ## Existing-project mode
 
 When `project_type: existing` (set in `.spec-config.md`), `map-codebase` has already run and written
-`.buildloop/project-spec/codebase-map.research.md` — the as-is facts. At Stage 0, read it, and **reframe the
+`.dev-skills/project-spec/codebase-map.research.md` — the as-is facts. At Stage 0, read it, and **reframe the
 intake interview**: not "what do you want to build?" but *"here's what you've built — what's the
 intended direction, what's drift you want fixed, what's deliberate?"* Self-answer the brief dimensions
 from the map (the product, the audience the code serves, the de-facto scope) and spend the human's

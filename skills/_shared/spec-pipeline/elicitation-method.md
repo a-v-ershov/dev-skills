@@ -82,7 +82,7 @@ yes`) rather than inventing certainty. Name what you deliberately did **not** as
 
 ## Read the brief first
 
-Every phase reads **`.buildloop/project-spec/project-brief.research.md`** (the discovery dossier from
+Every phase reads **`.dev-skills/project-spec/project-brief.research.md`** (the discovery dossier from
 `gather-context`) at intake, if present. Treat it as **two distinct classes of input**:
 
 - **Intent & constraints** (the goal, audience, scope, budget, timeline, platforms, compliance, hard

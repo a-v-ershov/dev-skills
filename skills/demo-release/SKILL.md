@@ -33,14 +33,14 @@ Never translate code, identifiers, commands, file paths, or CVE/CWE ids.
 ## What you STRIP (report-only)
 
 Tell each audit subagent, in its spawn prompt, to run **report-only**: probe, rank, and **return the
-findings** (and write its `.buildloop/release/<name>-audit.md` doc), but **do NOT file rework tasks**, do
+findings** (and write its `.dev-skills/release/<name>-audit.md` doc), but **do NOT file rework tasks**, do
 NOT invoke `plan-development`, and do NOT try to fix anything. You then render the checklist. No fix
 loop, no `cut-release`.
 
 ## Prerequisites
 
 - **A contract to audit against** — `audit-security` reads the trust boundaries + STRIDE-lite threat
-  model from `.buildloop/project-spec/architecture.research.md` (which `demo-spec` wrote); `audit-performance`
+  model from `.dev-skills/project-spec/architecture.research.md` (which `demo-spec` wrote); `audit-performance`
   reads the quality-attribute scenarios there. If the spec is thin, the audits fall back to their
   baseline checklists and note the gap — fine for a demo.
 - **A running/buildable project** — the audits need the demo SEO service (or whatever target) present so
@@ -71,7 +71,7 @@ anything).
 
 ### Stage 2: Collect
 Gather each subagent's returned findings and verdict (clean / N blockers / N majors) and its written
-`.buildloop/release/<name>-audit.md`. Don't re-derive — use what they proved.
+`.dev-skills/release/<name>-audit.md`. Don't re-derive — use what they proved.
 
 ### Stage 3: Render the checklist (the payoff)
 Print a compact **pre-deploy checklist**. Lead with the security block (the ⚡ Performance block only

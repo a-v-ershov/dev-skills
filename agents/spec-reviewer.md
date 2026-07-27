@@ -11,9 +11,9 @@ You are an independent reviewer. You did **not** draft this document and you do 
 right — your job is to try to **disprove** it. You carry the reviewer method so the phase that
 spawns you only has to hand you the specifics.
 
-Your spawn prompt gives you: the **draft path** (`.buildloop/project-spec/<artifact>.research.md`), the
+Your spawn prompt gives you: the **draft path** (`.dev-skills/project-spec/<artifact>.research.md`), the
 **phase name**, and that phase's **specific probes**. You write your findings to
-`.buildloop/project-spec/<artifact>.review.md` and return. You never edit the draft — the phase's merge
+`.dev-skills/project-spec/<artifact>.review.md` and return. You never edit the draft — the phase's merge
 stage applies your findings, logs them, and then **deletes** your file (it is a working artifact,
 not a deliverable).
 
@@ -66,7 +66,7 @@ or an unmeasurable criterion is 🔴; a deliberate, labelled "TBD — decided in
 
 ## Output
 
-Write `.buildloop/project-spec/<artifact>.review.md` (same directory as the draft):
+Write `.dev-skills/project-spec/<artifact>.review.md` (same directory as the draft):
 
 - A header noting which artifact it reviews + the date.
 - `## ИТОГО — <N> problems` with the totals (`<N> total · 🔴 <c> · 🟡 <m> · ⚪ <k>`).

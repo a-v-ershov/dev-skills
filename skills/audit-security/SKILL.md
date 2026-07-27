@@ -1,13 +1,13 @@
 ---
 name: audit-security
-description: "Audit the built product for security at the system level, against the spec's threat model. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent security engineer: it reads the STRIDE-lite threat model + trust boundaries from .buildloop/project-spec/architecture.research.md and proves, with evidence, whether the running system upholds them — secrets in code/history, authn/authz on every protected path, injection (SQL/command/template/path), the lethal trifecta (private data + untrusted input + external exfiltration in one agent/tool path), insecure data handling (PII, crypto, logging), and dependency/supply-chain exposure. Read-only: it probes, reproduces, and ranks (blocker/major/minor per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .buildloop/release/security-audit.md. Runs the shared audit machine; re-runs after a fix to confirm the hole is closed."
+description: "Audit the built product for security at the system level, against the spec's threat model. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent security engineer: it reads the STRIDE-lite threat model + trust boundaries from .dev-skills/project-spec/architecture.research.md and proves, with evidence, whether the running system upholds them — secrets in code/history, authn/authz on every protected path, injection (SQL/command/template/path), the lethal trifecta (private data + untrusted input + external exfiltration in one agent/tool path), insecure data handling (PII, crypto, logging), and dependency/supply-chain exposure. Read-only: it probes, reproduces, and ranks (blocker/major/minor per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/security-audit.md. Runs the shared audit machine; re-runs after a fix to confirm the hole is closed."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.buildloop/*' '*/.buildloop/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.dev-skills/*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Security Skill
@@ -30,12 +30,12 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
 ## Inputs and outputs
 
 - **Reads:** the STRIDE-lite **threat model + trust boundaries** in
-  `.buildloop/project-spec/architecture.research.md` (+ `adr/*`) — your contract; `.buildloop/project-setup/verification.md`
+  `.dev-skills/project-spec/architecture.research.md` (+ `adr/*`) — your contract; `.dev-skills/project-setup/verification.md`
   for how to bring the stack up and drive it; the product's source, dependency manifests, and git
   history. If the threat model is absent (the spec may have skipped it for a product with no sensitive
   assets), say so and audit against the OWASP/trifecta baseline below, recording the gap.
-- **Writes:** `.buildloop/release/security-audit.md` (findings, template in `report-template.md`); rework
-  tasks in the backlog for 🔴/🟡 (via `plan-development` amend); evidence under `.buildloop/release/artifacts/`.
+- **Writes:** `.dev-skills/release/security-audit.md` (findings, template in `report-template.md`); rework
+  tasks in the backlog for 🔴/🟡 (via `plan-development` amend); evidence under `.dev-skills/release/artifacts/`.
   Never the product's code.
 
 ## Language
@@ -89,7 +89,7 @@ don't collide with `audit-performance`/`audit-product`) and drive the real attac
 (secrets, supply chain, crypto) read the tree, history, and manifests. **Reproduce a hole** (a request
 that leaks, a payload that lands) or **prove the defense** (the parameterized query, the enforced 403).
 "No obvious issue" is not proof — find the boundary and push on it. Save evidence (the leaking response,
-the secret location, the advisory) under `.buildloop/release/artifacts/`.
+the secret location, the advisory) under `.dev-skills/release/artifacts/`.
 
 ### Stage 2: Rank + file
 Rank each finding 🔴/🟡/⚪ per **`severity-rubric.md`**, against the threat model — an exploitable hole on
@@ -99,7 +99,7 @@ threat it restores) via `plan-development` amend. Do not file ⚪. **No finding 
 unproven worry is a note to investigate, not a blocker.
 
 ### Stage 3: Record + verdict
-Write `.buildloop/release/security-audit.md` (**`report-template.md`**): the verdict (clean / N blockers / N
+Write `.dev-skills/release/security-audit.md` (**`report-template.md`**): the verdict (clean / N blockers / N
 majors), the findings table (each row with evidence + the threat it traces to + the filed task), what
 you **checked**, what you **skipped and why**, and `## Sources` for any advisory/CWE you leaned on.
 Return the verdict to `release-product`. On a re-audit, a previously-🔴 finding is only cleared when you

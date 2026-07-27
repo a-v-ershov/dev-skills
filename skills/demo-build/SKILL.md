@@ -39,15 +39,15 @@ the user asks.)
 
 ## Prerequisites (check fast, fix minimally)
 
-- **A verification contract** — `.buildloop/project-setup/verification.md` (how to bring the stack up +
+- **A verification contract** — `.dev-skills/project-setup/verification.md` (how to bring the stack up +
   drive/prove a surface). The verifier **cannot run without it**. If it's missing: either the user has
   already run `setup-dev-environment` on the demo project, or you write a **minimal** one inline from
   what you can detect (the dev-server command, how to hit the UI/API, how to run tests) — just enough
   for the verifier to drive the stack. Don't build a full setup; this is a demo.
-- **A slim spec** — `.buildloop/project-spec/product-requirements.research.md` (from `demo-spec`), so the
+- **A slim spec** — `.dev-skills/project-spec/product-requirements.research.md` (from `demo-spec`), so the
   task can trace to a real feature + acceptance criteria. If absent, derive one acceptance criterion
   inline from the feature description.
-- **`.buildloop/build-plan/.build-config.md`** — write it if absent: `mode: interactive`,
+- **`.dev-skills/build-plan/.build-config.md`** — write it if absent: `mode: interactive`,
   `max_verify_iterations: 2`.
 
 ## Procedure (copy this checklist into your response and check off as you go)
@@ -67,7 +67,7 @@ Ensure the verification contract and config exist per **Prerequisites** above. R
 (`date -u +%Y-%m-%dT%H:%M:%SZ`).
 
 ### Stage 1: One throwaway task
-Create `.buildloop/build-plan/tasks/` if absent and write **one** task file `T001-<slug>.md` following
+Create `.dev-skills/build-plan/tasks/` if absent and write **one** task file `T001-<slug>.md` following
 the schema in `../_shared/build-pipeline/backlog-format.md` (`type: feature`, `status: todo`,
 `blocked_by: []`, `verify_attempts: 0`). Give it:
 - a concrete `## Description` (what to build, where it fits, the relevant spec section),

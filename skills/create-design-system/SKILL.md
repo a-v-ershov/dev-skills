@@ -1,7 +1,7 @@
 ---
 name: create-design-system
 disable-model-invocation: true
-description: "Turn the design DIRECTION into a concrete, committed design system — a root DESIGN.md (Google's open, tool-neutral format: YAML design tokens + prose rationale). Use in the build phase, AFTER the project is scaffolded (so candidates can be rendered in the real stack), normally invoked by setup-dev-environment for a UI project, or standalone. Reads .buildloop/project-spec/design-decisions.research.md (the direction: system needed?, adopt-vs-bespoke, type/color intent) and product-requirements (brand/audience). Produces SEVERAL candidate DESIGN.md variants from one of three sources — IMPORT an existing DESIGN.md, ADOPT a UI kit (Material 3 / shadcn / Tailwind UI / Radix), or GENERATE from brand intent — renders each as mockups via generate-mockups so the human can compare, then writes the chosen one to the repo root and a .buildloop/project-setup/design-system.md record. Self-skips for a no-UI project or when design-decisions says no system is needed. Idempotent; installs/global changes gated (the careful pattern). It makes the direction concrete; it does NOT re-open the direction (that's define-design-decisions) and does NOT lay out per-feature screens (that's generate-mockups + implement-feature)."
+description: "Turn the design DIRECTION into a concrete, committed design system — a root DESIGN.md (Google's open, tool-neutral format: YAML design tokens + prose rationale). Use in the build phase, AFTER the project is scaffolded (so candidates can be rendered in the real stack), normally invoked by setup-dev-environment for a UI project, or standalone. Reads .dev-skills/project-spec/design-decisions.research.md (the direction: system needed?, adopt-vs-bespoke, type/color intent) and product-requirements (brand/audience). Produces SEVERAL candidate DESIGN.md variants from one of three sources — IMPORT an existing DESIGN.md, ADOPT a UI kit (Material 3 / shadcn / Tailwind UI / Radix), or GENERATE from brand intent — renders each as mockups via generate-mockups so the human can compare, then writes the chosen one to the repo root and a .dev-skills/project-setup/design-system.md record. Self-skips for a no-UI project or when design-decisions says no system is needed. Idempotent; installs/global changes gated (the careful pattern). It makes the direction concrete; it does NOT re-open the direction (that's define-design-decisions) and does NOT lay out per-feature screens (that's generate-mockups + implement-feature)."
 argument-hint: "[import <path|url> | adopt <kit> | generate]"
 ---
 
@@ -46,16 +46,16 @@ human choose what they can actually look at.
 - **`DESIGN.md` at the repo root** — the canonical, version-controlled, tool-neutral design system
   (the chosen candidate). Format + token schema: `references/design-md-format.md`. This is the file
   `implement-feature`, `generate-mockups`, and external tools (Stitch/Cursor/Claude Code) read.
-- **`.buildloop/project-setup/design-system.md`** — the human record: the approach taken (import/adopt/
+- **`.dev-skills/project-setup/design-system.md`** — the human record: the approach taken (import/adopt/
   generate), the source, the candidates compared (with links to their mockups), why this one won, and
   any fork the human should confirm. This is the audit trail + the decisions-first summary in one (it
   replaces the spec pipeline's research+summary pair — this skill lives in the build phase, where docs
   are lighter and `DESIGN.md` itself carries the rationale prose).
-- Throwaway **candidate mockups** under `.buildloop/build-plan/mockups/design-system/<candidate>/`
+- Throwaway **candidate mockups** under `.dev-skills/build-plan/mockups/design-system/<candidate>/`
   (gitignored scratch — `../_shared/build-pipeline/mockup-method.md`); only the chosen candidate's
   screenshot is kept, referenced from the record.
 
-`.buildloop/project-setup/` and the root `DESIGN.md` are committed project documentation.
+`.dev-skills/project-setup/` and the root `DESIGN.md` are committed project documentation.
 
 ## Language
 
@@ -66,7 +66,7 @@ of the format).
 
 ## Modes (read this first)
 
-Read `.buildloop/build-plan/.build-config.md` for `mode`. If absent (standalone run), ask once (default
+Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone run), ask once (default
 **interactive**) and write it. Full rules: **`../_shared/build-pipeline/build-config.md`**.
 
 - **interactive** — ask the source/approach, present the rendered candidates, and stop for the human to
@@ -100,14 +100,14 @@ Read `.buildloop/build-plan/.build-config.md` for `mode`. If absent (standalone 
 - [ ] Stage 2: Candidates — produce 2–3 candidate DESIGN.md variants (full format: tokens + prose), each tracing to the direction; check contrast vs the WCAG target
 - [ ] Stage 3: Render — invoke generate-mockups (showcase mode) per candidate over the key screens; collect screenshots
 - [ ] Stage 4: Choose — present the rendered candidates side by side (interactive: human picks · autopilot: pick + log + Needs human confirm)
-- [ ] Stage 5: Commit — write the chosen DESIGN.md to the repo root; write .buildloop/project-setup/design-system.md; discard the other candidates
+- [ ] Stage 5: Commit — write the chosen DESIGN.md to the repo root; write .dev-skills/project-setup/design-system.md; discard the other candidates
 - [ ] Stage 6: Handoff — point at the root DESIGN.md + the record; note generate-mockups is available per-feature from here
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/design-decisions.research.md` (the direction — the **Design system / Needed?**
+Read `.dev-skills/project-spec/design-decisions.research.md` (the direction — the **Design system / Needed?**
 field, the component strategy, the type/color intent, the key-screen inventory, the WCAG target) and
-`.buildloop/project-spec/product-requirements.research.md` (brand, audience, product category). **Self-skip**
+`.dev-skills/project-spec/product-requirements.research.md` (brand, audience, product category). **Self-skip**
 (report and touch nothing) if this is a no-UI project or `design-decisions` recorded **Needed? = no** —
 record the one-line reason. Detect an existing root `DESIGN.md` or design tokens (idempotency — revise,
 don't clobber). Confirm the project is scaffolded (so candidates can render in the stack); if not, you
@@ -136,7 +136,7 @@ prose sections, in canonical order) per `references/design-md-format.md`. Each m
 direction and the domain/glossary vocabulary. Resolve token references (`{colors.primary}`) coherently.
 **Check color contrast** of text-on-surface pairs against the `design-decisions` WCAG target and fix or
 flag failures. Stage each candidate where the renderer can reach it (e.g.
-`.buildloop/build-plan/mockups/design-system/<candidate>/DESIGN.md`).
+`.dev-skills/build-plan/mockups/design-system/<candidate>/DESIGN.md`).
 
 ### Stage 3: Render
 For **each** candidate, invoke **`generate-mockups` in showcase mode** (via the Skill tool), passing the
@@ -155,7 +155,7 @@ recommendation.
 
 ### Stage 5: Commit
 Write the chosen candidate to the **repo root as `DESIGN.md`** (back up an existing one to `DESIGN.md.bak`
-first if revising). Write `.buildloop/project-setup/design-system.md` — the approach, the source, the
+first if revising). Write `.dev-skills/project-setup/design-system.md` — the approach, the source, the
 candidates compared (with links to their kept screenshots), why this one won, and any fork to confirm.
 Discard the other candidates' scratch trees (the chosen candidate's screenshot may be copied next to the
 record). Do not install a kit or wire a token pipeline here — note any such follow-up for
@@ -163,14 +163,14 @@ record). Do not install a kit or wire a token pipeline here — note any such fo
 
 ### Stage 6: Handoff
 - **interactive:** "Design system committed → `DESIGN.md` (root, the contract `implement-feature`
-  follows), `.buildloop/project-setup/design-system.md` (why). From here, `/generate-mockups <feature>`
+  follows), `.dev-skills/project-setup/design-system.md` (why). From here, `/generate-mockups <feature>`
   renders UI options for any screen against this system, on demand."
 - **autopilot:** record the same and hand back to the caller (`setup-dev-environment` or, standalone,
   report the files + the must-confirm fork).
 
 ## Adopt mode (existing project)
 
-When `project_type: existing` (in `.buildloop/project-spec/.spec-config.md`), the codebase already has a
+When `project_type: existing` (in `.dev-skills/project-spec/.spec-config.md`), the codebase already has a
 realized design system. **Reverse-engineer the AS-IS tokens first** from what `map-codebase` charted
 (Tailwind `theme.extend`, CSS custom properties / token files, a shadcn `components.json` + CSS
 variables, a Material theme, a Storybook) into an **AS-IS `DESIGN.md`**, then interview/decide the

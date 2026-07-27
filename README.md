@@ -1,12 +1,12 @@
-# Buildloop
+# dev-skills
 
 **English** · [Русский](README.ru.md)
 
-Buildloop is a set of Claude Code skills and agents for building products.
+dev-skills is a set of Claude Code skills and agents for building products.
 
-The name is the method: every change rides a **build → verify → ship loop** where a separate agent proves the work before it advances. **[Jump to install ↓](#install)**
+The method is the point: every change rides a **build → verify → ship loop** where a separate agent proves the work before it advances. **[Jump to install ↓](#install)**
 
-**Take a raw idea to a shipped release with Buildloop — one reviewed step at a time, so the AI
+**Take a raw idea to a shipped release with dev-skills — one reviewed step at a time, so the AI
 builds the *right* thing and proves it works instead of just saying so.**
 
 Three gated pipelines — **spec → build → release** — installed as a plugin into any project from
@@ -42,7 +42,7 @@ runs on its own.
 
 `create-project-spec` runs seven persona-driven phases; each researches its claims (source-cited),
 drafts, is checked by an adversarial reviewer, and emits a research doc + a short human summary under
-`.buildloop/project-spec/`.
+`.dev-skills/project-spec/`.
 
 | Step | Skill | Persona | Produces |
 |------|-------|---------|----------|
@@ -95,10 +95,10 @@ closed**.
 
 ## How it compares
 
-Most tools cover one slice of the arc; Buildloop's bet is the *full* arc plus a separate adversary
+Most tools cover one slice of the arc; the dev-skills bet is the *full* arc plus a separate adversary
 at every stage.
 
-| Tool | What it is | Where Buildloop differs |
+| Tool | What it is | Where dev-skills differs |
 |------|-----------|------------------------------|
 | **[GitHub Spec Kit](https://github.com/github/spec-kit)** | Spec → Plan → Tasks → Implement; templates, agent-agnostic | It stops at implement — no independent verification, no release audits, no built-in research or adversarial review. |
 | **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** | Agentic-agile framework, 12+ specialist agents | Plans and builds, but has no read-only release-audit phase, no harness-enforced verifier, no brownfield reverse-engineering. |
@@ -113,12 +113,12 @@ at every stage.
 In any project, inside Claude Code:
 
 ```
-/plugin marketplace add https://github.com/a-v-ershov/buildloop.git
-/plugin install buildloop@buildloop
+/plugin marketplace add https://github.com/a-v-ershov/dev-skills.git
+/plugin install dev-skills@dev-skills
 ```
 
-Skills appear namespaced as `buildloop:<skill>`. Start a project with
-**`/buildloop:create-project-spec`** and answer the three setup questions — or run any single
+Skills appear namespaced as `dev-skills:<skill>`. Start a project with
+**`/dev-skills:create-project-spec`** and answer the three setup questions — or run any single
 skill on its own.
 
 ## Update
@@ -127,11 +127,11 @@ An install only picks up changes once the plugin's `version` is **bumped**. To u
 has it installed (a restart applies the update):
 
 ```
-/plugin marketplace update buildloop
-/plugin update buildloop@buildloop
+/plugin marketplace update dev-skills
+/plugin update dev-skills@dev-skills
 ```
 
-Or turn on auto-update once: `/plugin` → **Marketplaces** → `buildloop` → **Enable auto-update**.
+Or turn on auto-update once: `/plugin` → **Marketplaces** → `dev-skills` → **Enable auto-update**.
 
 ---
 
@@ -159,9 +159,9 @@ also runs on its own.
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
 | `build-product` | Orchestrator | Picks one ready task at a time and drives implement → verify → commit | the build loop |
-| `setup-dev-environment` | Platform engineer | Scaffolds the repo, brings up the stack, stands up the quality gate | repo + `.buildloop/project-setup/` |
+| `setup-dev-environment` | Platform engineer | Scaffolds the repo, brings up the stack, stands up the quality gate | repo + `.dev-skills/project-setup/` |
 | `create-design-system` | Design-system lead | *(UI)* Makes the design direction concrete from rendered candidates | `DESIGN.md` + `design-system.md` |
-| `plan-development` | Delivery tech lead | Turns the spec into a kanban backlog, one file per task | `.buildloop/build-plan/` |
+| `plan-development` | Delivery tech lead | Turns the spec into a kanban backlog, one file per task | `.dev-skills/build-plan/` |
 | `implement-feature` | Implementer | Builds one backlog task into code and gets the quality gate green | code |
 | `verify-feature` | Independent verifier | Authors adversarial tests and proves a built task's observable outcomes | tests + verdict |
 | `generate-mockups` | UI prototyper | *(on demand)* Renders stub UI variants against `DESIGN.md` to compare | throwaway mockups |
@@ -185,7 +185,7 @@ also runs on its own.
 | `commit` | Git helper | Splits session changes into well-structured commits (English messages) | commits |
 | `propagate-changes` | Cross-cutting conductor | Reconciles downstream docs + backlog after an upstream spec edit | updated docs + backlog |
 
-Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.buildloop/project-spec/`,
-audits under `.buildloop/release/`. *(existing)* = brownfield projects only, *(UI)* = UI projects (self-skips
+Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,
+audits under `.dev-skills/release/`. *(existing)* = brownfield projects only, *(UI)* = UI projects (self-skips
 otherwise), *(on demand)* = not auto-run in a pipeline. `gather-context` is also reusable on demand as
 a scoped grill.

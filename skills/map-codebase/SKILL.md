@@ -1,6 +1,6 @@
 ---
 name: map-codebase
-description: "Reverse-engineer an existing codebase into a factual as-is map before spec work — a forensic code archaeologist that charts what is actually built so the rest of the pipeline can reconstruct a spec from it. The brownfield front phase: when create-project-spec runs on a project that already has code (project_type: existing), this runs FIRST — before gather-context — and writes .buildloop/project-spec/codebase-map.research.md plus a short human summary that every later phase reads as the as-is ground truth. It charts structure, stack, domain model, surfaces/flows, tests, and build/run/CI/env, separating what's observed in the code from what's claimed from what's unknown. It maps as-is only — it does NOT validate the idea, define the target feature set, or design anything (those are the later phases, in existing-project mode)."
+description: "Reverse-engineer an existing codebase into a factual as-is map before spec work — a forensic code archaeologist that charts what is actually built so the rest of the pipeline can reconstruct a spec from it. The brownfield front phase: when create-project-spec runs on a project that already has code (project_type: existing), this runs FIRST — before gather-context — and writes .dev-skills/project-spec/codebase-map.research.md plus a short human summary that every later phase reads as the as-is ground truth. It charts structure, stack, domain model, surfaces/flows, tests, and build/run/CI/env, separating what's observed in the code from what's claimed from what's unknown. It maps as-is only — it does NOT validate the idea, define the target feature set, or design anything (those are the later phases, in existing-project mode)."
 argument-hint: "[path or subtree to map]"
 ---
 
@@ -31,7 +31,7 @@ You separate three things ruthlessly and label every fact as one of them:
   purpose, audience, or target direction — that is `gather-context`'s job, which runs right after
   you and reads your map so it can ask sharp questions instead of making the user narrate their code.
 
-## Outputs in `.buildloop/project-spec/` (two kept files)
+## Outputs in `.dev-skills/project-spec/` (two kept files)
 
 - **`codebase-map.research.md`** — the detailed as-is dossier (for the AI / next phases), from
   `references/codebase-map-template.md`. Every fact tagged observed / claimed / unknown.
@@ -48,7 +48,7 @@ never translates code, identifiers, paths, commands, or API names.
 
 ## Modes (read this first)
 
-Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and `project_type`.
+Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and `project_type`.
 If absent (standalone run), this skill only makes sense on an existing codebase, so set
 `project_type: existing` and ask the other settings once (default **interactive**), then write the
 file. Full rules: **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -116,13 +116,13 @@ couple of targeted checks; most of this phase is the code, not the web. Method �
 **`../_shared/spec-pipeline/research-method.md`**. Cite anything you carry into the doc.
 
 ### Stage 3: Draft
-Draft `.buildloop/project-spec/codebase-map.research.md` from `references/codebase-map-template.md`, citing
+Draft `.dev-skills/project-spec/codebase-map.research.md` from `references/codebase-map-template.md`, citing
 sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Create
-`.buildloop/project-spec/` if needed (and, on creating the dir, drop a `.buildloop/project-spec/.gitignore`
+`.dev-skills/project-spec/` if needed (and, on creating the dir, drop a `.dev-skills/project-spec/.gitignore`
 containing `*.review.md` if absent).
 
 ### Stage 4: Review (accuracy + completeness critic)
-Delegate to the `spec-reviewer` agent to write `.buildloop/project-spec/codebase-map.review.md` (it does NOT
+Delegate to the `spec-reviewer` agent to write `.dev-skills/project-spec/codebase-map.review.md` (it does NOT
 edit the draft; this file is intermediate). Method + format:
 **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For this phase the critic
 checks **two** things specific to a code map: **accuracy** (does a claimed entity/route actually
@@ -141,11 +141,11 @@ Clean review (0 🔴) proceeds without stopping.
 ### Stage 6: Merge
 Synthesize draft + review corrections into the final `codebase-map.research.md`. Log applied findings
 in the Forks / Decisions log. What no one could resolve goes to `## Open questions`. **Then delete
-`.buildloop/project-spec/codebase-map.review.md`.**
+`.dev-skills/project-spec/codebase-map.review.md`.**
 
 ### Stage 7: Dual output
 Finalize `codebase-map.research.md` (complete `## Sources` and `## Forks / Decisions log`). Then write
-`.buildloop/project-spec/codebase-map.summary.md` from **`../_shared/spec-pipeline/summary-template.md`** —
+`.dev-skills/project-spec/codebase-map.summary.md` from **`../_shared/spec-pipeline/summary-template.md`** —
 the gist of what's built in plain language + the biggest unknowns/risks the human should weigh in on.
 Format rules: **`../_shared/spec-pipeline/output-format.md`**.
 

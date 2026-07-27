@@ -6,7 +6,7 @@ business logic** — its only job is to make a UI option *visible* so a human ca
 variants. This file defines the *how* once — the rendering tiers, the token resolution, where mockups
 live, and how a chosen variant is recorded — so neither skill restates it.
 
-The governing constraint: Buildloop has **no browser/screenshot tooling of its own**, and it must
+The governing constraint: dev-skills has **no browser/screenshot tooling of its own**, and it must
 not depend on any external plugin (gstack's `browse`/`design-shotgun` are a *separate* marketplace).
 So rendering **detects what's available and degrades gracefully** — it is never blocked by missing
 tooling; in the worst case it generates the files and tells the human how to open them.
@@ -26,7 +26,7 @@ At intake, probe in this order and pick the first that's available — record wh
 output is honest about how it was rendered.
 
 ### Tier 1 — render in the project's own stack (preferred when it exists)
-If `.buildloop/project-setup/verification.md` exists and the app is scaffolded and runnable, render the
+If `.dev-skills/project-setup/verification.md` exists and the app is scaffolded and runnable, render the
 variants as **real pages/components in the project's own dev server** and screenshot them via the
 **run / drive / prove** commands that contract already documents (`verification-method.md`). This is
 the truest "real rendered code" and reuses existing machinery rather than inventing any. It drives the
@@ -48,7 +48,7 @@ bonus; the HTML is the deliverable.
 ### Tier 3 — generate-only (the always-available floor)
 If neither a runnable app (Tier 1) nor any screenshot tool (Tier 2) is present, **generate the variant
 files and stop** — then tell the human exactly how to view them ("open
-`.buildloop/build-plan/mockups/<slug>/variant-a.html` in your browser; tell me which you prefer"). This
+`.dev-skills/build-plan/mockups/<slug>/variant-a.html` in your browser; tell me which you prefer"). This
 degrades to zero infra: the skill is never blocked, it just does less automatically. State plainly that
 auto-screenshots were unavailable — never imply a render that didn't happen.
 
@@ -77,16 +77,16 @@ the write-scope guard).
 Mockups are disposable comparison artifacts — several throwaway variants per subject. They are
 **not committed product code**:
 
-- Write them under `.buildloop/build-plan/mockups/<slug>/` — `<slug>` is the task id (feature mode, e.g.
+- Write them under `.dev-skills/build-plan/mockups/<slug>/` — `<slug>` is the task id (feature mode, e.g.
   `T012`) or `design-system/<candidate>` (showcase mode, e.g. `design-system/warm-editorial`).
 - Each variant is `variant-{a,b,c}.{html|tsx|…}` plus its screenshot `variant-{a,b,c}.png` when a tier
   produced one.
-- The tree is **gitignored**: ensure `.buildloop/build-plan/.gitignore` contains `mockups/` (create the
+- The tree is **gitignored**: ensure `.dev-skills/build-plan/.gitignore` contains `mockups/` (create the
   `.gitignore` with that line if absent — the build pipeline otherwise keeps no transient files, so
   this is the one gitignore it adds, the analog of the spec pipeline's `*.review.md`).
 - The single screenshot of the **chosen** variant *may* be copied to a committed location as the "this
-  is what we picked" record — feature mode to `.buildloop/build-plan/tasks/artifacts/` (next to verifier
-  evidence), showcase mode referenced from `.buildloop/project-setup/design-system.md`. The other variants
+  is what we picked" record — feature mode to `.dev-skills/build-plan/tasks/artifacts/` (next to verifier
+  evidence), showcase mode referenced from `.dev-skills/project-setup/design-system.md`. The other variants
   are discarded.
 
 ## Recording the chosen variant
@@ -98,11 +98,11 @@ the mode:
   `## Description`** — the section `implement-feature` already reads — naming the chosen variant, what
   to follow (layout, hierarchy, component usage), and the path to its file + screenshot. Then append a
   dated `## Log` line, e.g. `- <ts> [generate-mockups] 3 variants for T012; chose B → see
-  .buildloop/build-plan/tasks/artifacts/T012-variant-b.png`. No backlog-schema change — it uses the existing
+  .dev-skills/build-plan/tasks/artifacts/T012-variant-b.png`. No backlog-schema change — it uses the existing
   `## Description` + `## Log` fields, and only the task file is edited.
 - **Showcase mode** (rendering `DESIGN.md` candidates for `create-design-system`): no task is involved
   — return the rendered screenshots + a one-line-per-variant note to the caller, which presents them
-  for the pick and records the outcome in `.buildloop/project-setup/design-system.md`.
+  for the pick and records the outcome in `.dev-skills/project-setup/design-system.md`.
 
 ## Generating meaningfully-different variants
 
@@ -119,7 +119,7 @@ in sequence is fine for small N.
 ## Write scope (never touch product code)
 
 Whichever skill drives this, the mockup work writes **only** under the scratch mockups tree, the task
-file (for the design-note/log in feature mode), `DESIGN.md` + `.buildloop/project-setup/` (for
+file (for the design-note/log in feature mode), `DESIGN.md` + `.dev-skills/project-setup/` (for
 `create-design-system`), and `/tmp`. It must **never** edit the feature's implementation — enforce this
 with the shared `scripts/guard-write-scope.sh` PreToolUse hook, scoped to those paths (the same guard
 `verify-feature` uses to stay out of product code).

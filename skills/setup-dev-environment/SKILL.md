@@ -1,7 +1,7 @@
 ---
 name: setup-dev-environment
 disable-model-invocation: true
-description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .buildloop/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. For an existing project (project_type: existing) it runs in adopt mode: it reads the reverse-engineered codebase-map, adopts and extends what's already there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .buildloop/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-product."
+description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .dev-skills/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. For an existing project (project_type: existing) it runs in adopt mode: it reads the reverse-engineered codebase-map, adopts and extends what's already there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .dev-skills/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-product."
 ---
 
 # Setup Dev Environment Skill
@@ -38,7 +38,7 @@ settled in the spec; orphan setup that traces to nothing is a defect.
   `justfile` / script), and the directory skeleton — whatever `dev-architecture` specifies. The
   project `CLAUDE.md` carries two parts: your stack notes + commands, **and** the marker-delimited
   **project documentation map** — write/refresh that block per **`../_shared/agent-guide.md`** so an
-  agent can navigate `.buildloop/project-spec/`, `.buildloop/build-plan/`, and `.buildloop/project-setup/`. (An earlier
+  agent can navigate `.dev-skills/project-spec/`, `.dev-skills/build-plan/`, and `.dev-skills/project-setup/`. (An earlier
   `create-project-spec` run may already have seeded the map block; refresh it in place, idempotently.)
 - **The quality gate** (repo-local): linter + formatter + type-checker configs (zero-tolerance), a
   `make check` target, a **pre-commit hook** that blocks the commit on red, and a Claude Code
@@ -56,17 +56,17 @@ settled in the spec; orphan setup that traces to nothing is a defect.
   **`../_shared/build-pipeline/env-access.md`**.
 - **The design system** (UI projects only): for a UI project, once the scaffold is up, invoke
   **`create-design-system`** (via the Skill tool) to produce the committed root **`DESIGN.md`** + a
-  `.buildloop/project-setup/design-system.md` record — it proposes several candidate systems, renders each as
+  `.dev-skills/project-setup/design-system.md` record — it proposes several candidate systems, renders each as
   mockups (via `generate-mockups`) so the human picks one. You **conduct** this step; you do not
   duplicate it. Self-skips for a no-UI project or when `design-decisions` says no system is needed.
-- **`.buildloop/project-setup/setup-plan.md`** — the approvable plan (4 sections, each item traced).
-- **`.buildloop/project-setup/setup-log.md`** — what was done / skipped (already present) / deferred to the
+- **`.dev-skills/project-setup/setup-plan.md`** — the approvable plan (4 sections, each item traced).
+- **`.dev-skills/project-setup/setup-log.md`** — what was done / skipped (already present) / deferred to the
   human (secrets, accounts).
-- **`.buildloop/project-setup/verification.md`** — the concrete run/drive/prove commands, derived from the
+- **`.dev-skills/project-setup/verification.md`** — the concrete run/drive/prove commands, derived from the
   dev-architecture verification matrix now that the stack is real. **This is the file `verify-feature`
   reads** to get project-specific commands. Templates for all three: `references/setup-templates.md`.
 
-`.buildloop/project-setup/` is committed project documentation.
+`.dev-skills/project-setup/` is committed project documentation.
 
 ## Language
 
@@ -76,7 +76,7 @@ translate code, identifiers, file paths, commands, or tool names.
 
 ## Modes (read this first)
 
-Read `.buildloop/build-plan/.build-config.md` for `mode`. If absent (standalone run), ask the user once
+Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone run), ask the user once
 (default **interactive**) and write the file. Full rules: **`../_shared/build-pipeline/build-config.md`**.
 
 - **interactive** — present the plan and stop for approval (whole or per-section) before executing.
@@ -130,9 +130,9 @@ Read `.buildloop/build-plan/.build-config.md` for `mode`. If absent (standalone 
 ```
 
 ### Stage 0: Intake
-Read `.buildloop/project-spec/dev-architecture.research.md` (the inner-loop design: local-run topology,
-verification matrix, AI tooling) and `.buildloop/project-spec/architecture.research.md` (the stack) plus
-`.buildloop/project-spec/adr/*`. List: the components and their local stand-ins, the one-command bring-up,
+Read `.dev-skills/project-spec/dev-architecture.research.md` (the inner-loop design: local-run topology,
+verification matrix, AI tooling) and `.dev-skills/project-spec/architecture.research.md` (the stack) plus
+`.dev-skills/project-spec/adr/*`. List: the components and their local stand-ins, the one-command bring-up,
 the seed strategy, the test/verification matrix, the **environment-access model and the developer/test
 scripts**, the **custom project skills** to author, and the AI tooling (MCP servers, plugins, CLAUDE.md
 content). If `dev-architecture.research.md` is missing, tell the user and offer to run
@@ -145,7 +145,7 @@ PATH (`command -v docker node pnpm uv cargo go …` per the stack)? Which target
 of the local services already running (ports in use)? Record what exists so later stages skip it.
 
 ### Stage 2: Plan (four sections, every item traced)
-Compose `.buildloop/project-setup/setup-plan.md` (template in `references/setup-templates.md`) as a
+Compose `.dev-skills/project-setup/setup-plan.md` (template in `references/setup-templates.md`) as a
 checklist split into four sections, each item carrying **action · provenance (component/ADR) ·
 reversibility · idempotency note · already-present?**:
 
@@ -196,19 +196,19 @@ error). "No error in the logs" is not proof. If it fails, report what failed and
 
 ### Stage 5b: Design system (UI projects only)
 Now that the stack is up, settle the **concrete design system** before features are built. Read
-`.buildloop/project-spec/design-decisions.research.md`: if this is a no-UI project or it recorded **Design
+`.dev-skills/project-spec/design-decisions.research.md`: if this is a no-UI project or it recorded **Design
 system / Needed? = no**, **skip** this stage (note it in the setup log) and go to Stage 6. Otherwise, if
 there is no committed root `DESIGN.md` yet, **invoke `create-design-system`** (via the Skill tool) — it
 proposes several candidate `DESIGN.md` variants, renders each as mockups (via `generate-mockups`, now
 that there's a real stack to render in), lets the human pick, and writes the chosen **root `DESIGN.md`**
-plus `.buildloop/project-setup/design-system.md`. **Conduct, don't duplicate** — let `create-design-system`
+plus `.dev-skills/project-setup/design-system.md`. **Conduct, don't duplicate** — let `create-design-system`
 run its own procedure; you just trigger it at the right moment and continue once it hands back. (If a
 `DESIGN.md` already exists, leave it; re-running is idempotent.)
 
 ### Stage 6: Record + handoff
-Write `.buildloop/project-setup/setup-log.md` — three lists: **done**, **skipped (already present)**, and
+Write `.dev-skills/project-setup/setup-log.md` — three lists: **done**, **skipped (already present)**, and
 **your turn** (the manual-only items: which secret/account, and where it goes). Then write
-`.buildloop/project-setup/verification.md` — the concrete **run / drive / prove** commands for each surface,
+`.dev-skills/project-setup/verification.md` — the concrete **run / drive / prove** commands for each surface,
 filled in from the now-real stack (one-command bring-up; how to drive UX/Backend/E2E; how to prove an
 outcome; the dummy-auth token and seed/reset commands; where logs are). This is the contract
 `verify-feature` reads. Then hand off:
@@ -220,12 +220,12 @@ outcome; the dummy-auth token and seed/reset commands; where logs are). This is 
 
 ## Adopt mode (existing project)
 
-When `project_type: existing` (in `.buildloop/project-spec/.spec-config.md`), the repo already has a working
+When `project_type: existing` (in `.dev-skills/project-spec/.spec-config.md`), the repo already has a working
 dev setup — adopt mode is mostly this skill's **detect-state-first idempotency doing its job**, with
 three brownfield specifics. (No re-scaffolding: an existing project very likely already has a
 `CLAUDE.md`, a compose file, a Makefile.)
 
-1. **The map seeds detection.** At Stage 0, also read `.buildloop/project-spec/codebase-map.research.md` —
+1. **The map seeds detection.** At Stage 0, also read `.dev-skills/project-spec/codebase-map.research.md` —
    its *Build / run / CI / env* and *Tests & quality gate* sections — so the plan starts from
    **documented** present-state, not only live probing (it catches a CI workflow that defines the real
    gate, a `.env.example` listing required secrets, an existing run command). The Stage-2 plan is then

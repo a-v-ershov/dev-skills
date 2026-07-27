@@ -31,7 +31,7 @@ into git. Likewise, never translate code, identifiers, file paths, or commands.
 
 ## Backlog task reference
 
-If the change relates to a build-backlog task (one of `.buildloop/build-plan/tasks/T###-*.md`), include the
+If the change relates to a build-backlog task (one of `.dev-skills/build-plan/tasks/T###-*.md`), include the
 task id and what was done in the commit message — the id as a `[T###]` tag in the subject line. This
 makes each commit traceable to the task it advances. `build-product` checkpoint commits always pass
 the id of the task they finalize.

@@ -2,7 +2,7 @@
 
 How a feature task is proven done. Verification is a **stage of each feature task**, run by
 `verify-feature` as a **separate, fresh agent** with no bias from the implementer. It is **generic** —
-it reads the project-specific commands from `.buildloop/project-setup/verification.md` and the task's own
+it reads the project-specific commands from `.dev-skills/project-setup/verification.md` and the task's own
 `acceptance` criteria; it never hard-codes a project's test setup.
 
 ## Why a separate, unbiased agent
@@ -24,7 +24,7 @@ honest. Both sides' tests are committed and feed the regression net (the quality
 ## Inputs
 
 - The **task file** — its `acceptance` criteria (the definition of done) and `## Description`.
-- **`.buildloop/project-setup/verification.md`** — the concrete run / drive / prove commands for this stack
+- **`.dev-skills/project-setup/verification.md`** — the concrete run / drive / prove commands for this stack
   (one-command bring-up, per-surface drive/prove, dummy auth, seed/reset, log access), the gate command
   (`make check`), and where tests live + how to name a new one. Written by `setup-dev-environment`. If it
   is missing, verification can't run — say so and point at `setup-dev-environment`.
@@ -59,7 +59,7 @@ A green automated test alone is not the verdict either — it proves the code do
 not that the criterion's real-world outcome holds. The authored test and the driven observable outcome
 are complementary; the criterion is met only when both confirm it.
 
-Save evidence (screenshots, captured responses) under `.buildloop/build-plan/tasks/artifacts/` and reference
+Save evidence (screenshots, captured responses) under `.dev-skills/build-plan/tasks/artifacts/` and reference
 it from the log.
 
 ## Recording findings (the batch of comments)

@@ -1,7 +1,7 @@
 # Architecture — <Product name>
 
 > Status: Draft | Date: <YYYY-MM-DD>
-> Source: .buildloop/project-spec/user-flows.research.md, .buildloop/project-spec/product-requirements.research.md
+> Source: .dev-skills/project-spec/user-flows.research.md, .dev-skills/project-spec/product-requirements.research.md
 > Scope: quality-attribute scenarios + component design + the concrete technology realizing each.
 
 ## System overview

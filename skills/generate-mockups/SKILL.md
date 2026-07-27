@@ -1,13 +1,13 @@
 ---
 name: generate-mockups
-description: "Generate several stub UI variants for a screen and render them so a human can compare and choose — no business logic, just static pages styled against the design system (the root DESIGN.md). Use on demand when working a feature and you want to see UI options before implementing, or in showcase mode to render a candidate DESIGN.md for design-system selection. Two modes: feature mode (given a task id or a free screen description, produces N variants against the committed DESIGN.md and records the chosen one as a design-note on the task so implement-feature follows it) and showcase mode (--showcase <DESIGN.md>, renders representative key screens against a candidate system — used by create-design-system). Rendering degrades gracefully: render in the project's own stack via .buildloop/project-setup/verification.md when runnable, else standalone HTML against the DESIGN.md tokens + any available screenshot tool, else generate files only with view instructions. Mockups are throwaway scratch under .buildloop/build-plan/mockups/ (gitignored); it writes ONLY mockups/task-notes/temp and never the feature's implementation. Not auto-run by build-product — on demand only."
+description: "Generate several stub UI variants for a screen and render them so a human can compare and choose — no business logic, just static pages styled against the design system (the root DESIGN.md). Use on demand when working a feature and you want to see UI options before implementing, or in showcase mode to render a candidate DESIGN.md for design-system selection. Two modes: feature mode (given a task id or a free screen description, produces N variants against the committed DESIGN.md and records the chosen one as a design-note on the task so implement-feature follows it) and showcase mode (--showcase <DESIGN.md>, renders representative key screens against a candidate system — used by create-design-system). Rendering degrades gracefully: render in the project's own stack via .dev-skills/project-setup/verification.md when runnable, else standalone HTML against the DESIGN.md tokens + any available screenshot tool, else generate files only with view instructions. Mockups are throwaway scratch under .dev-skills/build-plan/mockups/ (gitignored); it writes ONLY mockups/task-notes/temp and never the feature's implementation. Not auto-run by build-product — on demand only."
 argument-hint: "[<task-id> | <screen description> | --showcase <DESIGN.md path>]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.buildloop/build-plan/*' '*/_mockups/*' '*mockup*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/.dev-skills/build-plan/*' '*/_mockups/*' '*mockup*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Generate Mockups Skill
@@ -52,8 +52,8 @@ wired into `build-product`'s per-task loop; nothing auto-generates mockups for e
 
 - **Reads:** the root `DESIGN.md` (feature mode) or the passed candidate (showcase mode); in feature
   mode the task file and the `user-flows`/`design-decisions` screen it serves (for what the screen must
-  show); `.buildloop/project-setup/verification.md` (to render in the real stack when available).
-- **Writes:** variant files + screenshots under `.buildloop/build-plan/mockups/<slug>/` (gitignored scratch);
+  show); `.dev-skills/project-setup/verification.md` (to render in the real stack when available).
+- **Writes:** variant files + screenshots under `.dev-skills/build-plan/mockups/<slug>/` (gitignored scratch);
   in feature mode, a **design-note** in the task's `## Description` + a `## Log` line; the chosen
   screenshot copied to a kept location. Never the feature's implementation.
 
@@ -109,7 +109,7 @@ Produce N stub variants — static pages with hard-coded sample content, styled 
 `DESIGN.md` tokens (Tier 2 standalone HTML inlines them on `:root`; Tier 1 uses real components in a
 scratch `/_mockups/` route). No data, no handlers, no logic. The variants are independent, so you **may**
 spawn one `ui-prototyper` subagent per variant (in parallel) — each builds one stub from the same brief
-+ `DESIGN.md` — then collect them. Write everything under `.buildloop/build-plan/mockups/<slug>/`.
++ `DESIGN.md` — then collect them. Write everything under `.dev-skills/build-plan/mockups/<slug>/`.
 
 ### Stage 3: Render
 Render per the tier detected in Stage 0 (`mockup-method.md`): Tier 1 drives the project's own stack via
@@ -129,7 +129,7 @@ recommendation.
 
 ### Stage 5: Cleanup
 Discard the non-chosen variants' scratch (copy the chosen variant's screenshot to a kept location —
-feature: `.buildloop/build-plan/tasks/artifacts/`; showcase: referenced by the caller's record). Report what
+feature: `.dev-skills/build-plan/tasks/artifacts/`; showcase: referenced by the caller's record). Report what
 you rendered, on which tier, and where the kept artifact is.
 
 ## Rules
@@ -139,5 +139,5 @@ you rendered, on which tier, and where the kept artifact is.
 4. Generate several genuinely-different variants along real design axes; same system across all.
 5. Detect the render tier and degrade gracefully; be honest when only files (no screenshot) were produced.
 6. In feature mode, record the chosen variant as a design-note on the task so `implement-feature` follows it.
-7. Mockups are gitignored scratch under `.buildloop/build-plan/mockups/`; keep only the chosen screenshot.
+7. Mockups are gitignored scratch under `.dev-skills/build-plan/mockups/`; keep only the chosen screenshot.
 8. On demand only — never auto-run inside the `build-product` loop.
