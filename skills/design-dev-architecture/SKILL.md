@@ -203,7 +203,11 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
      tokens" is enforced instead of hoped for. **Do not invent a custom grep-based checker** — a
      home-grown color-literal hunt produces false positives, and a noisy gate gets disabled.
    Plus the **test levels** (unit / integration / e2e) and what each covers, and **test data**
-   provisioning/reset. **Map each flow** from `user-flows.research.md` to *how the agent drives it*
+   provisioning/reset. Also name the **release-phase measurement tooling** for this stack — the
+   duplication / dead-code analyzer, the mutation-testing runner, the accessibility checker, the load
+   tool — because `setup-dev-environment` installs them and the release phase is forbidden to: an
+   unnamed tool means `refactor`, `write-tests`, and the audits later record that signal as
+   *unmeasured*. Name what the stack actually has; "none available" is a legitimate answer, silence is not. **Map each flow** from `user-flows.research.md` to *how the agent drives it*
    and *how it proves success* (incl. important alternate/error paths). Each flow's **acceptance
    criteria** (and per-state assertions) are the proof targets — map every AC to the concrete check
    that asserts it. The bar: for every flow and surface, the agent can run → drive → prove **with

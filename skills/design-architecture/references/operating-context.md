@@ -55,6 +55,13 @@ secrets live; backups and the restore path; and the **manual setup checklist** �
 must click through once (domain, DNS, payment method, provider or store accounts, any registration),
 listed rather than assumed.
 
+**Who executes it:** `setup-production-environment`, invoked by hand from the build or release phase.
+That skill reads this section as its contract and turns it into a real environment — sorting each gap
+into what it fixes in the repo, what it can do through an authorized provider CLI, and what only the
+human can do in a dashboard. So write this section for an executor, not for a reader: name the
+platform, the environments, and the manual items concretely enough to act on. This phase **decides**;
+it never configures, never deploys, and never opens an account.
+
 ---
 
 ## Part 2 — Measurement (analytics & telemetry)
@@ -95,3 +102,8 @@ The `## Analytics & telemetry` section: the question → metric → source → h
 own database answers (with query sketches); which need client events and the chosen tool (or none);
 how errors surface and to whom; and what user data leaves the system, checked against the residency
 decision.
+
+**Who executes it:** the same skill, `setup-production-environment` — it installs the counter, wires
+the named events, sets up error tracking, and checks that the metrics the own database is supposed to
+answer are actually answerable (a funnel step with no timestamp cannot be counted). So name the events
+and the metrics precisely: a vague "we'll add analytics" becomes nothing installed.

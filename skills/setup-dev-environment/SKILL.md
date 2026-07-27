@@ -66,6 +66,12 @@ settled in the spec; orphan setup that traces to nothing is a defect.
      spacing come from the design tokens, icons come from the one chosen set. Without that rule the
      next session's agent hand-rolls its own button.
   Skipped entirely for a no-UI project or when `design-decisions` says no system is needed.
+- **The quality tooling the release phase will need** (repo-local dev dependencies, wired behind the
+  project's own commands): whatever `dev-architecture` named for measuring the codebase and the suite —
+  a duplication/dead-code analyzer, a mutation-testing runner, an accessibility checker, a load tool.
+  Install them **here**, because the release phase deliberately cannot: `refactor`, `write-tests`, and
+  every `audit-*` are forbidden from installing anything, and record a missing tool as *unmeasured*
+  instead. A tool nobody installed is a measurement nobody takes.
 - **`.dev-skills/project-setup/setup-plan.md`** — the approvable plan (4 sections, each item traced).
 - **`.dev-skills/project-setup/setup-log.md`** — what was done / skipped (already present) / deferred to the
   human (secrets, accounts).
@@ -279,9 +285,12 @@ its job**. Three specifics:
 4. The environment is "done" only when the one-command bring-up is smoke-tested green and drivable.
 5. Surface the irreducible manual steps honestly in setup-log.md; never pretend they're handled.
 6. Always write `verification.md` — the build phase depends on it; an environment without it is unfinished.
-7. Stand up the **enforced quality gate** — a red `make check` blocks the commit (pre-commit hook), and
+7. **Install the quality tooling the release phase cannot install itself** (analyzer, mutation runner,
+   accessibility checker, load tool — whatever the dev-architecture named). Production-side setup —
+   platform, database, caps, telemetry — is **not** yours: that is `setup-production-environment`.
+8. Stand up the **enforced quality gate** — a red `make check` blocks the commit (pre-commit hook), and
    a Stop hook feeds failures back. The gate executes the spec's test levels + hooks; it doesn't re-pick tools.
-8. Bake the **env-access mechanism** into the bring-up command (lock with lease + stale-reclaim, and/or
+9. Bake the **env-access mechanism** into the bring-up command (lock with lease + stale-reclaim, and/or
    per-run isolation; gitignore the lock file) and scaffold the **developer/test-script skeletons** and
    the **custom project-skill skeletons** (`.claude/skills/<name>/SKILL.md`) the dev-architecture named —
    full implementation is backlog work.
