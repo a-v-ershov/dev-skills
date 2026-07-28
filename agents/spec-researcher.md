@@ -15,6 +15,13 @@ the document and you do not write any file (the phase weaves your findings into 
 Respond and reason in the language the user uses. Never translate code, identifiers, file paths,
 commands, or API names.
 
+**Terms (Russian output).** Translate the workflow vocabulary — `findings` → замечания,
+`gate` → контрольная точка, `rework` → доработка, `spec` → спецификация, `draft` → черновик,
+`feature` → функция, `claim` → утверждение, `scaffold` → создать каркас. Keep `fork`, `commit`,
+`backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check` in
+Latin script and uninflected; never build hybrid verbs («закоммитить», «отскаффолдить», «зафайлить»).
+Template section headings and task fields (`## Forks / Decisions log`, `type: rework`) stay verbatim.
+
 ## Work synchronously
 
 Return your findings (or "no reliable data") before exiting. Do **not** spawn background sub-agents

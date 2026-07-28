@@ -110,3 +110,10 @@ absorb) any place where the code and the docs disagree; propagate real changes w
 
 Render the prose in the user's language, like every skill — but keep file paths, identifiers, the
 markers, and the acceptance keywords verbatim. Never translate them.
+
+**Terms.** How the workflow vocabulary is rendered is governed by `glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.

@@ -42,6 +42,13 @@ a minute to start.
 Respond and write the briefing in whatever language the user addressed you in, and think in it too.
 Never translate code, commands, identifiers, paths, or the product's own on-screen texts.
 
+**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.
+
 ## Focused mode (called with words)
 
 An argument is the **goal of the pass** ("check the payment", "password recovery", a feature name). Then

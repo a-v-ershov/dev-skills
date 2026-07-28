@@ -40,6 +40,13 @@ There is no separate mode, no extra phase, and no setting for it. Method:
 Respond and reason in whatever language the user addressed you in. Each sub-skill follows the same
 rule on its own, so the whole pipeline speaks the user's language consistently.
 
+**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.
+
 ## Two setup choices (ask once, up front)
 
 Before step 1, settle two settings and persist them to `.dev-skills/project-spec/.spec-config.md` so

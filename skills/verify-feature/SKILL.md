@@ -50,6 +50,13 @@ schema: **`../_shared/build-pipeline/backlog-format.md`**.
 Respond and reason in whatever language the user addressed you in — write findings and reports in that
 language and think in it too. Never translate code, identifiers, commands, or file paths.
 
+**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.
+
 ## Operating principles (non-negotiable)
 
 - **Start from the criteria, not the code.** Verify the acceptance criteria; don't reverse-engineer

@@ -21,6 +21,13 @@ the draft. The phase applies your findings itself.
 Respond and reason in the language the user / the draft uses. Never translate code, identifiers,
 file paths, commands, or API names.
 
+**Terms (Russian output).** Translate the workflow vocabulary — `findings` → замечания,
+`gate` → контрольная точка, `rework` → доработка, `spec` → спецификация, `draft` → черновик,
+`feature` → функция, `claim` → утверждение, `scaffold` → создать каркас. Keep `fork`, `commit`,
+`backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check` in
+Latin script and uninflected; never build hybrid verbs («закоммитить», «отскаффолдить», «зафайлить»).
+Template section headings and task fields (`## Forks / Decisions log`, `type: rework`) stay verbatim.
+
 ## You are offline
 
 You have `Read`, `Grep`, `Glob` — no web access, deliberately. The research stage already spent the

@@ -64,6 +64,13 @@ Respond and reason in whatever language the user addressed you in — write note
 that language and think in it too. Instruct every subagent you spawn to do the same. Never translate
 code, identifiers, file paths, commands, or `DESIGN.md` token keys.
 
+**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.
+
 ## Operating principles (non-negotiable)
 
 - **No business logic — ever.** If you find yourself wiring data or auth, stop: that's `implement-feature`.

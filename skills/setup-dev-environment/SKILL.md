@@ -87,6 +87,13 @@ Respond and reason in whatever language the user addressed you in — write the 
 reports in that language and think in it too. Instruct any subagent you spawn to do the same. Never
 translate code, identifiers, file paths, commands, or tool names.
 
+**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.
+
 ## Modes (read this first)
 
 Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone run), ask the user once

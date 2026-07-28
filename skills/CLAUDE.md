@@ -18,6 +18,13 @@ applies to natural-language text only — never translate code, identifiers, pat
 names. When a skill spawns subagents, it tells them the same rule. **One fixed exception:** git commit
 messages are always written in English.
 
+**Which words to translate is not left to taste** — `_shared/glossary.md` fixes it: the workflow
+vocabulary is translated (`findings` → замечания, `gate` → контрольная точка, `rework` → доработка),
+a short list of terms stays in Latin script and uninflected (`fork`, `commit`, `backlog`, `mockup`,
+`deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check`), hybrid verbs
+(«закоммитить», «отскаффолдить») are never built, and the templates' structural anchors — section
+headings, task fields, config keys — stay verbatim so the pipeline keeps finding them.
+
 ## How to invoke
 
 Installed as a plugin, the skills are namespaced — invoke them as `dev-skills:<name>`
@@ -165,5 +172,6 @@ lives, so the audits can stay pure audits.
   `verifier`, `ui-prototyper`) for the pipelines' subagent roles.
 - Shared methodology lives in `_shared/` (no `SKILL.md`): `spec-pipeline/`, `build-pipeline/`, and
   `release-pipeline/` hold the elicitation, research, review, output-format, backlog, quality-gate,
-  propagation, audit, severity, and report methods; `agent-guide.md` defines the project-map block. Read
+  propagation, audit, severity, and report methods; `agent-guide.md` defines the project-map block;
+  `glossary.md` fixes how the workflow vocabulary is rendered in the user's language. Read
   these for the *how*; don't restate them in skills.

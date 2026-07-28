@@ -15,6 +15,12 @@ English in, English out. Nothing to configure; detect it from the message.
 - Natural-language text only — never translate code, identifiers, paths, commands, or API names.
 - A skill tells every subagent it spawns the same rule, so the whole flow stays consistent.
 - **Exception:** git commit messages are ALWAYS written in English.
+- **Which words to translate is fixed by [`skills/_shared/glossary.md`](skills/_shared/glossary.md)**,
+  not by taste: the workflow vocabulary is translated (`findings` → замечания, `gate` → контрольная
+  точка), a short list stays in Latin script and uninflected (`fork`, `commit`, `backlog`, `mockup`,
+  `deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check`), hybrid verbs are never
+  built, and templates' structural anchors (section headings, task fields, config keys) stay verbatim.
+  Every skill's `## Language` section points at it; the agents carry a compact inline copy.
 
 ## Repository layout
 
@@ -25,7 +31,7 @@ root, so the marketplace `source` is `"./"`.
 .claude-plugin/marketplace.json   # marketplace catalog (lists the plugin; source: "./")
 .claude-plugin/plugin.json        # the plugin manifest (carries the version)
 skills/<name>/SKILL.md            # one dir per skill (+ references/*.md, load on demand)
-skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md)
+skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md, glossary.md)
 agents/*.md                       # named subagent roles (auto-discovered — no plugin.json entry)
 scripts/*.sh                      # hook helpers (e.g. guard-write-scope.sh)
 ```

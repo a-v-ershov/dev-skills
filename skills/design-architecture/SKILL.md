@@ -47,6 +47,13 @@ Respond and reason in whatever language the user addressed you in — ask your q
 the docs in that language, and think in it too. Instruct every subagent you spawn to do the same.
 This never translates code or identifiers (technology names stay as-is).
 
+**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
+(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
+keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
+`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
+(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
+(`## Forks / Decisions log`, `type: rework`) verbatim.
+
 ## Modes (read this first)
 
 Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
