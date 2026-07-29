@@ -76,15 +76,30 @@ apply. Deferring acceptance is the human's decision, never yours.
 
 ```
 - [ ] Stage 0: Intake — resolve the input to a task file (id, or file a new adhoc task); confirm it's ready
-- [ ] Stage 1: Start — status in_progress; show the acceptance criteria; acquire the env lease
+- [ ] Stage 1: Start — status in_progress; show the acceptance criteria; acquire the env lease; start the clock
 - [ ] Stage 2: Build — spawn the implementer agent (or dispatch a setup task to setup-dev-environment)
 - [ ] Stage 3: Verify — spawn the verifier agent, ONCE
 - [ ] Stage 4: Fix — one round by the same implementer + green gate, else needs_human
 - [ ] Stage 5: Solve pass — tidy this task's own diff, behaviour-preserving; full gate green
 - [ ] Stage 6: Accept — human digest + approval, or review: auto when nothing is hand-checkable
 - [ ] Stage 7: Spec catch-up — behavior changed and undocumented? propose the edit (spec_sync)
-- [ ] Stage 8: Commit — status done + checkpoint commit via the commit skill; release the lease; regen board
+- [ ] Stage 8: Commit — status done + timings + checkpoint commit via the commit skill; release the lease; regen board
 ```
+
+### Timing the stages
+
+**You** time the work, because nobody else can: an agent cannot see its own clock, and the duration of
+a subagent never comes back inside the result you receive — only its text does. So bracket the stages
+you dispatch. At Stage 1, and at each boundary of Stages 2–5, take one reading:
+
+```sh
+date -u '+%Y-%m-%dT%H:%M:%SZ %s'
+```
+
+Keep the epoch seconds and subtract: `build` (Stage 2), `verify` (Stage 3), `fix` (Stage 4 — only when
+the fix round actually ran), `solve` (Stage 5), and `total` (Stage 1 → the end). Write them into the
+task's `timings` block in **one** edit when the task leaves you, at Stage 8 or at the `needs_human`
+stop. Schema and how to read the numbers: **`../_shared/build-pipeline/backlog-format.md`**.
 
 ### Stage 0: Intake
 **A task id** (`T012`) → read that task file. **A free-form request** ("the card doesn't show the
@@ -122,8 +137,8 @@ fix round, then run the **quality gate** — which now includes the verifier's c
 fix is checked without re-spawning the verifier.
 - Green → Stage 5.
 - Still red, or a finding the implementer says it cannot close → set `status: needs_human`, append a
-  `## Log` entry naming what still fails and what was tried, release the lease, and **stop**. Report
-  it plainly. **Never a second fix round.**
+  `## Log` entry naming what still fails and what was tried, **write the `timings` you have**, release
+  the lease, and **stop**. Report it plainly. **Never a second fix round.**
 
 ### Stage 5: Solve pass + full gate
 Direct the **same implementer agent** to a light cleanup **scoped to this task's own diff** — remove
@@ -162,11 +177,17 @@ task; then set `spec_sync: done`. If the user declines, leave `spec_sync: pendin
 surfaces it and the next planning run will see it. Never block the task on this.
 
 ### Stage 8: Commit + hand back
-Set `status: done` (history entry) and make a **checkpoint commit** via the `commit` skill — the
-message carries this task's id (e.g. `[T012]`) and what was done; `commit` splits a substantial
-cleanup into its own `refactor:` commit. Release the env lease. Regenerate
-`.dev-skills/build-plan/board.md` from the task files. Report in three lines: what was built, how it
-was proven, what state the task is in.
+Set `status: done` (history entry), take the final clock reading, and write the `timings` block — both
+land **before** the commit, so the task file the commit captures is complete. Then make a **checkpoint
+commit** via the `commit` skill — the message carries this task's id (e.g. `[T012]`) and what was done;
+`commit` splits a substantial cleanup into its own `refactor:` commit. Release the env lease.
+Regenerate `.dev-skills/build-plan/board.md` from the task files. Report in three lines — what was
+built, how it was proven, what state the task is in — plus one line of timings:
+
+> **Time:** build 6m52s · verify 3m07s · fix 1m36s · solve 1m14s · total 15m03s
+
+Give it as it is, without commentary: it is wall-clock including every moment you waited on a human,
+so it explains where the task's time went and nothing more.
 
 ## Rules
 
@@ -185,3 +206,6 @@ was proven, what state the task is in.
    unless the user asked for one.
 8. **Hold the env lease for the task's span** and release it when the task leaves — committed or
    escalated. See **`../_shared/build-pipeline/env-access.md`**.
+9. **Record the timings on the way out — escalated tasks included.** A task that went `needs_human` is
+   exactly the one whose time is worth knowing; dropping it leaves a record where only the smooth
+   tasks were measured. Never estimate a stage you forgot to clock — omit the key instead.

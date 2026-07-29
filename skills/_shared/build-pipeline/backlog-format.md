@@ -44,6 +44,12 @@ review: pending               # pending | human | auto — how the finished work
 acceptance:                   # the behavioral criteria verify-feature must prove (from the spec)
   - "Given a logged-in user, When they search 'invoice', Then matching docs are listed"
   - "Given an empty query, When they search, Then a 400 is returned (not a 500)"
+timings:                      # wall-clock seconds per stage, written by run-task when the task leaves
+  build: 412                  # the implementer (or setup-dev-environment on a `setup` task)
+  verify: 187                 # the separate verifier
+  fix: 96                     # the one fix round + gate — absent when verification passed first time
+  solve: 74                   # the solve pass + the full gate
+  total: 903                  # in_progress → done/needs_human, so it also holds the human's waiting time
 history:                      # status transitions: time + actor + optional note. Append-only.
   - { at: 2026-06-18T10:00:00Z, to: todo,        by: plan-development }
   - { at: 2026-06-18T11:05:00Z, to: in_progress, by: implement-feature, note: "started" }
@@ -98,6 +104,12 @@ was done, what was found, evidence links. The verifier's findings accumulate as 
 - **`acceptance`** — the behavioral, testable criteria (Given/When/Then or EARS) copied/derived from
   the feature's acceptance criteria in `product-requirements.research.md` (and the flow's criteria in
   `user-flows.research.md`). The definition of done the verifier proves against.
+- **`timings`** — wall-clock **seconds** per stage, written once by `run-task` when the task leaves
+  (`done` *or* `needs_human`); the whole block is absent until then, and a stage that didn't run has
+  no key. It is honest wall-clock, **not** compute time: waiting on a permission prompt and on the
+  human's acceptance answer is inside it, so `total` is normally larger than the stages added up and
+  the remainder is mostly the human. Read it to see where a task's time went — never as a benchmark
+  of a model or a target to optimize.
 - **`history`** — append-only transition log; each entry `{ at, to, by, note? }`. Never rewrite past
   entries.
 

@@ -101,6 +101,11 @@ list, one line each on where it got stuck) · which remain blocked and by what �
 **`spec_sync: pending`** — done, but not yet reflected in the spec. Point at
 `.dev-skills/build-plan/board.md` for the detail.
 
+Give each task a **time** column from its `timings.total`, and one line under the table splitting the
+run into build / verify / fix / solve. Report the numbers flat, with no verdict attached — they are
+wall-clock, so they include every stretch the run spent waiting on you
+(**`../_shared/build-pipeline/backlog-format.md`**).
+
 **Stopped at the limit with ready tasks left** — ask the human to compact and re-run:
 
 > Ran 8 tasks; <N> ready tasks remain. Continuing in this session isn't wise — the context is full of
