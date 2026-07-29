@@ -26,11 +26,16 @@ keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `
 («закоммитить», «отскаффолдить»), and leave template section headings and task fields
 (`## Forks / Decisions log`, `type: rework`) verbatim.
 
-## Git safety
+## Git workflow / safety
 
-- **Never create a branch.** Commit onto the current branch. Only branch if the user has
-  explicitly asked in this session.
+- **One branch — the current one, normally `main`.** Commit onto the branch the session is already
+  on. Never create a branch, never switch to another branch, never open a worktree on your own
+  initiative — not per feature, not "to keep `main` clean", not for a large changeset. **The single
+  exception:** the user explicitly asked for a separate branch in this session; then use the name
+  they gave (or propose one and confirm it) and say which branch the commits landed on. Being asked
+  to commit is not being asked to branch. Full rule: **`../_shared/git-workflow.md`**.
 - **Never push** unless the user explicitly asks.
+- **Never merge, rebase, or reset** — a commit is the only history-changing operation you perform.
 - **Never use `--amend`** — always create a new commit.
 - **Never add co-author or attribution trailers.** Do not append `Co-Authored-By:` lines,
   "Generated with Claude" / "🤖 Generated with..." footers, or any text crediting an AI model

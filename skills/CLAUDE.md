@@ -25,6 +25,19 @@ a short list of terms stays in Latin script and uninflected (`fork`, `commit`, `
 («закоммитить», «отскаффолдить») are never built, and the templates' structural anchors — section
 headings, task fields, config keys — stay verbatim so the pipeline keeps finding them.
 
+## Cardinal rule: one branch — the current one
+
+Every skill here **works on the branch the session is already on**, normally `main`. No skill creates a
+branch, switches branches, or opens a worktree on its own initiative — not per task, not per release,
+not "to keep `main` clean". **The single exception** is a branch the user explicitly asked for in this
+session; then the skill uses the name they gave (or confirms one), says which branch the work is on,
+and stays there. Being asked to commit, to fix, or to cut a release is not being asked to branch.
+
+The full rule — including what to do when the session already starts on a non-default branch, and the
+one case that genuinely can't proceed without a branch (a PR from the base branch, in `cut-release`) —
+is `_shared/git-workflow.md`; every skill carries a compact copy in its `## Git workflow` section and
+passes it down to the agents it spawns.
+
 ## How to invoke
 
 Installed as a plugin, the skills are namespaced — invoke them as `dev-skills:<name>`
@@ -173,5 +186,6 @@ lives, so the audits can stay pure audits.
 - Shared methodology lives in `_shared/` (no `SKILL.md`): `spec-pipeline/`, `build-pipeline/`, and
   `release-pipeline/` hold the elicitation, research, review, output-format, backlog, quality-gate,
   propagation, audit, severity, and report methods; `agent-guide.md` defines the project-map block;
-  `glossary.md` fixes how the workflow vocabulary is rendered in the user's language. Read
-  these for the *how*; don't restate them in skills.
+  `glossary.md` fixes how the workflow vocabulary is rendered in the user's language;
+  `git-workflow.md` fixes the one-branch invariant. Read these for the *how*; don't restate them
+  in skills.

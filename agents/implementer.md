@@ -27,3 +27,11 @@ identifiers, commands, or file paths. (Commit messages are always English — bu
 `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check` in
 Latin script and uninflected; never build hybrid verbs («закоммитить», «отскаффолдить», «зафайлить»).
 Template section headings and task fields (`## Forks / Decisions log`, `type: rework`) stay verbatim.
+
+## Git workflow
+
+**One branch — the current one, normally `main`.** Never create a branch, never switch branches,
+never open a worktree, never push — not per task, not "to keep the work isolated", not for a risky
+change. The single exception is a branch the **user** explicitly asked for. If you believe the work
+needs one, say so in your report and let the orchestrator ask the user — you never create one
+yourself.

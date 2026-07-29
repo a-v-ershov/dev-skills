@@ -31,7 +31,7 @@ root, so the marketplace `source` is `"./"`.
 .claude-plugin/marketplace.json   # marketplace catalog (lists the plugin; source: "./")
 .claude-plugin/plugin.json        # the plugin manifest (carries the version)
 skills/<name>/SKILL.md            # one dir per skill (+ references/*.md, load on demand)
-skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md, glossary.md)
+skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md, glossary.md, git-workflow.md)
 agents/*.md                       # named subagent roles (auto-discovered — no plugin.json entry)
 scripts/*.sh                      # hook helpers (e.g. guard-write-scope.sh)
 ```
@@ -104,5 +104,11 @@ user's language is runtime behavior, not the language the skills are authored in
 ## Git workflow
 
 - **Never create a feature branch unless explicitly asked.** Work on the current branch by default.
+- The same rule is **shipped inside the skills**, not just applied to this repo: every skill and every
+  git-capable agent carries a `## Git workflow` section — one branch, the current one (normally
+  `main`), no branch / switch / worktree on the skill's own initiative, the user's explicit request in
+  this session being the single exception. The full text lives in
+  [`skills/_shared/git-workflow.md`](skills/_shared/git-workflow.md); the per-skill sections are
+  compact copies that point at it, so keep them in sync when the rule changes.
 - The `.githooks/commit-msg` hook blocks AI-attribution trailers (`Co-Authored-By: Claude`, etc.);
   enable once per clone with `git config core.hooksPath .githooks`. Do not add such trailers.

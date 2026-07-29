@@ -51,6 +51,19 @@ keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `
 («закоммитить», «отскаффолдить»), and leave template section headings and task fields
 (`## Forks / Decisions log`, `type: rework`) verbatim.
 
+## Git workflow
+
+**One branch — the current one, normally `main`.** Never create a branch, never switch to another
+branch, and never open a worktree on your own initiative. **The single exception:** the user
+explicitly asked for a separate branch in this session — then use the name they gave (or propose one
+and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
+is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+
+**The PR is the one place this can bite** (Stage 4): a pull request cannot be opened from the base
+branch. If the current branch *is* the base, do not silently branch — commit and tag on it, then
+either ask for a branch (name it, wait for an explicit yes) or hand the PR back to the user as a
+remaining step, exactly as `--no-pr` does. Cutting the release never reorganizes the user's branches.
+
 ## Modes
 
 Read `.dev-skills/release/.release-config.md` for `mode`. Full rules:
@@ -101,7 +114,8 @@ notable items to their task ids where useful.
 Invoke the `commit` skill to commit the docs + version + changelog together (English message, carrying
 the version). Then **tag** the release (`vX.Y.Z`, annotated) and, unless `--no-pr`, **push** and **open
 the PR** (English title + a body summarizing the release and linking the changelog). **Confirm before the
-push and PR** — in both modes. Do not deploy.
+push and PR** — in both modes. Commit and tag on the **current branch**; if a PR is impossible from it,
+ask for the branch instead of creating one (see Git workflow). Do not deploy.
 
 ### Done: stop before deploy + report
 Update the `## Shipped` section of `.dev-skills/release/release-summary.md` (version · tag · PR link · changelog
@@ -127,3 +141,5 @@ open and point at `release-product`.
 6. **Commit/tag/PR text is English** (the `commit` skill); CHANGELOG + release notes follow the user's language.
 7. **Clean tree in, clean cut out** — the working tree must be clean before, and the cut is a single
    coherent commit + tag (+ PR).
+8. **Cut on the current branch.** No `release/*` branch, no branch "for the PR" — if the PR needs one,
+   ask; a no means commit + tag locally and hand the PR to the user.

@@ -57,6 +57,14 @@ keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `
 («закоммитить», «отскаффолдить»), and leave template section headings and task fields
 (`## Forks / Decisions log`, `type: rework`) verbatim.
 
+## Git workflow
+
+**One branch — the current one, normally `main`.** Never create a branch, never switch to another
+branch, and never open a worktree on your own initiative. **The single exception:** the user
+explicitly asked for a separate branch in this session — then use the name they gave (or propose one
+and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
+is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+
 ## Modes (read this first)
 
 Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and

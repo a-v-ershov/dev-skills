@@ -28,9 +28,11 @@ GitHub. Every skill replies in the language you write to it.
 4. **A real dev loop + a release phase that hunts the AI's own bugs** — an enforced quality gate locally, then a refactor pass, a red-first test sweep, independent security / performance / product+accessibility audits, and a hands-on briefing for you, before you ship.
 5. **Production in one deliberate step** — `setup-production-environment` sets up the platform, the database, the caps, and the telemetry, sorting every gap into *repo · authorized CLI with your yes · you in a dashboard*, then deploys, smoke-tests the live version, and leaves a plain-language runbook.
 
-**Plus:** replies in your language · reverse-engineers an existing codebase into a spec (brownfield) ·
-leaves committed project memory — docs, ADRs, backlog, a `CLAUDE.md` map — that doesn't rot · ships as
-a plain Claude Code plugin, no extra runtime or MCP server.
+**Plus:** replies in your language · never touches your branches — every skill works on the branch you
+are on (normally `main`) and branches only when you explicitly ask · reverse-engineers an existing
+codebase into a spec (brownfield) · leaves committed project memory — docs, ADRs, backlog, a
+`CLAUDE.md` map — that doesn't rot · ships as a plain Claude Code plugin, no extra runtime or MCP
+server.
 
 ---
 
