@@ -109,7 +109,12 @@ was done, what was found, evidence links. The verifier's findings accumulate as 
   no key. It is honest wall-clock, **not** compute time: waiting on a permission prompt and on the
   human's acceptance answer is inside it, so `total` is normally larger than the stages added up and
   the remainder is mostly the human. Read it to see where a task's time went — never as a benchmark
-  of a model or a target to optimize.
+  of a model or a target to optimize. One ratio is worth watching across tasks rather than within
+  one: **`verify` against `build`**. Proving a feature should cost a fraction of building it, so a
+  `verify` that keeps landing near or above its `build` says the two roles are covering the same
+  ground — the verifier re-authoring what the implementer already wrote — and that is a finding about
+  `implement-feature`, `verify-feature` and `verification-method.md`, not about the task in front of
+  you.
 - **`history`** — append-only transition log; each entry `{ at, to, by, note? }`. Never rewrite past
   entries.
 

@@ -79,10 +79,10 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Stage 0: Intake — read the task (description + acceptance + any verifier findings); confirm ready; set in_progress + history
+- [ ] Stage 0: Intake — read the task (description + acceptance + any verifier findings); confirm ready; set in_progress + history; open the ## Log note
 - [ ] Stage 1: Build — implement the feature on the current branch, matching project conventions; touch only what the task needs
-- [ ] Stage 2: Self-check — happy path via verification.md + (optional) own tests/env + quality gate (make check) green
-- [ ] Stage 3: Log + hand off — append a ## Log note (what was built, self-check result); leave status in_progress for verify-feature
+- [ ] Stage 2: Self-check — happy path via verification.md + unit tests of your own logic (no e2e, no adversarial suite) + quality gate (make check) green
+- [ ] Stage 3: Log + hand off — close the ## Log note (what was built, self-check result); leave status in_progress for verify-feature
 ```
 
 ### Stage 0: Intake
@@ -90,7 +90,10 @@ Read the task's `## Description`, `acceptance`, and `## Log` (in the **fix round
 failures are there and its tests are now in the tree — run them to reproduce each failure, then fix to
 green; that is the whole priority). Read the spec sections it `traces_to` and the project `CLAUDE.md`.
 Confirm the task is `ready` (its `blocked_by` are all `done`); if a blocker isn't done, stop and report
-— don't build on an unmet dependency. Set the task `status: in_progress` with a `history` entry.
+— don't build on an unmet dependency. Set the task `status: in_progress` with a `history` entry, and
+**open the `## Log` note now**, before building — then append each decision as you take it. A note
+composed at the end is lost whole when the run is cut short, and the next reader is left with a diff
+and no reasons.
 
 ### Stage 1: Build
 Implement the feature on the current branch. Follow the project's conventions and existing patterns;
@@ -109,14 +112,18 @@ wrong fix.
 ### Stage 2: Self-check
 Using the commands in `.dev-skills/project-setup/verification.md`, bring the stack up if needed and drive the
 happy path of the acceptance criteria, confirming a real observable outcome (a page renders, a row
-lands, a response asserts). You **may** also write your own tests and exercise the environment here for
-a fast inner loop — the adversarial tests are the verifier's job, not yours. Then run the quality gate
+lands, a response asserts). Your own tests here are a **fast inner loop, not a suite**: unit tests over
+the logic you are writing this minute. The e2e scenario, the adversarial cases and the negative paths
+belong to the verifier, and it writes them from the acceptance criteria whatever you produce — so a
+suite of your own is paid for twice, once to author it and again in the browser time to run both.
+Then run the quality gate
 (`make check`) and get it green before handing off. This is a smoke check to catch the obvious — it is
 **not** the verdict.
 
 ### Stage 3: Log + hand off
-Append a dated `## Log` note (tagged `[implement-feature]`): what you built, which files, and the
-happy-path self-check result. Leave the task `in_progress` — do **not** set it `done`, do **not** run
+Close the `## Log` note you opened at Stage 0 (dated, tagged `[implement-feature]`): what you built,
+which files, and the happy-path self-check result. Leave the task `in_progress` — do **not** set it
+`done`, do **not** run
 `verify-feature`, and do **not** commit. Report that the task is ready for verification; the
 orchestrator (`run-task`) spawns the independent verifier next and commits on pass.
 

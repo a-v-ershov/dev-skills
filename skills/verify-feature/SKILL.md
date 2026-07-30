@@ -99,10 +99,16 @@ for the concrete commands (bring-up, drive/prove per surface, dummy auth, seed/r
 
 ### Stage 1: Author → run → drive → prove
 For **each** acceptance criterion, produce two independent proofs. **Author** an adversarial automated
-test (additional to the implementer's), commit it into the project's test structure, and run it. Then
+test from the criterion — independently of whatever the implementer wrote, and without reading their
+tests first: you start from the criteria, not from their suite. Commit it into the project's test
+structure and run it. Then
 bring the stack up (or confirm it's up), reset to a known seeded state if needed, **drive** the behavior
 per the contract, and **prove** the real outcome — observe and capture it. Cover the negative/error
-criteria explicitly. Save screenshots/responses to `.dev-skills/build-plan/tasks/artifacts/`. Full method:
+criteria explicitly. Drive **your own** scenario, not the whole accumulated e2e suite: regressions in
+other tasks are the quality gate's job, a full run rewrites their evidence, and its report directory
+can redden the gate on vendored code nobody here wrote. Save screenshots/responses to
+`.dev-skills/build-plan/tasks/artifacts/` under names carrying **this** task's id — never overwrite
+another task's evidence, it is what its findings cite. Full method:
 **`verification-method.md`**.
 
 ### Stage 2: Record

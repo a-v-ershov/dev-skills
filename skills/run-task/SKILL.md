@@ -112,7 +112,10 @@ Then confirm the task is **ready**: `status: todo` (or a stale `in_progress` fro
 every `blocked_by` is `done`. A task with an unmet blocker stops here — say which one.
 
 ### Stage 1: Start
-Set `status: in_progress` with a `history` entry. **Show the human the acceptance criteria** this task
+Set `status: in_progress` with a `history` entry, and **regenerate `board.md` now** so the task moves
+out of `Ready` into `In progress` — the build runs for an hour or more, and a board that only catches
+up at the commit shows "nothing in progress" for exactly the stretch someone would look at it.
+**Show the human the acceptance criteria** this task
 will be judged by, one line each — it is the last cheap moment to catch a criterion that describes the
 wrong thing. Acquire the **env lease** (**`../_shared/build-pipeline/env-access.md`**); subagents
 inherit it.
@@ -124,6 +127,20 @@ Dispatch by `type`:
   fresh, clean context — it preloads `implement-feature`). It builds, self-checks the happy path, and
   gets the cheap gate green before handing back.
 - **`verify`** (cross-cutting) → skip to Stage 3 and spawn the verifier directly.
+
+**What the spawn prompt must carry.** The agent is fresh and knows nothing you know; a prompt that
+passes only a task id makes it rediscover the project. Name: the task file's path · the project
+`CLAUDE.md` and its invariants · **what recently changed** — the files the last closed tasks
+rewrote, so it reads the current state instead of trusting line numbers in the task description ·
+the branch rule and that it must not commit · the test boundary (unit inner loop, no e2e, no
+adversarial suite — those are the verifier's).
+
+**If the agent dies before it reports** — an API error, a session limit, an interrupt — that is not a
+failed task and not a `needs_human`. Check `git status`: an empty tree means nothing was lost, so
+spawn a fresh implementer with the same brief. A non-empty tree means work landed with no account of
+itself, so read its `## Log` (opened at its Stage 0) and either resume the same agent, or go to
+Stage 3 telling the verifier plainly that the build is unattested and it must judge completeness too.
+Never assume an interrupted build is finished, and never assume it is worthless.
 
 ### Stage 3: Verify (once)
 Spawn the **`verifier` agent** (`subagent_type: verifier`, separate agent — it preloads
@@ -142,8 +159,11 @@ fix is checked without re-spawning the verifier.
 ### Stage 5: Solve pass + full gate
 Direct the **same implementer agent** to a light cleanup **scoped to this task's own diff** — remove
 dead or duplicated code it introduced, collapse needless abstraction, drop over-built generality —
-strictly **behaviour-preserving**. Pre-existing rot in code this task didn't touch is out of scope:
-note it as a `rework` task, never tidy it here. (Agents over-produce and don't feel maintenance cost;
+strictly **behaviour-preserving** — and a flag, parameter or command named in
+`.dev-skills/project-setup/verification.md` **is** behaviour: from inside the diff it looks like an
+argument nobody varies, but it is part of the contract the verifier drives the product by.
+Pre-existing rot in code this task didn't touch is out of scope: note it as a `rework` task, never
+tidy it here. (Agents over-produce and don't feel maintenance cost;
 a deliberate pass stops bloat from compounding.)
 
 Then confirm the **full quality gate** is green (`make check` — lint/type + the whole accumulated
