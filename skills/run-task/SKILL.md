@@ -1,6 +1,5 @@
 ---
 name: run-task
-disable-model-invocation: true
 description: "Drive ONE task through the full development cycle: the implementer builds it, a separate fresh verifier independently proves the acceptance criteria, its findings go back for exactly one fix round, the quality gate must be green, the human accepts the work (or it is auto-accepted when the diff holds nothing a person could check by hand), the spec is offered a catch-up edit if the product's behavior changed, and a checkpoint commit carrying the task id lands. Two entry points: a task id from the backlog (run-task T07) or a free-form request (run-task 'the card doesn't show the date'), in which case it files the task itself with origin: adhoc and acceptance criteria the user confirms. No iteration loop and no cap to tune — anything the single fix round leaves open escalates to needs_human. Use to build one task; build-tasks calls it repeatedly to work through the backlog. Sequential, single working tree, current branch. It conducts the implementer/verifier agents and the commit skill; it does not duplicate their procedures."
 argument-hint: "[<task-id> | <free-form request>]"
 ---

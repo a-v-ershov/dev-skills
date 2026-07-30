@@ -38,8 +38,8 @@ additional to any the implementer wrote — aimed at breaking the feature.
   `verification.md` is missing, stop and point the user at `setup-dev-environment` — verification
   cannot run without it.
 - **Writes:** the adversarial **test files** you author, committed into the project's test structure
-  (the convention is in `verification.md`); a batch of findings appended to the task's `## Log`; the
-  on escalation, the task's `status: needs_human`. Evidence under
+  (the convention is in `verification.md`); a batch of findings appended to the task's `## Log`; on
+  escalation, the task's `status: needs_human`. Evidence under
   `.dev-skills/build-plan/tasks/artifacts/`.
 
 Method (the loop, recording, escalation): **`../_shared/build-pipeline/verification-method.md`**. Task
@@ -106,8 +106,8 @@ criteria explicitly. Save screenshots/responses to `.dev-skills/build-plan/tasks
 **`verification-method.md`**.
 
 ### Stage 2: Record
-Append a dated batch of findings to the task's `## Log` (tagged `[verify-feature]`, with the
-iteration number, one line per criterion, evidence links on failures). Increment the task's
+Append a dated batch of findings to the task's `## Log` (tagged `[verify-feature]`, one line per
+criterion, evidence links on failures).
 
 ### Stage 3: Verdict
 - **All criteria proven → PASS.** Report pass; the task is eligible to go `done` (the orchestrator

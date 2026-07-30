@@ -1,6 +1,5 @@
 ---
 name: build-tasks
-disable-model-invocation: true
 description: "Work through the development plan: take tasks from .dev-skills/build-plan/ one at a time and run each through the run-task skill (implementer → separate verifier → one fix round → green gate → human acceptance → checkpoint commit). The order is deterministic and not a judgement call: the next task is the ready one (status todo, all blocked_by done) with the lowest id; no parallel tasks, one working tree. Before starting it checks whether the spec moved ahead of the plan and, if so, offers to reconcile via plan-development first rather than confidently building something already abandoned. A task that escalates to needs_human is not retried — the run continues and reports it at the end. By default it runs straight through, pausing only for a real reason (a task whose work a human can check by hand, needs_human, a red gate, the per-run limit); a one-at-a-time mode with confirmation before each task is opt-in, as is thinning acceptance to every Nth task. It takes at most 8 tasks per run, then stops and asks the human to compact the context and start it again — beyond that the session is full of diffs and reports and tasks start blurring together. Resumable: the backlog is the source of truth, so an interrupted run continues where it stopped and never rebuilds finished work. Use after plan-development. It writes no code and duplicates no cycle — all per-task work is run-task's."
 argument-hint: "[one-at-a-time | run N | review every N | <task-id> to start from]"
 ---
@@ -60,7 +59,7 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode` (write it if absent, d
 
 ```
 - [ ] Step 0: Intake — backlog present? spec moved ahead of the plan? mode? interrupted run?
-- [ ] Loop: ready set → lowest id → /run-task → regen board → next (stop at 8 tasks)
+- [ ] Loop: ready set → lowest id → /run-task → regen board → acceptance if due → next (stop at 8 tasks)
 - [ ] Done: report built / needs_human / blocked / spec_sync pending; at the limit, ask for /compact
 ```
 
@@ -91,7 +90,12 @@ Repeat while ready tasks remain:
 4. **A task that went `needs_human`** → don't take it again; show it to the human and move to the next
    ready task. One stuck task must not stop the whole plan.
 5. **Regenerate `.dev-skills/build-plan/board.md`** from the task files.
-6. **Next task — unless you hit the limit.** Count the tasks handled this run (including escalated
+6. **Acceptance, when the human asked for it.** In *acceptance every N* mode, if this was the **Nth**
+   task of the run — or the run's **last** one — do the manual acceptance now, before taking anything
+   else: show the batch (one line per auto-accepted task since the previous acceptance: what was built
+   + what proved it) and **wait**. Skipping this silently turns the mode the human switched on into a
+   promise nobody kept.
+7. **Next task — unless you hit the limit.** Count the tasks handled this run (including escalated
    ones): at **8**, stop even if ready tasks remain, and go to Done. An argument `run N` lowers the
    limit to N.
 

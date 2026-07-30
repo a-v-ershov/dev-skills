@@ -19,6 +19,10 @@ task fields and their values (`type: rework`, `status: done`, `review: auto`), c
 translating one breaks the pipeline. Prose *about* an anchor follows the user's language — the anchor
 itself stays verbatim.
 
+This governs **new** names too: identifiers you author — variables, functions, classes, fixtures,
+parameters, test-function names — are written in **Latin script**, whatever language the conversation
+is in. The user's language belongs in comments, docstrings and human-visible strings, never in a name.
+
 ## Kept in Latin script (Russian output)
 
 `fork` · `commit` · `backlog` · `mockup` · `deploy` · `checklist` · `baseline` · `harness` ·

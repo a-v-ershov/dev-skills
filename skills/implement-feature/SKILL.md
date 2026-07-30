@@ -124,7 +124,8 @@ orchestrator (`run-task`) spawns the independent verifier next and commits on pa
 
 1. Build only this task, to its acceptance criteria; match the codebase; no unrelated refactors.
 2. Confirm the task is `ready` before building; never build on an unmet blocker.
-3. Self-check the happy path against the real stack and get the quality gate (`make check`) green — but
-   never self-approve; the separate verifier decides.
+3. Self-check the **happy path** against the real stack and get the quality gate (`make check`) green.
+   **Adversarial tests are the verifier's and you do not write them** — an adversarial suite of your
+   own is duplicated work the verifier will redo. Never self-approve; the separate verifier decides.
 4. Do not commit and do not run the verifier — the orchestrator owns both.
 5. Leave a clear `## Log` trail for the fresh verifier agent.
