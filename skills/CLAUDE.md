@@ -143,6 +143,14 @@ lives, so the audits can stay pure audits.
 ## Standalone skills
 
 - **`commit`** — analyze uncommitted changes, group by logic, create well-structured commits (English messages).
+- **`audit-skills`** — *(by hand, never auto-run)* the set's own retrospective: it reads this session's
+  transcript (`scan_session.py`) plus the artifacts the run produced, works out how the skills and agents
+  that ran actually behaved — wrong or skipped steps, silent gates, repeated work, broken invariants of
+  the set, output that misses its template — and reports **numbered edit proposals** against the file
+  that owns each rule (`SKILL.md`, an agent, or a `_shared/*.md` method). It proposes only: nothing is
+  applied until the caller names numbers, and even then it can write nothing but skill/agent/command
+  files (write-scope guard). Not a release audit — it audits the tooling, not the product, and
+  `release-product` never invokes it.
 - **`generate-mockups`** — on demand, generate several stub UI variants (no logic) for a screen and
   render them against the `DESIGN.md` so you can compare and choose; records the chosen one as a
   design-note on the task. It explores arrangement within the settled design system — never alternative systems.

@@ -30,7 +30,7 @@ root, so the marketplace `source` is `"./"`.
 ```
 .claude-plugin/marketplace.json   # marketplace catalog (lists the plugin; source: "./")
 .claude-plugin/plugin.json        # the plugin manifest (carries the version)
-skills/<name>/SKILL.md            # one dir per skill (+ references/*.md, load on demand)
+skills/<name>/SKILL.md            # one dir per skill (+ references/*.md, load on demand; helper scripts alongside)
 skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md, glossary.md, git-workflow.md)
 agents/*.md                       # named subagent roles (auto-discovered — no plugin.json entry)
 scripts/*.sh                      # hook helpers (e.g. guard-write-scope.sh)
@@ -45,7 +45,8 @@ scripts/*.sh                      # hook helpers (e.g. guard-write-scope.sh)
 The plugin's `version` (`.claude-plugin/plugin.json`, semver) is **owned by the user**. The agent MUST
 NOT edit it on its own initiative — only when the user explicitly asks. Consumers receive changes via
 `/plugin update` only once it's bumped, but the agent never drives the bump (may mention skills changed,
-nothing more). Keep `metadata.version` in `marketplace.json` in sync when the user does bump.
+nothing more). **`metadata.version` in `marketplace.json` is a different number** — the marketplace's
+own version, not the plugin's. It does not track plugin bumps; leave it alone.
 
 ## The pipelines (overview)
 
@@ -73,6 +74,11 @@ Skills are **verbs**; their outputs are **nouns**. All artifacts are committed p
 under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
 (UI projects). `.dev-skills/build-plan/mockups/` is the only gitignored item.
 
+One skill sits **outside all three**: **`audit-skills`** is a manually-invoked meta-utility that audits
+the *tooling*, not the product — it reads the session transcript (`scan_session.py`) plus the artifacts a
+run produced and proposes numbered edits to the skill / agent / `_shared` files that ran, applying
+nothing until the user picks numbers. It is never invoked by `release-product` and files no rework tasks.
+
 ## Skill & agent authoring conventions
 
 - **Description = discoverability.** Write the `description` in the third person stating WHAT the skill
@@ -85,15 +91,19 @@ under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release
 - **Named agents** (`agents/`, auto-discovered) carry the pipelines' subagent roles: `spec-reviewer` and
   `spec-researcher` are self-contained (a plugin agent can't reliably read `_shared/*.md` at runtime);
   `implementer`/`verifier`/`ui-prototyper` are thin wrappers that `skills:`-preload their procedure skill.
-- **`disable-model-invocation: true`** on side-effecting / outward-facing entry points so they don't
-  auto-fire from a cold chat: `commit`, `build-tasks`, `run-task`, `setup-dev-environment`,
-  `setup-production-environment`, `refactor`, `cut-release`, `release-product`. Not set on the doc-only
-  spec phases, the read-only `audit-*` and `manual-test`, `write-tests`, the build-loop skills, or
-  `generate-mockups`.
+- **`disable-model-invocation: true`** only where an auto-fire would reach **outside the repository**:
+  `setup-production-environment` and `cut-release`. Nothing else carries it. The flag is not free —
+  **a skill that another skill's procedure is told to invoke cannot have it**, or the hand-off dies on
+  `cannot be used with Skill tool`: `run-task` invokes `commit` and `setup-dev-environment`,
+  `build-tasks` invokes `run-task`, `release-product` invokes `build-tasks` and `cut-release`. That last
+  pair is the one live exception — `release-product` must read `cut-release/SKILL.md` and follow it
+  rather than call it. In-repo side effects (a commit, a refactor, a whole build run) are guarded by the
+  user's permission prompts, not by this flag.
 - **Write-scope guard hooks** (declared in a skill's frontmatter, running `scripts/guard-write-scope.sh`)
   turn a prose invariant into a harness guarantee: `verify-feature` and `write-tests` write tests +
-  `.dev-skills/` only; `generate-mockups` the scratch mockups tree only; each `audit-*` `.dev-skills/**`
-  + the backlog only; `manual-test` `.dev-skills/**` only.
+  `.dev-skills/` only; `generate-mockups` the scratch mockups tree only; each release `audit-*`
+  `.dev-skills/**` + the backlog only; `manual-test` `.dev-skills/**` only; `audit-skills` skill / agent /
+  command / `CLAUDE.md` files only — never product code, never the version-carrying manifests.
   **`allowed-tools` is deliberately unused** — we keep the user's permission prompts intact.
 
 ## Authoring language

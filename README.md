@@ -212,6 +212,7 @@ also runs on its own.
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
 | `commit` | Git helper | Splits session changes into well-structured commits (English messages) | commits |
+| `audit-skills` | Skill auditor | *(by hand)* Audits how the skills and agents that ran in this session actually behaved — wrong or skipped steps, repeated work, broken invariants, artifacts that miss their template — and proposes numbered edits to their files; applies nothing until you pick numbers | proposals (edits to skill files on your pick) |
 
 Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,
 the release phase's findings under `.dev-skills/release/`, setup records under
