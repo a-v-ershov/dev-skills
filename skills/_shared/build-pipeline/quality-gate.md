@@ -23,6 +23,24 @@ that runs, fast and deterministically:
 The concrete tools come from the stack `design-architecture`/`design-dev-architecture` already chose —
 the gate **executes** that decision, it does not re-pick tools.
 
+## Keep the gate cheap — it is run hundreds of times
+
+Every hand-off, every verification and every commit pays for the suite, so its cost is charged to
+every future task. A gate that grows slower is a gate agents start working around.
+
+**Production-grade slow primitives must be cheap under test.** Password hashing and KDFs (Argon2,
+bcrypt, scrypt), artificial delays, retry backoff, deliberate rate limits — these are slow *by
+design*, that is their whole job in production, and weakening them there is a defect. Under test they
+need a configurable cheap setting, or a handful of feature tests quietly dominate the entire run.
+Measured case: Argon2 at OWASP defaults costs ~32 ms per operation, which made 86 auth tests take 42 s
+of a 95 s suite; the same tests with test-cost parameters took 7.7 s and the whole 1006-test suite
+dropped to 33 s — with nothing dropped from it.
+
+Reach for that **before** trimming what the suite runs. Selecting "only the tests related to this
+change" is the tempting fix and usually the wrong one: it gives up the regression net precisely where
+a task is most likely to break an earlier one, and the tests of the feature being built are typically
+the slow ones anyway.
+
 ## Zero-tolerance config
 
 The gate is only effective for AI-written code if it cannot be silently sidestepped:
@@ -35,9 +53,12 @@ The gate is only effective for AI-written code if it cannot be silently sidestep
 ## Where it is configured vs enforced
 
 - **Configured by `setup-dev-environment`** (repo-local, so auto-applicable): the tool configs, the
-  `make check` target, a **pre-commit hook** that runs the gate and blocks the commit on red, and a
-  Claude Code **Stop / PostToolUse hook** in `.claude/settings.json` that runs the gate after edits and
-  feeds the failures back to the agent.
+  `make check` target, and a **pre-commit hook** that runs the gate and blocks the commit on red.
+  **Do not wire a Claude Code hook that runs the full gate after every edit or every turn.** The whole
+  suite on each turn is time the agent spends waiting instead of working, and a gate that is red
+  mid-task — which is the normal state halfway through building something — blocks the turn and forces
+  a polling loop around it. The gate belongs where it decides something: the pre-commit hook, the
+  implementer's hand-off, and the verifier's run.
 - **Enforced at three points:**
   1. `implement-feature` self-check — runs the gate before handing off; does not hand off on red.
   2. `verify-feature` — its authored tests become part of the suite the gate runs.
