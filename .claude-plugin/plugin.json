@@ -1,6 +1,6 @@
 {
   "name": "dev-skills",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Coding-workflow skills + agents for Claude Code: three pipelines from raw idea to cut release, plus a manual production step. project-spec (gather-context -> validate-idea -> define-product-requirements -> create-user-flows -> define-design-decisions -> design-architecture -> design-dev-architecture, conducted by create-project-spec) writes the buildable spec; build (setup-dev-environment -> plan-development -> run-task per task, conducted by build-tasks) turns it into working software; release (refactor -> write-tests -> audit-security/performance/product in parallel -> manual-test -> cut-release, conducted by release-product) cleans, proves, and ships it; setup-production-environment then sets up the live environment by hand — platform, database, config, spend caps, analytics — and deploys. Plus commit, generate-mockups, and audit-skills — a by-hand retrospective that reads the session transcript and works out how the skills and agents that ran actually behaved, then proposes numbered edits to their own files. Bundled agents (spec-reviewer, spec-researcher, implementer, verifier) carry the pipelines' subagent roles. Every skill responds and thinks in whatever language you address it in.",
   "author": {
     "name": "a-v-ershov",

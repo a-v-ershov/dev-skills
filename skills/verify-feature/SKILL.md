@@ -86,9 +86,9 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Stage 0: Intake — read the task (acceptance + description) + verification.md + mode
-- [ ] Stage 1: Author tests → run → drive → prove each acceptance criterion (incl. negative/error paths), saving evidence
-- [ ] Stage 2: Record — append a dated findings batch to the task ## Log
+- [ ] Stage 0: Intake — read the task (acceptance + description) + verification.md + mode; open the ## Log entry
+- [ ] Stage 1: Author tests → run → drive → prove each acceptance criterion (incl. negative/error paths), saving evidence — recording each verdict in the ## Log as it lands
+- [ ] Stage 2: Close the record — the verdict line per criterion is already there; add what only the whole picture shows
 - [ ] Stage 3: Verdict — pass (all proven) / fail (hand back) / escalate to needs_human at the cap
 ```
 
@@ -96,6 +96,9 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
 Read the task's `acceptance` criteria and `## Description`. Read `.dev-skills/project-setup/verification.md`
 for the concrete commands (bring-up, drive/prove per surface, dummy auth, seed/reset, logs). Read
 `mode`. If the contract is missing, stop and report.
+
+Then **open the `## Log` entry now**, before authoring anything — dated and tagged `[verify-feature]`
+— exactly as `implement-feature` opens its own at its Stage 0. See the rule on writing it as you go.
 
 ### Stage 1: Author → run → drive → prove
 For **each** acceptance criterion, produce two independent proofs. **Author** an adversarial automated
@@ -111,9 +114,15 @@ can redden the gate on vendored code nobody here wrote. Save screenshots/respons
 another task's evidence, it is what its findings cite. Full method:
 **`verification-method.md`**.
 
-### Stage 2: Record
-Append a dated batch of findings to the task's `## Log` (tagged `[verify-feature]`, one line per
-criterion, evidence links on failures).
+**Write each verdict into the `## Log` the moment it lands** — one line per criterion, evidence link
+on a failure — not in a batch at the end. A criterion you have proven and not yet written down is a
+result nobody else has.
+
+### Stage 2: Close the record
+The per-criterion lines are already in the `## Log` from Stage 1. Add here only what the whole picture
+shows and a single criterion could not: a pattern across failures, a criterion that turned out to
+measure the harness rather than the product, a defect outside the criteria that you are handing on
+rather than fixing.
 
 ### Stage 3: Verdict
 - **All criteria proven → PASS.** Report pass; the task is eligible to go `done` (the orchestrator
@@ -134,3 +143,11 @@ criterion, evidence links on failures).
    second pass to clarify them in.
 4. No verification contract (`verification.md`) → stop and point at `setup-dev-environment`.
 5. Never weaken a criterion to pass it.
+6. **Write the `## Log` as you go, not at the end.** Open it at Stage 0 and append each criterion's
+   verdict as it lands. A verification run can end before you do — an interrupt, an API limit, a
+   session cap — and the working tree is shared, so your half-written tests survive while your
+   findings do not. Measured case: a verifier ran 36 minutes, authored its adversarial specs, wrote
+   per-worker evidence artifacts, and was interrupted mid-command; because its whole record was
+   batched for the end, the task was left with test files, artifacts, and **not one line** saying what
+   any of it had established. Whoever picks it up then has to re-derive from the tree what you already
+   knew. `implement-feature` opens its note at its Stage 0 for exactly this reason; so do you.
