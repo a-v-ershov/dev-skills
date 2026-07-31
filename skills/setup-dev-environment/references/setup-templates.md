@@ -29,8 +29,9 @@ placeholders from the spec and the detected state.
 | seed script | scripts/seed.ts | seed strategy | yes | no |
 | entrypoint | Makefile `dev` target → `docker compose up` | one-command bring-up | yes | no |
 | quality gate | linter+formatter+typechecker config (zero-tolerance) | test levels / quality-gate.md | yes | no |
-| `make check` | target running lint + type-check + tests | quality-gate.md | yes | no |
-| pre-commit hook | runs `make check`, blocks commit on red | quality-gate.md | yes | no |
+| `make check-fast` | target running format + lint + type-check + suppressions (no tests) | quality-gate.md | yes | no |
+| `make check` | the same **plus** the accumulated suite — run deliberately, never by a hook | quality-gate.md | yes | no |
+| pre-commit hook | runs `make check-fast`, blocks commit on red | quality-gate.md | yes | no |
 | env-access | lock helper baked into bring-up (gitignored lock) and/or per-run isolation | env-access.md | yes | no |
 | dev/test scripts | skeleton of fast local scripts (full impl = backlog) | dev-architecture / dev scripts | yes | no |
 | custom project skills | skeleton `.claude/skills/<name>/SKILL.md` stubs (full authoring = backlog; §6) | dev-architecture / custom skills | yes | no |
@@ -39,7 +40,7 @@ placeholders from the spec and the detected state.
 ## C. AI tooling  (config auto; plugin/MCP installs gated)
 | Item | Action | From | Gated? |
 |------|--------|------|--------|
-| .claude/settings.json | hooks + **`permissions.deny`** (exclude generated/build/vendor) | AI tooling / quality-gate.md / §5 | no (config) |
+| .claude/settings.json | **`permissions.deny`** (exclude generated/build/vendor) — **no gate-running Stop/PostToolUse hook** | AI tooling / quality-gate.md / §5 | no (config) |
 | LSP plugin: <lang> | `/plugin install <lang>-lsp@claude-plugins-official` — symbol navigation | AI tooling / §5 | yes (install) |
 | MCP: postgres | register db MCP server | AI tooling | yes (install) |
 | plugin: <name> | install | AI tooling | yes (install) |
@@ -63,7 +64,7 @@ placeholders from the spec and the detected state.
 - Wrote project CLAUDE.md (backed up previous to CLAUDE.md.bak).
 - Registered the postgres MCP server.
 - Smoke-test: `make dev` came up green; app reachable at http://localhost:3000; seed data present;
-  `make check` green and the pre-commit hook blocks a deliberately-broken commit.
+  `make check` green and the pre-commit hook blocks a commit with a deliberate type error.
 
 ## Skipped (already present)
 - Docker (already installed). Node 20 (already on PATH).
@@ -94,11 +95,14 @@ made executable. This is the project-specific input the generic `verify-feature`
 - Acquire / release: `make dev` acquires · `make down` releases · force-clear a stuck lock: `make env-unlock`.
 - Standalone skill runs acquire and release the env themselves. Method: `_shared/build-pipeline/env-access.md`.
 
-## Gate (must be green before commit)
-- One command: `make check` → format check + lint + type-check + tests (the accumulated suite).
+## Gate (two commands — one automatic, one deliberate)
+- `make check-fast` → format check + lint + type-check + suppressions. **No tests.** This is what the
+  pre-commit hook runs; a red one blocks the commit.
+- `make check` → the same plus the accumulated suite. Run deliberately: the implementer's hand-off,
+  the verifier's run, and `build-tasks` before the checkpoint commit.
 - Zero-tolerance: fails on lint/type errors, new warnings, and new suppression comments.
-- Enforced by a pre-commit hook (blocks the commit on red) and a Claude Code Stop hook (feeds failures
-  back). Method: `_shared/build-pipeline/quality-gate.md`.
+- **No Claude Code Stop / PostToolUse hook running either one.** Method:
+  `_shared/build-pipeline/quality-gate.md`.
 
 ## Drive & prove, per surface
 | Surface | Run it | Drive it | Prove it (observable) |
@@ -130,38 +134,41 @@ made executable. This is the project-specific input the generic `verify-feature`
 | `<inspector / visualizer>` | see an intermediate outcome | local render, no prod assets | yes |
 ```
 
-## 4. `.claude/settings.json` — the quality-gate hook (copy-ready)
+## 4. The pre-commit hook (copy-ready) — and the hook that must NOT exist
 
-The Claude Code **Stop hook** that runs the gate after the agent finishes editing and **feeds the
-failures back** so it fixes them before finishing — the in-session counterpart of the pre-commit hook.
-Drop this into the project's `.claude/settings.json` (merge it with any existing `hooks` block):
+**The only automatic gate is the pre-commit hook, and it runs the static checks.** `.githooks/pre-commit`,
+wired with `git config core.hooksPath .githooks`:
 
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "make check 1>&2 || { echo 'Quality gate (make check) is red — fix the reported issues before finishing.' 1>&2; exit 2; }",
-            "timeout": 300
-          }
-        ]
-      }
-    ]
-  }
-}
+```bash
+#!/usr/bin/env bash
+# The static gate, on every commit. Red blocks the commit.
+#
+# NO TESTS HERE. A compiler-shaped check costs seconds and is worth paying
+# without being asked; a test suite is not, and it grows. The suite lives in
+# `make check`, which implement-feature, verify-feature and build-tasks run
+# deliberately. Do not add a test step back, and do not smuggle one in under
+# another name (a "quick subset", a changed-files runner, a wrapper target).
+#
+# Escape hatch: `git commit --no-verify` — for a deliberate failure, explained
+# in the commit message.
+
+set -e
+make check-fast
 ```
 
-- **Exit codes do the work.** `make check` green → exit 0, the agent stops normally; red → the wrapper
-  exits **2**, which blocks the stop and feeds the gate's own output back as the next thing to fix.
-- **Keep it actionable, keep it fast.** If the full suite is slow, point the Stop hook at a faster
-  subset (lint + type-check + changed-file tests) and let the **pre-commit hook** run the whole suite —
-  the commit is the hard gate (`_shared/build-pipeline/quality-gate.md`). Raise `timeout` (seconds) to
-  fit the gate's runtime.
-- It is the same gate `make check` runs everywhere; the hook changes only *when* it runs (on stop) and
-  *that a red result blocks* — never *what* it checks.
+**Do NOT write a Claude Code `Stop` or `PostToolUse` hook that runs a gate.** It reads as free
+insurance and is not:
+
+- A gate that is red mid-task is the **normal** state halfway through building something. The hook
+  turns that into a blocked turn and a polling loop around it.
+- Measured case: a `Stop` hook running the full gate killed a turn over a **formatter warning** on a
+  work-in-progress file. The agent spent that turn on whitespace instead of the task it was given.
+- It buys nothing the pipeline doesn't already have: `implement-feature` runs the full gate before
+  handing off, and `build-tasks` runs it before the checkpoint commit. Those are the moments where
+  something is actually being asserted; the end of a turn is not one of them.
+
+If a project already has such a hook, removing it is a fix, not a loosening
+(`_shared/build-pipeline/quality-gate.md`).
 
 ## 5. `.claude/settings.json` — code intelligence (LSP) + navigation deny
 

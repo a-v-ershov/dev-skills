@@ -40,10 +40,11 @@ settled in the spec; orphan setup that traces to nothing is a defect.
   agent can navigate `.dev-skills/project-spec/`, `.dev-skills/build-plan/`, and `.dev-skills/project-setup/`. (An earlier
   `create-project-spec` run may already have seeded the map block; refresh it in place, idempotently.)
 - **The quality gate** (repo-local): linter + formatter + type-checker configs (zero-tolerance), a
-  `make check` target, a **pre-commit hook** that blocks the commit on red, and a Claude Code
-  **Stop / PostToolUse hook** in `.claude/settings.json` that runs the gate and feeds failures back.
-  Defined once in **`../_shared/build-pipeline/quality-gate.md`**; it executes the test levels + hooks
-  `design-dev-architecture` already specified — it does not re-pick tools.
+  `make check-fast` target (static checks) and a `make check` target (static + the suite), and a
+  **pre-commit hook that runs the static gate** and blocks the commit on red. **No test step in that
+  hook, and no Claude Code Stop / PostToolUse hook that runs a gate when a turn or an edit ends** —
+  both are ruled out in **`../_shared/build-pipeline/quality-gate.md`**, which defines the gate once;
+  it executes the test levels `design-dev-architecture` already specified and does not re-pick tools.
 - **Environment access + developer scripts + custom-skill skeletons** (repo-local): whichever
   env-access mechanism `dev-architecture` chose — the **advisory-lock helper** baked into the
   bring-up/teardown commands (lock file gitignored) and/or the **per-run isolation** params — plus the
@@ -122,8 +123,9 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
 - **Trace every action to the spec.** Each plan item names the component/tool and ADR it comes from.
 - **Smoke-test, not paper.** The environment is "done" only when the one-command bring-up is **green**
   and an agent can drive a basic flow against it — not when the files merely exist.
-- **The gate is enforced, not advisory.** Stand up the quality gate so a red gate **blocks the commit**
-  (pre-commit hook) and feeds failures back to the agent (Stop hook). See
+- **The gate is enforced, not advisory.** Stand up the quality gate so a red **static** gate blocks
+  the commit (pre-commit hook), and the full gate — the one with the suite — is what
+  `implement-feature`, `verify-feature` and `build-tasks` run deliberately. No turn-end hook. See
   **`../_shared/build-pipeline/quality-gate.md`**.
 - **Coordinate the shared env.** Bake the env-access mechanism into the bring-up command (acquire the
   lock on `make dev`, release on `make down`, lease + stale-reclaim) and/or set up per-run isolation —
@@ -182,7 +184,8 @@ reversibility · idempotency note · already-present?**:
   marker-delimited project documentation map per **`../_shared/agent-guide.md`** — touch only that
   block, leave the rest), directory skeleton, `docker-compose.yml`, seed scripts, the one-command
   entrypoint, app config, the **quality gate** (linter/formatter/type-checker configs with
-  zero-tolerance, a `make check` target, a pre-commit hook that blocks the commit on red —
+  zero-tolerance, a `make check-fast` and a `make check` target, a pre-commit hook that runs the
+  **static** one and blocks the commit on red —
   **`../_shared/build-pipeline/quality-gate.md`**), the **env-access helper** (lock baked into
   bring-up + gitignored lock file, and/or per-run isolation params —
   **`../_shared/build-pipeline/env-access.md`**), the **skeleton of the developer/test scripts**
@@ -190,9 +193,9 @@ reversibility · idempotency note · already-present?**:
   **custom project skills** it specified (frontmatter + thin body invoking the wrapped script; the
   procedure left as a TODO — full authoring is a backlog task; skeleton template in
   `references/setup-templates.md` §6). *Auto-applicable (repo-local).*
-- **(C) AI tooling** — `.claude/settings.json` (incl. the **Stop / PostToolUse hook** that runs the
-  gate and feeds failures back, **and a `permissions.deny` list** excluding generated/build/vendor
-  trees from navigation), the **code-intelligence LSP plugin(s)** for the stack's typed language(s)
+- **(C) AI tooling** — `.claude/settings.json` (**a `permissions.deny` list** excluding
+  generated/build/vendor trees from navigation — and **no gate-running Stop / PostToolUse hook**, see
+  the gate doc), the **code-intelligence LSP plugin(s)** for the stack's typed language(s)
   (symbol-level navigation, not text grep), the **standard stack plugins / MCP servers** the
   dev-architecture tooling section named, and any other MCP config. *Config files (settings.json,
   `permissions.deny`) auto; plugin / MCP / LSP installs gated.* Recipes: `references/setup-templates.md` §5.
@@ -217,8 +220,9 @@ Run the one-command bring-up from the spec. Prove it is actually **green**: the 
 is reachable at the documented URL/port, seed data is present, and an agent can drive one basic flow
 and observe a real outcome (a page renders / a health endpoint returns 200 / a seeded row is
 queryable). Also prove the **gate has teeth**: `make check` runs green on the clean tree, and a
-deliberately-introduced error makes it fail and the pre-commit hook blocks the commit (then revert the
-error). "No error in the logs" is not proof. If it fails, report what failed and offer to fix it
+deliberately-introduced **type or lint** error makes `make check-fast` fail and the pre-commit hook
+block the commit (then revert the error). Use a static error, not a failing test — the hook does not
+run tests, so a broken test would prove nothing about it. "No error in the logs" is not proof. If it fails, report what failed and offer to fix it
 (adjust the compose file, fix a port clash, re-seed) — the environment is not "done" until this is green.
 
 ### Stage 5b: Design system → `DESIGN.md` (UI projects only)
@@ -302,8 +306,9 @@ its job**. Three specifics:
 7. **Install the quality tooling the release phase cannot install itself** (analyzer, mutation runner,
    accessibility checker, load tool — whatever the dev-architecture named). Production-side setup —
    platform, database, caps, telemetry — is **not** yours: that is `setup-production-environment`.
-8. Stand up the **enforced quality gate** — a red `make check` blocks the commit (pre-commit hook), and
-   a Stop hook feeds failures back. The gate executes the spec's test levels + hooks; it doesn't re-pick tools.
+8. Stand up the **enforced quality gate** — a red `make check-fast` blocks the commit (pre-commit
+   hook); the suite lives in `make check`, which the pipeline runs deliberately. **No test step in the
+   hook and no turn-end hook.** The gate executes the spec's test levels; it doesn't re-pick tools.
 9. Bake the **env-access mechanism** into the bring-up command (lock with lease + stale-reclaim, and/or
    per-run isolation; gitignore the lock file) and scaffold the **developer/test-script skeletons** and
    the **custom project-skill skeletons** (`.claude/skills/<name>/SKILL.md`) the dev-architecture named —

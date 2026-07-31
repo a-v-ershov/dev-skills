@@ -1,27 +1,41 @@
 # Quality gate (shared — build pipeline)
 
 The **quality gate** is the fast, deterministic feedback loop the build pipeline runs on every task:
-linter + formatter + type-checker + test-runner, behind **one command**, that **blocks the commit**
-when it is red. It is the cheap layer that catches the obvious in seconds — before the expensive,
-adversarial `verify-feature` drive/prove runs — and the **accumulating test suite is the regression
-net** that keeps a later task from silently breaking an earlier one.
+linter + formatter + type-checker + test-runner. It is the cheap layer that catches the obvious in
+seconds — before the expensive, adversarial `verify-feature` drive/prove runs — and the **accumulating
+test suite is the regression net** that keeps a later task from silently breaking an earlier one.
 
 This doc defines the gate once. `setup-dev-environment` builds it; `implement-feature`, `verify-feature`
 and `build-tasks` enforce it. They reference this file rather than restating the rule.
 
-## What the gate runs
+## Two commands, and only one of them is automatic
 
-One command (`make check` or the stack's equivalent — recorded in `.dev-skills/project-setup/verification.md`)
-that runs, fast and deterministically:
+The two differ in **who asks for the run**, and that is the whole distinction:
+
+| | Runs | Invoked by |
+|---|---|---|
+| **Static gate** (`make check-fast`) | format · lint · type-check · suppressions | **automatically** — the pre-commit hook |
+| **Full gate** (`make check`) | the static gate **plus** the test suite | **deliberately** — the implementer's hand-off, the verifier's run, and `build-tasks` before the checkpoint commit |
+
+Both names are recorded in `.dev-skills/project-setup/verification.md`; the stack's equivalents are fine.
 
 - **Format** — the formatter in check mode (e.g. `ruff format --check`, `prettier --check`).
 - **Lint** — the linter (e.g. Ruff, ESLint).
 - **Type-check** — the type-checker in strict mode (e.g. `mypy --strict`, `tsc --noEmit`).
-- **Test** — the test-runner over the accumulated suite (e.g. `pytest`, `vitest`). Run the tests
-  relevant to the change for speed, then the **whole suite** before the commit (the regression pass).
+- **Test** — the test-runner over the accumulated suite (e.g. `pytest`, `vitest`), whole, as the
+  regression pass. **Full gate only.**
 
 The concrete tools come from the stack `design-architecture`/`design-dev-architecture` already chose —
 the gate **executes** that decision, it does not re-pick tools.
+
+**No test run is ever mandatory on commit.** The pre-commit hook runs the static gate and nothing
+heavier: a compiler-shaped check costs seconds and is worth paying without being asked, a test suite
+is not, and it grows. The developer decides when to pay for a run — and the pipeline decides for
+itself, by calling the full gate at the three points above, which are the points where something is
+actually being asserted. **Do not add a test step to the pre-commit hook**, and do not smuggle one in
+under another name (a "quick subset", a changed-files runner, a wrapper target that shells out to the
+suite). If a project wants tests on commit, that is the project's own hook to write, not this
+contract's to mandate.
 
 ## Keep the gate cheap — it is run hundreds of times
 
@@ -52,19 +66,22 @@ The gate is only effective for AI-written code if it cannot be silently sidestep
 
 ## Where it is configured vs enforced
 
-- **Configured by `setup-dev-environment`** (repo-local, so auto-applicable): the tool configs, the
-  `make check` target, and a **pre-commit hook** that runs the gate and blocks the commit on red.
-  **Do not wire a Claude Code hook that runs the full gate after every edit or every turn.** The whole
-  suite on each turn is time the agent spends waiting instead of working, and a gate that is red
-  mid-task — which is the normal state halfway through building something — blocks the turn and forces
-  a polling loop around it. The gate belongs where it decides something: the pre-commit hook, the
-  implementer's hand-off, and the verifier's run.
-- **Enforced at three points:**
-  1. `implement-feature` self-check — runs the gate before handing off; does not hand off on red.
-  2. `verify-feature` — its authored tests become part of the suite the gate runs.
+- **Configured by `setup-dev-environment`** (repo-local, so auto-applicable): the tool configs, both
+  targets, and a **pre-commit hook that runs the static gate** and blocks the commit on red.
+  **Do not wire a Claude Code hook — Stop, PostToolUse or any other — that runs a gate when the agent
+  finishes a turn or an edit.** A gate that is red mid-task is the *normal* state halfway through
+  building something: the hook then blocks the turn and forces a polling loop around it. Measured
+  case: a Stop hook running the full gate killed a turn over a **formatter warning** on a
+  work-in-progress file, and the agent spent the turn on whitespace instead of the task. The gate
+  belongs where it decides something — the pre-commit hook, the implementer's hand-off, and the
+  verifier's run — and nowhere that merely notices the agent stopped typing.
+- **Enforced at three points, all of them deliberate:**
+  1. `implement-feature` self-check — runs the **full gate** before handing off; does not hand off on red.
+  2. `verify-feature` — its authored tests become part of the suite the full gate runs.
   3. `build-tasks` — the **full gate must be green before the checkpoint commit**; a red gate routes
-     the task back to `implement-feature` (counts as a round), it is never committed red. The
-     pre-commit hook is the belt-and-suspenders backstop.
+     the task back to `implement-feature` (counts as a round), it is never committed red. This is the
+     pipeline choosing to run the suite, not a hook imposing it — and it is the *only* place the
+     suite is mandatory, which is why the pre-commit hook does not need to repeat it.
 
 ## Make failures actionable
 
