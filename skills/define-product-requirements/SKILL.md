@@ -1,6 +1,6 @@
 ---
 name: define-product-requirements
-description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. Use after validate-idea (reads .dev-skills/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/product-requirements.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
+description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. The committed set holds at most 15 features: sub-capabilities are folded into the feature they belong to, and whatever doesn't earn a place is cut into non-goals rather than deferred. Use after validate-idea (reads .dev-skills/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/product-requirements.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
 ---
 
 # Define Product Requirements Skill
@@ -17,6 +17,9 @@ Scope discipline (read carefully):
 - **No feature prioritization.** The feature list is the committed scope — everything in it gets
   built. No must/should/could tiers, no "MVP cut line", no deferred-feature backlog. If a feature
   does not belong in the product, remove it; do not park it.
+- **At most 15 features.** The committed set is a ceiling, not an inventory: fold sub-capabilities
+  into the feature they belong to (they live in its acceptance criteria) and cut what doesn't earn
+  its place into `## Non-goals`. A cut is a scope boundary, never a deferral.
 - **Defer user flows to `create-user-flows`** and technical decisions to `design-architecture`.
 
 ## Outputs in `.dev-skills/project-spec/` (two kept files)
@@ -65,6 +68,12 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
   problem, wedge, and business model as settled inputs. Only revisit them to fill genuine gaps.
 - **Every feature traces to a validated need.** Each feature maps to a problem or audience need
   from the validation doc. A feature that traces to nothing is cut, not kept.
+- **Fifteen features, hard ceiling.** Count the list before you write it out. A product that reads
+  as 30 features is really ~10 features described at the wrong altitude, or a wedge that grew past
+  what was validated — fix it by folding detail into acceptance criteria first, then by cutting.
+  "Export as PDF / as CSV / as Markdown" is one export feature; "settings page, profile page,
+  password change" is one account-management feature. A ceiling breach is a finding to resolve here,
+  not something the build phase should discover.
 - **Every feature has an acceptance criterion.** Each feature carries at least one behavioral,
   testable done-condition (Given/When/Then or EARS) — an observable outcome, black-box, never an
   implementation detail. A feature you cannot write a pass/fail check for is underspecified.
@@ -81,7 +90,7 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 
 ```
 - [ ] Stage 0: Intake — load idea-validation.research.md; summarize settled inputs; flag gaps; read mode
-- [ ] Stage 1: Elicit — audience, features (+ acceptance criteria), domain model & glossary, metrics, constraints (interactive: ask · autopilot: self-answer + log forks)
+- [ ] Stage 1: Elicit — audience, features (≤15, + acceptance criteria), domain model & glossary, metrics, constraints (interactive: ask · autopilot: self-answer + log forks)
 - [ ] Stage 2: Research — comparable feature sets / table-stakes / category norms (within the budget)
 - [ ] Stage 3: Draft — draft product-requirements.research.md
 - [ ] Stage 4: Review — spawn reviewer; it returns findings (no file)
@@ -105,11 +114,17 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
 the product definition across the dimensions below:
 1. **Audience** — primary persona (role, context, the job they hire this product to do);
    segments (primary / secondary / explicitly-not); jobs-to-be-done in the user's words.
-2. **Features (committed scope)** — the full set being built. For each: short name + one-line
-   capability + the validated need it serves (traceability) + **at least one acceptance criterion**
-   (behavioral, testable — Given/When/Then or EARS; the feature-level definition of done, an
-   observable outcome, never implementation detail). Group by capability area. Do NOT rank, tier,
+2. **Features (committed scope)** — the full set being built, **at most 15**. For each: short name +
+   one-line capability + the validated need it serves (traceability) + **at least one acceptance
+   criterion** (behavioral, testable — Given/When/Then or EARS; the feature-level definition of done,
+   an observable outcome, never implementation detail). Group by capability area. Do NOT rank, tier,
    or defer. Challenge anything that traces to nothing — fold it in properly or drop it.
+   **Then count.** Over 15: first fold variants and sub-capabilities into the feature they belong to
+   (the detail survives as acceptance criteria, nothing is lost), then cut what serves no validated
+   need or isn't table-stakes into `## Non-goals`. Still over 15 after both passes, the wedge itself
+   is too wide — say so plainly: interactive, put the choice to the user (narrow the wedge, or accept
+   a bigger scope and say so); autopilot, cut to the 15 that serve the validated need best and log
+   the cut as a fork with `Needs human confirm? = yes`. Never go past 15 silently.
 3. **Domain model & glossary** — the core entities the product is about (each: name, the data it
    owns, key relationships) and a glossary of domain terms in one canonical vocabulary. This is the
    *conceptual* model (product concepts), NOT a database schema — the physical schema belongs to
@@ -146,7 +161,9 @@ Delegate to the `spec-reviewer` agent (offline — it reads the draft and the pr
 to find inconsistencies + gaps. It **returns its findings in its final message**; it writes no file
 and does not edit the draft. Method + return format:
 **`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this phase the reviewer
-especially probes: features that trace to no validated need; a feature with no acceptance criterion,
+especially probes: a feature set over 15, or one kept under 15 by writing features at an inconsistent
+altitude (a whole capability area collapsed into one line while a sibling is split into five);
+features that trace to no validated need; a feature with no acceptance criterion,
 or an AC that's untestable or implementation-level; an entity a feature references but the domain
 model lacks; glossary terms used inconsistently; missing table-stakes; metrics that aren't
 measurable; an audience too vague to act on; scope creep past the validated wedge.
@@ -185,7 +202,9 @@ Do NOT start user-flow or architecture work in this session unless the user expl
 Read the implemented surfaces at Stage 0 and **pre-fill the feature set** from them, plus the domain
 model and glossary from the code's real entities (**keep the code's names** — a rename is a
 deliberate decision with refactor work attached). Then interview to confirm each inferred feature and
-add the ones the code doesn't have yet. Write acceptance criteria for the already-built features too
+add the ones the code doesn't have yet. The 15-feature ceiling holds here too, and reading code
+tempts you past it: describe what's built at the capability altitude (one feature per user-visible
+capability, not one per route, screen, or endpoint) instead of transcribing the codebase. Write acceptance criteria for the already-built features too
 — they become the verifier's regression net. Log the differences in
 `## Divergences (code vs intended)`. Method: **`../_shared/spec-pipeline/elicitation-method.md`** →
 "When the repo already has code".
@@ -202,6 +221,9 @@ mind — and you **amend** rather than regenerate: reconcile
 3. If affected, **amend surgically** — update only the parts the change touches in
    `product-requirements.research.md` (and `product-requirements.summary.md` if the essence changed),
    **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
+   An amend that adds features re-checks the **15-feature ceiling**: fold the addition into an
+   existing feature where it belongs, or name what comes out to make room — never let the set drift
+   past 15 one amend at a time.
 4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
 5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
 6. **Hand off, don't chase.** Say in one line what's next in the chain (`/create-user-flows`) and offer to run it. If
@@ -214,10 +236,12 @@ mind — and you **amend** rather than regenerate: reconcile
    stages first.
 2. Never include technical/architecture decisions (stack, APIs, schemas) — that is the next file.
 3. Never tier or defer features — the list is the full committed scope.
-4. Every feature traces to a validated need, or it is cut.
-5. Every feature carries at least one behavioral, testable acceptance criterion — never an
+4. **At most 15 features**, in every mode and on a re-run: fold detail into acceptance criteria, then
+   cut into non-goals. Going past 15 needs the user's explicit yes, logged as a fork.
+5. Every feature traces to a validated need, or it is cut.
+6. Every feature carries at least one behavioral, testable acceptance criterion — never an
    implementation detail.
-6. Define each domain entity and term once in the domain model + glossary; later phases reference
+7. Define each domain entity and term once in the domain model + glossary; later phases reference
    it. The summary stays non-technical (key concepts only, no schema).
-7. Every *verified* category claim is cited and every unverified one is labelled as such; every fork
+8. Every *verified* category claim is cited and every unverified one is labelled as such; every fork
    is logged; the review always runs (both modes) and its findings are always applied.

@@ -21,9 +21,11 @@ validated idea.>
 ### Jobs-to-be-done
 - <Core job, in the user's words.>
 
-## Features (committed scope)
+## Features (committed scope) — <N> of max 15
 
-> The full set of features being built. No tiers, no prioritization — everything here ships.
+> The full set of features being built, **at most 15**. No tiers, no prioritization — everything
+> here ships. Variants and sub-capabilities are folded into the feature they belong to (they live in
+> its acceptance criteria); what didn't earn a place is cut to `## Non-goals`, not deferred.
 > Each feature carries ≥1 behavioral acceptance criterion (Given/When/Then or EARS) — an
 > observable outcome, the feature's definition of done, never implementation detail.
 
@@ -70,7 +72,9 @@ validated idea.>
 
 ## Non-goals (scope boundaries)
 
-- <What this product deliberately does NOT try to be. Not a deferred-feature list.>
+- <What this product deliberately does NOT try to be. Not a deferred-feature list — a capability cut
+  to keep the committed set within 15 belongs here, stated as a boundary ("no team accounts"), never
+  as "later".>
 
 ## Sources
 

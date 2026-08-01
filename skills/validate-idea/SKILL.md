@@ -97,7 +97,9 @@ the cheap pre-filter, then the six dimensions.
 **KILL / SKIP / SHRINK** (~2 min):
 - **KILL** — Should this even exist? What real, observed demand says yes?
 - **SKIP** — Could this wait 3 months with no real loss? Is it the most important thing now?
-- **SHRINK** — What is the 20% MVP that delivers 80% of the value?
+- **SHRINK** — What is the 20% MVP that delivers 80% of the value? A useful yardstick: the wedge that
+  survives should be describable as **at most 15 features** — that's the ceiling
+  `define-product-requirements` commits to. If it obviously isn't, the wedge is still too wide.
 
 If KILL has no honest answer, say so plainly — recommend the user gather demand evidence first.
 (Autopilot: if you cannot find honest demand evidence in stage 2 either, the verdict is

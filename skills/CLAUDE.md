@@ -61,7 +61,7 @@ runs through and logs every decision; `final_summary`); config in
 |---|-------|----------------------------------------|
 | 1 | `gather-context` | `project-brief.research.md` — discovery interview; settled intent the rest reads |
 | 2 | `validate-idea` | `idea-validation.research.md` — adversarial KILL/SHRINK/forcing-questions pre-filter |
-| 3 | `define-product-requirements` | `product-requirements.research.md` — full committed feature set + acceptance criteria + domain model |
+| 3 | `define-product-requirements` | `product-requirements.research.md` — full committed feature set (**≤15 features**) + acceptance criteria + domain model |
 | 4 | `create-user-flows` | `user-flows.research.md` |
 | 5 | `define-design-decisions` | `design-decisions.research.md` — the product→technical bridge (design direction + which UI kit / icon set / theming approach, not mockups) |
 | 6 | `design-architecture` | `architecture.research.md` (+ `adr/`) — requirements-first system architecture, incl. where it runs (hosting, environments, cost, residency, manual setup) and how success is measured (analytics/telemetry) |
@@ -82,7 +82,7 @@ Config in `.dev-skills/build-plan/.build-config.md`.
 | # | Skill | Role |
 |---|-------|------|
 | 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check` + hooks); for a UI project install the spec's UI kit + icon set and write the root `DESIGN.md` from the spec |
-| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task). Re-run later = amend mode (task deltas) |
+| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) — coarse tasks, **at most 15**. Re-run later = amend mode (task deltas) |
 | 3 | `run-task` | **One task, end to end** — the whole cycle for a single task; also takes a free-form request (`origin: adhoc`) |
 | — | `implement-feature` | The implementer agent's procedure: build one task into code, UI against `DESIGN.md` |
 | — | `verify-feature` | The verifier agent's procedure: a **separate, unbiased** agent authoring adversarial tests, proving observable outcomes |

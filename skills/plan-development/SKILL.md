@@ -1,6 +1,6 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.dev-skills/project-spec/product-requirements.research.md), the user flows, the architecture, and the dev-architecture (incl. its developer/test scripts and the custom project skills that wrap them, which become build-out/authoring tasks), and emit a kanban backlog under .dev-skills/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. When the repo already has working code it plans only the gap: it reads the spec's Divergences sections plus the code itself and emits rework tasks for divergent code, new tasks for what isn't built, verify tasks to prove pre-existing features against their criteria, and a quality-gate setup task if none is enforced — features that already work and match are recorded done. Re-run it after the spec changes and it works in amend mode instead: it reconciles the backlog with the new spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate, and clears spec_sync flags the spec now covers. Run before build-tasks."
+description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.dev-skills/project-spec/product-requirements.research.md), the user flows, the architecture, and the dev-architecture (incl. its developer/test scripts and the custom project skills that wrap them, which become build-out/authoring tasks), and emit a kanban backlog under .dev-skills/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Tasks are sized coarse on purpose — the backlog holds at most 15 of them, so related features are grouped into one independently verifiable slice rather than split into micro-tasks. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. When the repo already has working code it plans only the gap: it reads the spec's Divergences sections plus the code itself and emits rework tasks for divergent code, new tasks for what isn't built, verify tasks to prove pre-existing features against their criteria, and a quality-gate setup task if none is enforced — features that already work and match are recorded done. Re-run it after the spec changes and it works in amend mode instead: it reconciles the backlog with the new spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate, and clears spec_sync flags the spec now covers. Run before build-tasks."
 ---
 
 # Plan Development Skill
@@ -74,6 +74,12 @@ write it. Full rules: **`../_shared/build-pipeline/build-config.md`**.
 
 ## Operating principles (non-negotiable)
 
+- **Tasks are large; the backlog caps at 15.** Size the tasks top-down so the whole backlog holds
+  **no more than 15 open tasks**: group related features into one coherent, independently verifiable
+  slice instead of splitting a feature into model / API / UI / per-field steps. Internal ordering
+  belongs in the task's `## Description`, not in extra tasks. If the committed scope genuinely can't
+  fit, say so and confirm the count — never exceed it silently. Method:
+  **`../_shared/build-pipeline/planning-method.md`** → "Task granularity".
 - **Every task traces to the spec.** No orphan tasks; `traces_to` is mandatory.
 - **Every `feature` task carries acceptance criteria** — the testable definition of done the separate
   verifier proves against. A task without them is incomplete.
@@ -87,7 +93,7 @@ write it. Full rules: **`../_shared/build-pipeline/build-config.md`**.
 
 ```
 - [ ] Stage 0: Intake — load product-requirements + user-flows + architecture + dev-architecture (+ setup-log); read mode
-- [ ] Stage 1: Derive tasks — one feature task per committed feature; setup tasks for build prerequisites; type + traces_to + dual description + acceptance
+- [ ] Stage 1: Derive tasks — coarse slices, ≤15 tasks total; setup tasks for build prerequisites; type + traces_to + dual description + acceptance
 - [ ] Stage 2: Blockers — set blocked_by from real data/auth/setup/flow order (shallow); the implicit graph
 - [ ] Stage 3: Write — task files + board.md + plan.summary.md + refresh the project CLAUDE.md map (backlog now present)
 - [ ] Stage 4: Gate — interactive: present the breakdown + spine, stop for approval · autopilot: log forks, hand off
@@ -99,12 +105,16 @@ criteria), the flows, the components/stack, and what the environment already pro
 If `product-requirements.research.md` is missing, tell the user and offer to run the spec pipeline first.
 
 ### Stage 1: Derive tasks
-Per **`planning-method.md`**: one `feature` task per committed feature (split a large one only when its
-criteria are independently buildable/verifiable); `setup` tasks for build-time prerequisites not
+Per **`planning-method.md`**: count the committed features first, then pick the grain that fits them
+into **≤15 tasks** — one `feature` task per feature when the set is small enough, otherwise one task
+per group of related features (split a large one only when its criteria are independently
+buildable/verifiable *and* the backlog still fits); `setup` tasks for build-time prerequisites not
 already done, **including building out the developer/test scripts and authoring the custom project
-skills** the dev-architecture named (each custom-skill task `blocked_by` the script it wraps); type
-each, write `traces_to`, the one-line `summary` + full `## Description`, and the `acceptance` criteria.
-In interactive, confirm the breakdown (how many tasks, any splits) before writing.
+skills** the dev-architecture named (each custom-skill task `blocked_by` the script it wraps) — these
+count toward the 15, so fold them together when the feature tasks need the room; type each, write
+`traces_to`, the one-line `summary` + full `## Description`, and the `acceptance` criteria (every
+grouped feature's criteria, none dropped). In interactive, confirm the breakdown (how many tasks, how
+features were grouped, any splits) before writing.
 
 ### Stage 2: Blockers (the implicit graph)
 Set each task's `blocked_by` from real constraints — data/domain order, auth before user-scoped
@@ -148,7 +158,9 @@ never writes code.
 ## Rules
 
 1. Never build code — output is the backlog only.
-2. Every task traces to the spec; every `feature` task carries acceptance criteria.
-3. Dependencies are real and shallow; no `conflicts_with` (there is no parallel execution).
-4. `board.md` is always derived from the task files — never hand-authored.
-5. Amend, never regenerate; destructive deltas always confirm.
+2. Tasks are coarse: **at most 15 open tasks in the backlog**, in every mode (create, amend, delta).
+   Exceeding it needs the user's explicit yes.
+3. Every task traces to the spec; every `feature` task carries acceptance criteria.
+4. Dependencies are real and shallow; no `conflicts_with` (there is no parallel execution).
+5. `board.md` is always derived from the task files — never hand-authored.
+6. Amend, never regenerate; destructive deltas always confirm.
