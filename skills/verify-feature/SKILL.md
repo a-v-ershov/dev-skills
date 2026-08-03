@@ -108,11 +108,16 @@ structure and run it. Then
 bring the stack up (or confirm it's up), reset to a known seeded state if needed, **drive** the behavior
 per the contract, and **prove** the real outcome — observe and capture it. Cover the negative/error
 criteria explicitly. Drive **your own** scenario, not the whole accumulated e2e suite: regressions in
-other tasks are the quality gate's job, a full run rewrites their evidence, and its report directory
-can redden the gate on vendored code nobody here wrote. Save screenshots/responses to
-`.dev-skills/build-plan/tasks/artifacts/` under names carrying **this** task's id — never overwrite
-another task's evidence, it is what its findings cite. Full method:
-**`verification-method.md`**.
+other tasks are the quality gate's job, and a full run's report directory can redden the gate on
+vendored code nobody here wrote.
+
+**Write captures to the harness's scratch output, never straight into `artifacts/`.** Evidence belongs
+in `.dev-skills/build-plan/tasks/artifacts/` under names carrying **this** task's id, and the log
+cites it from there — but it gets there by an explicit copy at acceptance, not by a spec's `path:`
+argument. Your driving code usually survives as a test file, and a file that writes into `artifacts/`
+rewrites another task's evidence on every later run, forever, in somebody else's hands. Do not treat
+"be careful not to overwrite" as the safeguard: it addresses you, and you are not who will run the
+full suite. Full method: **`verification-method.md`**.
 
 **Write each verdict into the `## Log` the moment it lands** — one line per criterion, evidence link
 on a failure — not in a batch at the end. A criterion you have proven and not yet written down is a

@@ -59,8 +59,20 @@ A green automated test alone is not the verdict either — it proves the code do
 not that the criterion's real-world outcome holds. The authored test and the driven observable outcome
 are complementary; the criterion is met only when both confirm it.
 
-Save evidence (screenshots, captured responses) under `.dev-skills/build-plan/tasks/artifacts/` and reference
-it from the log.
+Evidence (screenshots, captured responses) lives under `.dev-skills/build-plan/tasks/artifacts/`, named with
+**this** task's id, and the log links to it.
+
+**But a capture is not written there by anything that stays in the suite.** The verifier's driving
+code usually survives as a test file, and from then on the same filename is two things at once: the
+record of what was proven *then*, and the output of whatever ran *last*. So the run writes to the
+harness's own scratch output (git-ignored — `test-results/`, `tmp/`, whatever the stack calls it) and
+evidence enters `artifacts/` by an **explicit copy at acceptance**, once. In a project that already
+has this backwards, the fix is one helper that decides the path plus a small promote command; both
+are cheap, and the alternative is a suite that quietly rewrites its own history.
+
+Why this is a rule about *where the code writes* and not an instruction to be careful: the person who
+runs the whole suite is normally not the verifier — it is the owner, doing exactly what the project's
+own docs tell them to do before a release. A warning aimed at the verifier cannot reach them.
 
 ## Recording findings (the batch of comments)
 

@@ -16,7 +16,9 @@ contract every build skill (`plan-development`, `build-tasks`, `implement-featur
   tasks/
     T001-<slug>.md            # one file per task
     T002-<slug>.md
-    artifacts/                # verifier evidence (screenshots, logs) referenced from task logs
+    artifacts/                # verifier evidence (screenshots, logs) referenced from task logs.
+                              # Copied in at acceptance — never a test's write target, or every
+                              # later run rewrites it (verification-method.md).
 ```
 
 `.dev-skills/build-plan/` is committed project documentation (like `.dev-skills/project-spec/`). Each skill creates
