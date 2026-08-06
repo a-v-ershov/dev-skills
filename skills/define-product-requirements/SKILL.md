@@ -1,6 +1,6 @@
 ---
 name: define-product-requirements
-description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. The committed set holds at most 15 features: sub-capabilities are folded into the feature they belong to, and whatever doesn't earn a place is cut into non-goals rather than deferred. Use after validate-idea (reads .dev-skills/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/product-requirements.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
+description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. The committed set holds at most 15 features: sub-capabilities fold into the feature they belong to, and whatever does not earn a place is cut into non-goals rather than deferred. Use after validate-idea and before create-user-flows and design-architecture. Writes a source-cited product-requirements.research.md plus a short human summary. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is design-architecture's."
 ---
 
 # Define Product Requirements Skill
@@ -30,26 +30,18 @@ Scope discipline (read carefully):
 Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
 to the research doc.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — ask your questions and write
+Respond and reason in the user's language — ask your questions and write
 the docs in that language, and think in it too. Instruct every subagent you spawn to do the
 same. This never translates code or identifiers.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -108,39 +100,18 @@ definition must close. If the validation doc is missing, tell the user and offer
 `/validate-idea` first, or capture a short validation summary inline. Read the mode.
 
 ### Stage 1: Elicitation
-**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
-a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
-When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. Work
-the product definition across the dimensions below:
-1. **Audience** — primary persona (role, context, the job they hire this product to do);
-   segments (primary / secondary / explicitly-not); jobs-to-be-done in the user's words.
-2. **Features (committed scope)** — the full set being built, **at most 15**. For each: short name +
-   one-line capability + the validated need it serves (traceability) + **at least one acceptance
-   criterion** (behavioral, testable — Given/When/Then or EARS; the feature-level definition of done,
-   an observable outcome, never implementation detail). Group by capability area. Do NOT rank, tier,
-   or defer. Challenge anything that traces to nothing — fold it in properly or drop it.
-   **Then count.** Over 15: first fold variants and sub-capabilities into the feature they belong to
-   (the detail survives as acceptance criteria, nothing is lost), then cut what serves no validated
-   need or isn't table-stakes into `## Non-goals`. Still over 15 after both passes, the wedge itself
-   is too wide — say so plainly: interactive, put the choice to the user (narrow the wedge, or accept
-   a bigger scope and say so); autopilot, cut to the 15 that serve the validated need best and log
-   the cut as a fork with `Needs human confirm? = yes`. Never go past 15 silently.
-3. **Domain model & glossary** — the core entities the product is about (each: name, the data it
-   owns, key relationships) and a glossary of domain terms in one canonical vocabulary. This is the
-   *conceptual* model (product concepts), NOT a database schema — the physical schema belongs to
-   `design-architecture`. Every feature, and later every flow, refers to these names. An entity a
-   feature needs but the model lacks is a gap to close here.
-4. **Success metrics** — per goal: signal, target (a number), how measured. Tie to the business
-   model where relevant.
-5. **Product constraints & non-goals** — budget/timeline/team, platforms/devices, compliance,
-   hard non-negotiables, key assumptions; non-goals as scope boundaries (not deferred features).
-   Note raw technical expectations (e.g. "must feel instant") to carry forward — do not decide
-   architecture here.
+Work the dimensions in **`references/elicitation-topics.md`** — personas and the primary user, the
+committed feature set with its acceptance criteria, the domain model, the non-goals, and the success
+metrics. Read it now and work from it. Interview technique:
+**`../_shared/spec-pipeline/elicitation-method.md`**.
 
-- **interactive:** ask, one dimension at a time; challenge weak features in prose.
-- **autopilot:** answer each from the validation doc + (stage 2) research + best judgment; record
-  every choice in the Forks / Decisions log (especially each feature in-or-out decision) with
-  rationale, confidence, source. Mark uncertain ones `Needs human confirm? = yes`.
+**The committed set holds at most 15 features.** Fold sub-capabilities into the feature they belong to;
+anything that does not earn a place is **cut into non-goals**, not deferred into a sixteenth line.
+
+- **interactive:** ask one dimension at a time.
+- **autopilot:** derive them from the brief + validation + best judgment, and log each material choice
+  in the Forks / Decisions log with rationale and confidence.
+
 
 ### Stage 2: Research (budgeted)
 Verify category reality. Topics: comparable/competing products and their feature sets; the
@@ -211,24 +182,17 @@ capability, not one per route, screen, or endpoint) instead of transcribing the 
 
 ## Amend mode (an upstream doc changed)
 
-Re-run on an existing document — because an upstream phase was edited, or the user changed their
-mind — and you **amend** rather than regenerate: reconcile
-`product-requirements.research.md` to the change instead of producing it from scratch. Per
-**`../_shared/build-pipeline/propagation-method.md`**:
+Re-run on an existing document and you **amend** rather than regenerate — reconcile
+`product-requirements.research.md` to the change. Follow **`../_shared/build-pipeline/propagation-method.md`**
+in full: assess impact and self-skip if unaffected; otherwise amend surgically (only what the change
+touches, plus `product-requirements.summary.md` if the essence changed), preserve the `## Forks / Decisions log` and
+add an entry for what changed, ask only on a decision-changing fork, and hand off in one line
+(`/create-user-flows`; if `.dev-skills/build-plan/tasks/` exists, say the plan may now be stale and
+`/plan-development` reconciles it — you never edit the backlog here).
 
-1. Read the changed upstream document and your current `product-requirements.research.md`.
-2. **Assess impact** — if this phase is not affected, self-skip: report "no change needed", touch nothing.
-3. If affected, **amend surgically** — update only the parts the change touches in
-   `product-requirements.research.md` (and `product-requirements.summary.md` if the essence changed),
-   **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
-   An amend that adds features re-checks the **15-feature ceiling**: fold the addition into an
-   existing feature where it belongs, or name what comes out to make room — never let the set drift
-   past 15 one amend at a time.
-4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
-5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
-6. **Hand off, don't chase.** Say in one line what's next in the chain (`/create-user-flows`) and offer to run it. If
-   `.dev-skills/build-plan/tasks/` exists, add: the plan may now be stale — `/plan-development` will
-   reconcile it with task deltas. The user decides how far to walk; you never edit the backlog here.
+An amend that adds features re-checks the **15-feature ceiling**: fold the addition into an
+existing feature where it belongs, or name what comes out to make room — never let the set drift
+past 15 one amend at a time.
 
 ## Rules
 
@@ -245,3 +209,4 @@ mind — and you **amend** rather than regenerate: reconcile
    it. The summary stays non-technical (key concepts only, no schema).
 8. Every *verified* category claim is cited and every unverified one is labelled as such; every fork
    is logged; the review always runs (both modes) and its findings are always applied.
+9. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

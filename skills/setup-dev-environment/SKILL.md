@@ -1,108 +1,63 @@
 ---
 name: setup-dev-environment
-description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .dev-skills/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. For a UI project it also installs the UI kit and icon set the spec chose and writes the committed root DESIGN.md (tokens + rationale) straight from the spec's design decisions and the installed kit's own theme — no candidate systems, no mockups, no picking: the design decisions were made in the spec. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. In a repo that already has a working setup it adopts and extends what's there (compose, Makefile, existing lint/type tools wired behind make check-fast / make test-scoped / make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .dev-skills/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-tasks."
+description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline, as the first step of the build phase: install tooling, init the repo (.gitignore, CLAUDE.md, settings.json with the permissions the loop needs), write the Compose stack, seed data and bring-up, stand up the three gate targets (make check-fast, make test-scoped, make check) with a pre-commit hook, wire the AI tooling, and scaffold the developer/test scripts and custom project skills the spec specified. For a UI project it installs the chosen kit and writes the root DESIGN.md."
 ---
 
 # Setup Dev Environment Skill
 
-You are a pragmatic platform / release engineer. You take the documented dev architecture (the inner
-loop, on paper) and make it **real and runnable** — scaffold the repo, install what's needed, bring
-the local stack up with one command. You hate "works on my machine" and you never run a destructive
-or machine-global command without explicit confirmation.
+You are a pragmatic platform / release engineer. You take the documented dev architecture — the inner
+loop, on paper — and make it **real and runnable**: scaffold the repo, install what's needed, bring the
+local stack up with one command. You hate "works on my machine" and never run a destructive or
+machine-global command without explicit confirmation.
 
-This is the **first step of the build phase** — the boundary the spec pipeline deliberately stopped
-at (`design-dev-architecture` documents the inner loop but does not scaffold it). You execute that
-blueprint. You do NOT re-open stack choices, re-research tools, or redesign anything — all of that is
-settled in the spec; orphan setup that traces to nothing is a defect.
+This is the **first step of the build phase**, the boundary the spec pipeline deliberately stopped at.
+You execute that blueprint; you do NOT re-open stack choices, re-research tools, or redesign anything.
+Orphan setup that traces to nothing is a defect.
 
-## Scope discipline (read carefully)
+## Scope discipline
 
-- **You execute the spec, you don't re-decide it.** Every tool, container, and command traces to
+- **You execute the spec, you don't re-decide it.** Every tool, container and command traces to
   `dev-architecture.research.md` / `architecture.research.md` (+ ADRs). If the spec is wrong or
   missing something, surface it back — don't invent a different stack here.
-- **Plan everything; auto-execute only repo-local.** Repo scaffolding (files inside the working tree)
-  is safe to apply on autopilot. Machine-global installs, API keys/secrets, and Claude/MCP plugin
-  installs touch the user's machine or accounts — they are **planned** but executed only with explicit
-  confirmation (the `careful` pattern), never silently.
-- **Idempotent, detect-state-first.** Always probe what already exists before changing anything.
-  Re-running on a half-set-up (or fully-set-up) repo must be safe: skip what's done, fill only gaps,
-  back up before overwriting, never clobber existing config.
-- **Honest about the irreducible manual steps.** Secrets, cloud accounts, and licenses can't be done
-  for the user. List them explicitly as a "your turn" checklist rather than pretending the env is done.
+- **Plan everything; auto-execute only repo-local.** Machine-global installs, API keys/secrets and
+  Claude/MCP plugin installs touch the user's machine or accounts: planned, but executed only on
+  explicit confirmation, never silently.
+- **Idempotent, detect-state-first.** Probe what exists before changing anything; re-running on a
+  half-set-up repo must be safe — skip what's done, fill only gaps, back up before overwriting.
+- **Honest about the irreducible manual steps.** Secrets, cloud accounts and licenses can't be done for
+  the user: list them as a "your turn" checklist rather than pretending the env is done.
 
 ## Outputs
 
-- **Repo files** (in the working tree): `.gitignore`, a project `CLAUDE.md`, `.claude/settings.json`
-  and MCP config, the Docker Compose stack, seed scripts, a one-command entrypoint (`Makefile` /
-  `justfile` / script), and the directory skeleton — whatever `dev-architecture` specifies. The
-  project `CLAUDE.md` carries two parts: your stack notes + commands, **and** the marker-delimited
-  **project documentation map** — write/refresh that block per **`../_shared/agent-guide.md`** so an
-  agent can navigate `.dev-skills/project-spec/`, `.dev-skills/build-plan/`, and `.dev-skills/project-setup/`. (An earlier
-  `create-project-spec` run may already have seeded the map block; refresh it in place, idempotently.)
-- **The quality gate** (repo-local): linter + formatter + type-checker configs (zero-tolerance) and
-  **three targets** — `make check-fast` (static checks), **`make test-scoped SCOPE=…`** (run only the
-  tests belonging to given paths/pattern — what the whole build loop uses), and `make check` (static +
-  the whole suite, run by the release pipeline) — plus a **pre-commit hook that runs the static gate**
-  and blocks the commit on red. **No test step in that hook — not the suite, not a scoped run — and no
-  Claude Code Stop / PostToolUse hook that runs a gate when a turn or an edit ends**; both are ruled
-  out in **`../_shared/build-pipeline/quality-gate.md`**, which defines the gate once. It executes the
-  test levels `design-dev-architecture` already specified and does not re-pick tools.
-- **Environment access + developer scripts + custom-skill skeletons** (repo-local): whichever
-  env-access mechanism `dev-architecture` chose — the **advisory-lock helper** baked into the
-  bring-up/teardown commands (lock file gitignored) and/or the **per-run isolation** params — plus the
-  **skeleton/stubs of the developer & test scripts** it specified (fast, intentionally-divergent local
-  paths; full implementation is left to backlog tasks), and the **skeleton `.claude/skills/<name>/
-  SKILL.md` stubs** of the **custom project skills** it specified (the named verification-loop wrappers
-  — frontmatter `name` + discoverable `description` and a thin body invoking the wrapped script, with
-  the procedure left as a TODO; full authoring is a backlog task). See
-  **`../_shared/build-pipeline/env-access.md`**.
-- **The design system** (UI projects only) — the spec already decided it, so here you just make it
-  real, in this order:
-  1. **Install** the UI kit and icon set `design-decisions` named, per the kit's **current official
-     instructions** (check them — install commands go stale; don't run them from memory).
-  2. **Write the committed root `DESIGN.md`** — tokens + rationale, straight from the spec's design
-     direction and the installed kit's own theme values. **No candidates, no mockups, no picking:**
-     the choice was made in the spec. Format: `references/design-md-format.md`; per-kit token mapping:
-     `references/adoption-recipes.md`. Plus the short `.dev-skills/project-setup/design-system.md` record.
-  3. **Write the UI rule into the project `CLAUDE.md`** — components come from the kit, colors and
-     spacing come from the design tokens, icons come from the one chosen set. Without that rule the
-     next session's agent hand-rolls its own button.
-  Skipped entirely for a no-UI project or when `design-decisions` says no system is needed.
-- **The quality tooling the release phase will need** (repo-local dev dependencies, wired behind the
-  project's own commands): whatever `dev-architecture` named for measuring the codebase and the suite —
-  a duplication/dead-code analyzer, a mutation-testing runner, an accessibility checker, a load tool.
-  Install them **here**, because the release phase deliberately cannot: `refactor`, `write-tests`, and
-  every `audit-*` are forbidden from installing anything, and record a missing tool as *unmeasured*
-  instead. A tool nobody installed is a measurement nobody takes.
-- **`.dev-skills/project-setup/setup-plan.md`** — the approvable plan (4 sections, each item traced).
-- **`.dev-skills/project-setup/setup-log.md`** — what was done / skipped (already present) / deferred to the
-  human (secrets, accounts).
-- **`.dev-skills/project-setup/verification.md`** — the concrete run/drive/prove commands, derived from the
-  dev-architecture verification matrix now that the stack is real. **This is the file `verify-feature`
-  reads** to get project-specific commands. Templates for all three: `references/setup-templates.md`.
+Everything setup produces, with the detail behind each item in
+**`references/setup-templates.md`** §7 ("What setup produces"):
 
-`.dev-skills/project-setup/` is committed project documentation.
+- **Repo files** — `.gitignore`, the project `CLAUDE.md` (stack notes + the marker-delimited project
+  documentation map, per **`../_shared/agent-guide.md`**), `.claude/settings.json` + MCP config, the
+  Compose stack, seed scripts, the one-command entrypoint, the directory skeleton.
+- **The quality gate** — zero-tolerance linter/formatter/type-checker configs and **three targets**:
+  `make check-fast` (static), `make test-scoped SCOPE=…` (the build loop's run), `make check` (static
+  + whole suite, the release pipeline's) — plus a pre-commit hook running the **static** one. **No
+  test step in that hook and no turn-end Stop/PostToolUse gate hook**
+  (**`../_shared/build-pipeline/quality-gate.md`**).
+- **Environment access, developer-script skeletons, custom project-skill skeletons** — whichever
+  mechanism the spec chose (**`../_shared/build-pipeline/env-access.md`**).
+- **The design system** (UI only) — install the chosen kit + icon set, write the committed root
+  `DESIGN.md` from the spec and the kit's own theme, and put the UI rule in the project `CLAUDE.md`.
+- **The quality tooling the release phase cannot install itself** — analyzer, mutation runner,
+  accessibility checker, load tool, whatever `dev-architecture` named.
+- **Three records** in `.dev-skills/project-setup/` (committed): `setup-plan.md`, `setup-log.md`, and
+  **`verification.md`** — the run/drive/prove contract `verify-feature` reads.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write the plan, questions, and
-reports in that language and think in it too. Instruct any subagent you spawn to do the same. Never
-translate code, identifiers, file paths, commands, or tool names.
+Respond and reason in the user's language — write the plan, questions and reports in it, think in it,
+and tell any subagent the same. Never translate code, identifiers, paths, commands or tool names.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
-
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open a
+worktree on your own initiative; only an explicit request in this session changes that. Full rule:
+**`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -117,35 +72,30 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
 
 - **Detect before you change.** Probe the current state (git, tools on PATH, existing files, running
   services) read-only first. Never assume a clean machine or a clean repo.
-- **Repo-local is safe; global is gated.** Files inside the working tree can be auto-applied. Anything
-  that runs `brew`/`apt`/`npm -g`, writes a secret, or installs a plugin/MCP server stops for explicit
-  confirmation and is shown as the exact command to run.
-- **Back up before overwrite.** If a file already exists and you must change it, copy it to
-  `<file>.bak` (or show a diff and ask) — never blow it away.
-- **Trace every action to the spec.** Each plan item names the component/tool and ADR it comes from.
+- **Repo-local is safe; global is gated.** Anything that runs `brew`/`apt`/`npm -g`, writes a secret,
+  or installs a plugin/MCP server stops for explicit confirmation, shown as the exact command.
+- **Back up before overwrite** (`<file>.bak`, or show a diff and ask) — never blow a file away.
+- **Trace every action to the spec** — each plan item names the component/tool and ADR it comes from.
 - **Smoke-test, not paper.** The environment is "done" only when the one-command bring-up is **green**
   and an agent can drive a basic flow against it — not when the files merely exist.
-- **The gate is enforced, not advisory.** Stand up the quality gate so a red **static** gate blocks
-  the commit (pre-commit hook); give the build loop a **scoped test run** it can point at a task's
-  paths or tag (`implement-feature`, `verify-feature` and `run-task` use only that); and keep the
-  **full suite** in `make check` for the release pipeline. A project with no way to run a selection
-  forces the loop to choose between the whole suite and nothing — so the scoped target is part of the
-  setup, not an optimization. No turn-end hook. See **`../_shared/build-pipeline/quality-gate.md`**.
-- **Coordinate the shared env.** Bake the env-access mechanism into the bring-up command (acquire the
-  lock on `make dev`, release on `make down`, lease + stale-reclaim) and/or set up per-run isolation —
-  per **`../_shared/build-pipeline/env-access.md`**; gitignore the lock file.
-- **Give the agent symbol-level code intelligence.** For each typed language in the stack, recommend
-  the matching **LSP plugin** from the official marketplace (`typescript-lsp`, `pyright-lsp`,
-  `gopls-lsp`, `rust-analyzer-lsp`, …) so the agent navigates by symbol, not by text grep — and
-  exclude generated/build/vendor trees from its reading with a committed **`permissions.deny`** in
-  `.claude/settings.json`. The deny list is repo-local config (auto-applied); plugin installs are
-  gated. Concrete recipes: `references/setup-templates.md` §5.
-- **Keep the project `CLAUDE.md` lean and layered.** The root file holds the big picture — the
-  project-map block, stack notes, key commands, the load-bearing gotchas — and nothing deeper. **For
-  a monorepo / multi-package repo**, also seed a short `CLAUDE.md` in each package/service with its
-  *local* conventions and its **scoped** commands (the check / test command for *that*
-  package, so the agent doesn't run the whole repo's suite for a one-package change); Claude loads
-  them additively up the tree. For a single small package the root file is enough — don't over-split.
+- **The gate is enforced, not advisory.** A red **static** gate blocks the commit (pre-commit hook);
+  the build loop gets a **scoped test run** it can point at a task's paths or tag; the **full suite**
+  stays in `make check` for the release pipeline. A project with no way to run a selection forces the
+  loop to choose between the whole suite and nothing — so the scoped target is part of the setup, not
+  an optimization. No turn-end hook. See **`../_shared/build-pipeline/quality-gate.md`**.
+- **Give the loop the permissions it needs.** The agent must be able to read the harness's own output
+  — test results, reports, coverage, the local binaries — without a prompt per file. Write the
+  committed allow/deny block into `.claude/settings.json`
+  (**`../_shared/build-pipeline/env-access.md`** → "Permissions the loop needs").
+- **Coordinate the shared env.** Bake the env-access mechanism into the bring-up command (acquire on
+  `make dev`, release on `make down`, lease + stale-reclaim) and/or set up per-run isolation; gitignore
+  the lock file.
+- **Give the agent symbol-level code intelligence.** For each typed language, recommend the matching
+  **LSP plugin** from the official marketplace (`typescript-lsp`, `pyright-lsp`, `gopls-lsp`,
+  `rust-analyzer-lsp`, …) and exclude generated/build/vendor trees via `permissions.deny`. Config is
+  repo-local (auto-applied); plugin installs are gated. Recipes: `references/setup-templates.md` §5.
+- **Keep the project `CLAUDE.md` lean and layered** — root for the big picture, a short per-package
+  file with *scoped* commands in a monorepo (`references/setup-templates.md` §7).
 - **Minimal, proven infra.** Bring up exactly what the spec says; never reproduce production scale/HA
   locally or add tooling the spec didn't choose.
 
@@ -163,48 +113,26 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
 ```
 
 ### Stage 0: Intake
-Read `.dev-skills/project-spec/dev-architecture.research.md` (the inner-loop design: local-run topology,
-verification matrix, AI tooling) and `.dev-skills/project-spec/architecture.research.md` (the stack) plus
-`.dev-skills/project-spec/adr/*`. List: the components and their local stand-ins, the one-command bring-up,
-the seed strategy, the test/verification matrix, the **environment-access model and the developer/test
-scripts**, the **custom project skills** to author, and the AI tooling (MCP servers, plugins, CLAUDE.md
-content). If `dev-architecture.research.md` is missing, tell the user and offer to run
-`/design-dev-architecture` first. Read the mode.
+Read `dev-architecture.research.md` (the inner-loop design: local-run topology, verification matrix, AI
+tooling), `architecture.research.md` (the stack) and `adr/*`. List: components and their local
+stand-ins, the one-command bring-up, the seed strategy, the test/verification matrix **and its scoped
+selector**, the **environment-access model and developer/test scripts**, the **custom project skills**
+to author, and the AI tooling (MCP servers, plugins, CLAUDE.md content, permissions). If
+`dev-architecture.research.md` is missing, say so and offer `/design-dev-architecture` first. Read the mode.
 
 ### Stage 1: Detect state (read-only)
-Probe, without changing anything: is this a git repo (`git rev-parse`)? Which required tools are on
-PATH (`command -v docker node pnpm uv cargo go …` per the stack)? Which target files already exist
-(`.gitignore`, `CLAUDE.md`, `.claude/settings.json`, compose file, seed scripts, entrypoint)? Are any
-of the local services already running (ports in use)? Record what exists so later stages skip it.
+Probe without changing anything: is this a git repo? which required tools are on PATH? which target
+files already exist (`.gitignore`, `CLAUDE.md`, `.claude/settings.json`, compose file, seed scripts,
+entrypoint)? are any local services already running (ports in use)? Record what exists so later stages
+skip it.
 
 ### Stage 2: Plan (four sections, every item traced)
-Compose `.dev-skills/project-setup/setup-plan.md` (template in `references/setup-templates.md`) as a
-checklist split into four sections, each item carrying **action · provenance (component/ADR) ·
-reversibility · idempotency note · already-present?**:
+Compose `.dev-skills/project-setup/setup-plan.md` (template: `references/setup-templates.md` §1) as a
+checklist in four sections — **(A) global installs** *(gated)* · **(B) repo scaffolding**
+*(auto-applicable)* · **(C) AI tooling** *(config auto, installs gated)* · **(D) manual-only** — each
+item carrying **action · provenance (component/ADR) · reversibility · idempotency note ·
+already-present?**. What belongs in each section: **`references/plan-and-smoke.md`**.
 
-- **(A) Global installs** — language toolchains, Docker, CLIs the stack needs that aren't on PATH.
-  OS-specific; the plan shows the exact command (`brew install …`). *Gated — never auto-run.*
-- **(B) Repo scaffolding** — `.gitignore`, project `CLAUDE.md` (stack notes + commands **plus** the
-  marker-delimited project documentation map per **`../_shared/agent-guide.md`** — touch only that
-  block, leave the rest), directory skeleton, `docker-compose.yml`, seed scripts, the one-command
-  entrypoint, app config, the **quality gate** (linter/formatter/type-checker configs with
-  zero-tolerance, a `make check-fast`, a `make test-scoped SCOPE=…` and a `make check` target, a
-  pre-commit hook that runs the **static** one and blocks the commit on red —
-  **`../_shared/build-pipeline/quality-gate.md`**), the **env-access helper** (lock baked into
-  bring-up + gitignored lock file, and/or per-run isolation params —
-  **`../_shared/build-pipeline/env-access.md`**), the **skeleton of the developer/test scripts**
-  `dev-architecture` specified, and the **skeleton `.claude/skills/<name>/SKILL.md` stubs** of the
-  **custom project skills** it specified (frontmatter + thin body invoking the wrapped script; the
-  procedure left as a TODO — full authoring is a backlog task; skeleton template in
-  `references/setup-templates.md` §6). *Auto-applicable (repo-local).*
-- **(C) AI tooling** — `.claude/settings.json` (**a `permissions.deny` list** excluding
-  generated/build/vendor trees from navigation — and **no gate-running Stop / PostToolUse hook**, see
-  the gate doc), the **code-intelligence LSP plugin(s)** for the stack's typed language(s)
-  (symbol-level navigation, not text grep), the **standard stack plugins / MCP servers** the
-  dev-architecture tooling section named, and any other MCP config. *Config files (settings.json,
-  `permissions.deny`) auto; plugin / MCP / LSP installs gated.* Recipes: `references/setup-templates.md` §5.
-- **(D) Manual-only** — real secrets/API keys, cloud accounts, licenses. *Cannot be automated — listed
-  for the human.*
 
 ### Stage 3: Approve
 - **interactive:** present the plan grouped by section and get approval — whole, or per-section. Let
@@ -220,86 +148,53 @@ commands only after confirmation. Log each action (done / skipped-already-presen
 go. If a step fails, stop, report the exact error, and offer a fix — don't power through.
 
 ### Stage 5: Smoke-test (replaces the spec pipeline's adversarial review)
-Run the one-command bring-up from the spec. Prove it is actually **green**: the stack starts, the app
-is reachable at the documented URL/port, seed data is present, and an agent can drive one basic flow
-and observe a real outcome (a page renders / a health endpoint returns 200 / a seeded row is
-queryable). Also prove the **gate has teeth**: `make check` runs green on the clean tree, and a
-deliberately-introduced **type or lint** error makes `make check-fast` fail and the pre-commit hook
-block the commit (then revert the error). Use a static error, not a failing test — the hook does not
-run tests, so a broken test would prove nothing about it. And prove the **scoped run selects**:
-`make test-scoped SCOPE=<one existing test path/pattern>` runs those tests and visibly *fewer* than
-the full run — a "scoped" target that quietly runs everything is the failure mode to catch here, and
-it is the command the whole build loop will lean on. "No error in the logs" is not proof. If it fails, report what failed and offer to fix it
-(adjust the compose file, fix a port clash, re-seed) — the environment is not "done" until this is green.
+Run the one-command bring-up and prove it is actually **green** — the stack starts, the app is
+reachable, seed data is present, an agent can drive one basic flow and observe a real outcome. Then
+prove the gate has teeth **twice**: a deliberate static error makes `make check-fast` fail and the
+pre-commit hook block, and `make test-scoped SCOPE=…` runs visibly *fewer* tests than the full run.
+"No error in the logs" is not proof. What each proof looks like and why:
+**`references/plan-and-smoke.md`**.
+
 
 ### Stage 5b: Design system → `DESIGN.md` (UI projects only)
-Now that the stack is up and the kit is installed, write the design system down. Read
-`.dev-skills/project-spec/design-decisions.research.md`: if this is a no-UI project or it recorded **Design
-system / Needed? = no**, **skip** this stage (note it in the setup log) and go to Stage 6. If a root
-`DESIGN.md` already exists, leave it alone and note that (idempotent).
+No UI, or **Design system / Needed? = no** → skip, note it in the setup log. A root `DESIGN.md` that
+already exists → leave it alone (idempotent). Otherwise write it **directly from the spec** — tokens
+from the installed kit's real theme values or the recorded brand intent — per
+**`references/design-md-format.md`** ("Writing DESIGN.md during setup"), prove it renders on one real
+screen, and write the `design-system.md` record. The tokens land under `## Frozen decisions`
+(**`../_shared/build-pipeline/design-freeze.md`**). Deviating from the spec's design decisions here is
+out of scope.
 
-Otherwise **write the root `DESIGN.md` directly from the spec** — no candidates, no mockups, no
-picking. The design decisions are already made: `define-design-decisions` chose the UI kit, the icon
-set, the theming approach, and the type/color/spacing/motion intent; this stage only makes them
-concrete and machine-readable.
-
-- **Source of the tokens:** the theming approach from the spec. "Start from the kit's ready-made
-  theme" → read that theme's actual token values from the installed kit (its theme file / CSS
-  variables / config in the repo — the kit is installed now, so read the real values rather than
-  recalling them) and record them. "Author from brand intent" → derive a coherent token set from the
-  design direction + the product's audience and brand notes.
-- **Format:** the Google open format — YAML token front matter + prose rationale, canonical section
-  order: **`references/design-md-format.md`**. Per-kit token mapping (which of the kit's variables
-  becomes which token): **`references/adoption-recipes.md`**.
-- **Also record** the icon set, the installed kit and its version, and how tokens are wired into the
-  stack (Tailwind `theme.extend`, CSS custom properties, a `components.json`, a Material theme file)
-  so `implement-feature` uses tokens rather than literals.
-- **Then prove it renders.** Apply the tokens to one real screen or the scaffold's start page, take
-  a screenshot, and put it in the setup log — a `DESIGN.md` nobody has rendered is paper. If the
-  tokens don't actually take effect, fix the wiring before moving on.
-- Write the short record `.dev-skills/project-setup/design-system.md`: which kit + icon set, where the
-  tokens came from, how they're wired, the screenshot path.
-
-Deviating from the spec's design decisions here is **out of scope** — if the kit turns out to be
-wrong (a needed component genuinely doesn't exist), stop and say so: that is a spec change
-(`/define-design-decisions`, then `/plan-development` to reconcile the plan), not a call to make during setup.
 
 ### Stage 6: Record + handoff
-Write `.dev-skills/project-setup/setup-log.md` — three lists: **done**, **skipped (already present)**, and
-**your turn** (the manual-only items: which secret/account, and where it goes). Then write
-`.dev-skills/project-setup/verification.md` — the concrete **run / drive / prove** commands for each surface,
-filled in from the now-real stack (one-command bring-up; how to drive UX/Backend/E2E; how to prove an
-outcome; the dummy-auth token and seed/reset commands; where logs are). This is the contract
-`verify-feature` reads. Then hand off:
+Write `setup-log.md` — **done**, **skipped (already present)**, **your turn** (which secret/account,
+and where it goes). Then write `verification.md` — the concrete **run / drive / prove** commands per
+surface, filled in from the now-real stack: bring-up, how to drive UX/Backend/E2E, how to prove an
+outcome, the three gate commands and what a task's scoped run selects, the dummy-auth token, seed/reset
+commands, where logs are. This is the contract `verify-feature` reads. Then hand off — interactive:
+name the two files and point at `/plan-development`; autopilot: record the same and hand back.
 
-- **interactive:** "Environment up and smoke-tested green → setup-log.md (what was done + your manual
-  TODOs), verification.md (how features will be verified). Next: `/plan-development` to build the backlog."
-- **autopilot:** record the same and hand back to the orchestrator (or, standalone, report the files
-  and any outstanding manual TODOs).
+Close with the **«What you should do»** block (**`../_shared/build-pipeline/report-format.md`**): the
+manual-only items, one imperative line each.
 
 ## When the repo already has a working setup
 
-Nothing special is configured for this — it is this skill's **detect-state-first idempotency doing
-its job**. Three specifics:
+Nothing special is configured for this — it is detect-state-first idempotency doing its job. Three
+specifics:
 
-1. **Probe, then plan the difference.** Stage 1 already inventories what's present (compose file,
-   Makefile, CI config, lint/type tools, `.env.example`, existing run command). The Stage-2 plan is
-   **(what the dev-architecture inner loop needs) minus (what's already there)** — and read the CI
-   config, not just the local files: it often defines the real gate.
+1. **Probe, then plan the difference.** Stage 1 inventories what's present; the Stage-2 plan is *(what
+   the inner loop needs) minus (what's already there)*. Read the CI config too — it often defines the
+   real gate.
 2. **Fill gaps, adopt & extend — never overwrite.** An existing `Dockerfile` / compose / `Makefile` is
-   adopted and extended (back up before any edit), never blown away. The **quality gate** wires the
-   *existing* lint/format/type-check tools behind `make check-fast` / `make test-scoped` / `make check`
-   + the hooks rather than installing
-   new ones (the gate "executes the chosen tools, it doesn't re-pick" — here they're the ones already
-   in the repo). Env-access helper, dev-script skeletons, and custom-skill skeletons are scaffolded
-   only where absent; an existing `.claude/skills/` skill named by the dev-architecture is extended,
-   not overwritten. `verification.md` is still written **fresh** from the now-real stack.
-   For a UI project with a kit already installed, keep it and write `DESIGN.md` from its actual theme
-   values — replacing an installed kit is a spec decision, not a setup one.
+   adopted and extended (back up before any edit). The gate wires the *existing* lint/format/type
+   tools behind the three targets rather than installing new ones. Env-access helper, dev-script and
+   custom-skill skeletons are scaffolded only where absent. `verification.md` is still written
+   **fresh** from the now-real stack. A UI project with a kit already installed keeps it, and
+   `DESIGN.md` is written from its actual theme values.
 3. **The smoke-test includes the existing gate's honesty.** "Green" means the stack comes up via the
-   one command **and** the gate has teeth — which may mean fixing a gate the repo had red (tests exist;
-   do they pass?). A red pre-existing gate is **surfaced**, not silently accepted: report it and offer
-   to fix, or file it as a gap for `plan-development`.
+   one command **and** the gate has teeth — including that `make test-scoped` really selects. A red
+   pre-existing gate is **surfaced**, not silently accepted: report it and offer to fix, or file it as
+   a gap for `plan-development`.
 
 
 ## Rules
@@ -309,16 +204,13 @@ its job**. Three specifics:
 2. Idempotent always: detect first, skip what's present, back up before overwrite, never clobber.
 3. Every action traces to a component/tool/ADR in the spec — no orphan setup, no re-chosen stack.
 4. The environment is "done" only when the one-command bring-up is smoke-tested green and drivable.
-5. Surface the irreducible manual steps honestly in setup-log.md; never pretend they're handled.
-6. Always write `verification.md` — the build phase depends on it; an environment without it is unfinished.
-7. **Install the quality tooling the release phase cannot install itself** (analyzer, mutation runner,
-   accessibility checker, load tool — whatever the dev-architecture named). Production-side setup —
+5. Surface the irreducible manual steps honestly in `setup-log.md`; never pretend they're handled.
+6. Always write `verification.md` — the build phase depends on it.
+7. **Install the quality tooling the release phase cannot install itself.** Production-side setup —
    platform, database, caps, telemetry — is **not** yours: that is `setup-production-environment`.
-8. Stand up the **enforced quality gate** in three targets — a red `make check-fast` blocks the commit
-   (pre-commit hook); `make test-scoped SCOPE=…` runs a selection and is what the build loop uses; the
-   whole suite lives in `make check` for the release pipeline. **No test step in the hook and no
-   turn-end hook.** The gate executes the spec's test levels; it doesn't re-pick tools.
-9. Bake the **env-access mechanism** into the bring-up command (lock with lease + stale-reclaim, and/or
-   per-run isolation; gitignore the lock file) and scaffold the **developer/test-script skeletons** and
-   the **custom project-skill skeletons** (`.claude/skills/<name>/SKILL.md`) the dev-architecture named —
+8. Stand up the gate in **three targets** (`make check-fast` behind the pre-commit hook ·
+   `make test-scoped SCOPE=…` for the build loop · `make check` for the release pipeline), prove the
+   scoped one really selects, and add **no** test step to the hook and **no** turn-end hook.
+9. Bake in the **env-access mechanism**, write the **permissions block** the loop needs, and scaffold
+   the **developer/test-script** and **custom project-skill** skeletons the dev-architecture named —
    full implementation is backlog work.

@@ -1,6 +1,6 @@
 ---
 name: create-user-flows
-description: "Map how users actually move through the product to get value — the customer journey and the step-by-step flows for each feature, informed by conventional patterns for the category and an adversarial review pass. Use after define-product-requirements (reads .dev-skills/project-spec/product-requirements.research.md) and before design-architecture. Writes a detailed, source-cited .dev-skills/project-spec/user-flows.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. The second product-layer step: it describes the experience (WHAT the user does), never the technical HOW and never visual UI design."
+description: "Map how users actually move through the product to get value — the customer journey and the step-by-step flows for each feature, informed by conventional patterns for the category and an adversarial review pass. Use after define-product-requirements (reads product-requirements.research.md) and before design-architecture. Writes a source-cited .dev-skills/project-spec/user-flows.research.md plus a short human summary; an independent reviewer returns findings and the phase applies them in place. The second product-layer step: it describes the experience (WHAT the user does), never the technical HOW and never visual UI design."
 ---
 
 # Create User Flows Skill
@@ -27,26 +27,18 @@ Scope discipline (read carefully):
 Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
 to the research doc.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — ask your questions and write
+Respond and reason in the user's language — ask your questions and write
 the docs in that language, and think in it too. Instruct every subagent you spawn to do the
 same. This never translates code or identifiers.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -187,21 +179,13 @@ the intended flows; anything built-but-unwanted or wanted-but-unbuilt goes in
 
 ## Amend mode (an upstream doc changed)
 
-Re-run on an existing document — because an upstream phase was edited, or the user changed their
-mind — and you **amend** rather than regenerate: reconcile
-`user-flows.research.md` to the change instead of producing it from scratch. Per
-**`../_shared/build-pipeline/propagation-method.md`**:
-
-1. Read the changed upstream document and your current `user-flows.research.md`.
-2. **Assess impact** — if this phase is not affected, self-skip: report "no change needed", touch nothing.
-3. If affected, **amend surgically** — update only the parts the change touches in `user-flows.research.md`
-   (and `user-flows.summary.md` if the essence changed), **preserving the `## Forks / Decisions log`**.
-   Never regenerate; do scoped research only for the changed part.
-4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
-5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
-6. **Hand off, don't chase.** Say in one line what's next in the chain (`/define-design-decisions`) and offer to run it. If
-   `.dev-skills/build-plan/tasks/` exists, add: the plan may now be stale — `/plan-development` will
-   reconcile it with task deltas. The user decides how far to walk; you never edit the backlog here.
+Re-run on an existing document and you **amend** rather than regenerate — reconcile
+`user-flows.research.md` to the change. Follow **`../_shared/build-pipeline/propagation-method.md`**
+in full: assess impact and self-skip if unaffected; otherwise amend surgically (only what the change
+touches, plus `user-flows.summary.md` if the essence changed), preserve the `## Forks / Decisions log` and
+add an entry for what changed, ask only on a decision-changing fork, and hand off in one line
+(`/define-design-decisions`; if `.dev-skills/build-plan/tasks/` exists, say the plan may now be stale and
+`/plan-development` reconciles it — you never edit the backlog here).
 
 ## Rules
 
@@ -216,3 +200,4 @@ mind — and you **amend** rather than regenerate: reconcile
    a parallel set of names.
 7. Every *verified* adopted pattern is cited and every unverified one is labelled as such; every
    fork is logged; the review always runs (both modes) and its findings are always applied.
+8. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

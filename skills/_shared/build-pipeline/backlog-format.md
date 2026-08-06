@@ -48,6 +48,11 @@ traces_to: "product-requirements.research.md#search · user-flows.research.md#fi
 origin: spec                  # spec | adhoc — where the task came from
 spec_sync: none               # none | pending | done — does the spec still describe the product?
 review: pending               # pending | human | auto — how the finished work was accepted
+claim:                        # present ONLY while status is in_progress; absent otherwise
+  by: run-task@7f3c1a         # holder id — skill@session-prefix, so two sessions are distinguishable
+  stage: verify               # build | verify | fix | solve | commit — what is happening RIGHT NOW
+  since: 2026-06-18T11:05:00Z # when this stage started
+  heartbeat: 2026-06-18T11:52:00Z   # re-stamped whenever the holder writes to the task; stale = 30 min
 acceptance:                   # the behavioral criteria verify-feature must prove (from the spec)
   - "Given a logged-in user, When they search 'invoice', Then matching docs are listed"
   - "Given an empty query, When they search, Then a 400 is returned (not a 500)"
@@ -124,6 +129,18 @@ was done, what was found, evidence links. The verifier's findings accumulate as 
   ground — the verifier re-authoring what the implementer already wrote — and that is a finding about
   `implement-feature`, `verify-feature` and `verification-method.md`, not about the task in front of
   you.
+- **`claim`** — who is working on this task **right now**, present only while `in_progress`. Written
+  by `run-task` **before** it spawns anything, re-stamped (`stage`, `heartbeat`) at every stage
+  boundary, and removed when the task leaves `in_progress`. It does two jobs:
+  - **It answers "what are you doing?" without interrupting the run** — `stage` + `since` is the live
+    status a human (or the board) can read at any moment, instead of a board that shows nothing in
+    progress while an agent has been running for fifty minutes.
+  - **It keeps two sessions off the same task.** The user runs more than one session on one repository;
+    a task whose `claim.heartbeat` is **fresher than 30 minutes** belongs to that holder, and another
+    run skips it and says who holds it. Older than that, the holder is presumed dead (agents get
+    killed) and the task may be reclaimed — announce the reclaim, never do it silently. This is the
+    task-level twin of the environment lease in `env-access.md`, and it is deliberately advisory:
+    it prevents collisions, it does not lock a human out.
 - **`history`** — append-only transition log; each entry `{ at, to, by, note? }`. Never rewrite past
   entries.
 
@@ -137,8 +154,9 @@ todo ──> in_progress ──> done
 ```
 
 - **`todo`** — created, not started.
-- **`in_progress`** — an executor has claimed it (set when `implement-feature`/`setup-dev-environment`
-  begins).
+- **`in_progress`** — an executor has claimed it. **`run-task` sets this, and writes `claim`, BEFORE
+  it spawns the implementer** — not after the agent returns. State written after the expensive step is
+  state nobody can read while the expensive step is running, which is exactly when someone asks.
 - **`done`** — built, verified, accepted (`review: human` or `auto`), and committed.
 - **`needs_human`** — escalated: the one fix round didn't close a critical criterion, the quality gate
   stayed red, or a blocker couldn't be resolved autonomously. The task's `## Log` holds the findings
@@ -171,7 +189,9 @@ list `id` · `summary`, and put any `needs_human` tasks first as a prominent gro
 ```markdown
 # Build board
 
-> Generated <date> · <N> tasks · <done>/<total> done
+> Generated <date> · **<done>/<total> tasks done (<pct>%)** · <ready> ready · <blocked> blocked ·
+> <needs_human> need you · <cancelled> cancelled
+> **Now:** T012 · verify · started 11:05Z (52 min) — run-task@7f3c1a   ← or "Now: idle"
 > Reconciled with spec: <commit sha> (<date>)
 
 ## ⚠ Needs human
@@ -195,6 +215,13 @@ list `id` · `summary`, and put any `needs_human` tasks first as a prominent gro
 ## Cancelled
 - (none)
 ```
+
+The **first two lines answer the two questions a human actually asks** — *how far along is this?* and
+*what are you doing right now?* Both were asked repeatedly in the field, mid-run, because neither had
+an answer anywhere. The percentage counts `done` against every task that is not `cancelled`. The
+**Now** line is read straight from the `claim` block of whichever task is `in_progress` (there is at
+most one per session); with no claim it reads `Now: idle`. Regenerate the header at every stage
+boundary, not only when a task finishes — a header that only moves once per hour is not a status.
 
 The **Reconciled with spec** line is the anchor `build-tasks` checks before a run: it records the
 commit the backlog was last planned against, so `git log <sha>..HEAD -- .dev-skills/project-spec/`

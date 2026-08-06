@@ -1,6 +1,6 @@
 ---
 name: audit-performance
-description: "Audit the built product's performance at the system level, against the spec's quality-attribute scenarios. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent performance engineer: it reads the latency/throughput/cost/scale scenarios from .dev-skills/project-spec/architecture.research.md and MEASURES whether the running system meets them — p50/p95 on the hot paths, throughput under the target load, bundle/asset weight and client render cost, query plans (N+1, missing index), and the resource/cost envelope. Read-only: it measures, reproduces the slow path, and ranks (blocker = a missed budget, major = met with no margin, per the rubric) but NEVER edits product code and NEVER installs a profiler or load tool it wishes it had — an unavailable measurement is recorded as unmeasured, and tooling is setup-dev-environment's job. It files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/performance-audit.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs once after the fix round to confirm the number actually moved."
+description: "Measure the built product's performance against the spec's quality-attribute scenarios — p50/p95 on the hot paths, throughput at the target load, asset weight and client render cost, query plans, the resource and cost envelope. Use in the release phase (run by release-product) or standalone once features are built. Read-only: it measures, reproduces the slow path and ranks what it finds, but never edits product code and never installs a profiler or load tool it wishes it had — an unavailable measurement is recorded as unmeasured, and tooling is setup-dev-environment's job. Files blockers and majors as rework tasks and writes .dev-skills/release/performance-audit.md."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
@@ -38,25 +38,17 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
   tasks in the backlog for 🔴/🟡 (via `plan-development` amend); evidence (captured numbers, profiles,
   bundle reports) under `.dev-skills/release/artifacts/`. Never the product's code.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write findings and the report in that
+Respond and reason in the user's language — write findings and the report in that
 language and think in it too. Never translate code, identifiers, commands, file paths, or metric names.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## What you measure (against each scenario's budget)
 
@@ -126,3 +118,4 @@ Return the verdict to `release-product`. On a re-audit, a previously-🔴 scenar
 4. Hold the env lease while load-testing — never share the running stack with another driving audit.
 5. A micro-optimization with no scenario behind it is ⚪ at most — no speculative-tuning noise.
 6. The re-run clears a 🔴 only by re-measuring within budget — never by assumption.
+7. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

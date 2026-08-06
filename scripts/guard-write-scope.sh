@@ -7,6 +7,13 @@
 #   - audit-*         → may write findings (.dev-skills/**) + the backlog, nothing else
 #   - manual-test     → may write .dev-skills/** only (it is a read-only briefing)
 #
+# The test-authoring roles are also allowed the **test harness's own configuration** —
+# playwright.config.*, vitest/jest config, pytest.ini, conftest.py, tsconfig*.json,
+# the eslint config, the e2e directory. Writing a test you cannot register with the
+# runner is not a smaller permission, it is a broken one: in the field this guard
+# blocked playwright.config.ts four times, plus tsconfig.json and eslint.config.mjs,
+# in runs whose whole job was to add tests. Product code stays out of scope.
+#
 # It reads the Claude Code hook JSON from stdin, extracts tool_input.file_path, and
 # ALLOWS the write only if that path matches one of the glob patterns passed as
 # arguments. Any other write is BLOCKED with exit code 2 (a blocking denial whose

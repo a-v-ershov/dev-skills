@@ -274,3 +274,73 @@ description: "<Third-person: WHAT it does and WHEN to use it — this is how Cla
   assert → report), so it earns its name; a one-liner that just shells out adds nothing.
 - **The depth lives in the wrapped script**, not the skill — the skill is the discoverable, reusable
   entry point future agents invoke by name.
+
+---
+
+## 7. What setup produces — the outputs inventory
+
+Everything below is repo-local unless marked otherwise. `.dev-skills/project-setup/` is committed
+project documentation.
+
+### Repo files
+`.gitignore`, a project `CLAUDE.md`, `.claude/settings.json` + MCP config, the Docker Compose stack,
+seed scripts, a one-command entrypoint (`Makefile` / `justfile` / script), and the directory skeleton
+— whatever `dev-architecture` specifies.
+
+The project `CLAUDE.md` carries two parts: your stack notes + commands, **and** the marker-delimited
+**project documentation map** — write or refresh that block per `../../_shared/agent-guide.md` so an
+agent can navigate `.dev-skills/project-spec/`, `build-plan/` and `project-setup/`. An earlier
+`create-project-spec` run may already have seeded the block; refresh it in place, idempotently.
+
+Keep that file **lean and layered**: the root holds the big picture — the project-map block, stack
+notes, key commands, the load-bearing gotchas — and nothing deeper. For a monorepo, also seed a short
+`CLAUDE.md` in each package with its *local* conventions and its **scoped** commands, so the agent
+doesn't run the whole repo's suite for a one-package change; Claude loads them additively up the tree.
+For a single small package the root file is enough — don't over-split.
+
+### The quality gate
+Linter + formatter + type-checker configs (zero-tolerance) and **three targets** — `make check-fast`
+(static checks), `make test-scoped SCOPE=…` (only the tests belonging to given paths/pattern — what
+the whole build loop uses), `make check` (static + the whole suite, run by the release pipeline) —
+plus a **pre-commit hook that runs the static gate** and blocks the commit on red.
+
+**No test step in that hook — not the suite, not a scoped run — and no Claude Code Stop / PostToolUse
+hook that runs a gate when a turn or an edit ends.** Both are ruled out in
+`../../_shared/build-pipeline/quality-gate.md`, which defines the gate once. Setup **executes** the
+test levels `design-dev-architecture` specified; it does not re-pick tools.
+
+### Environment access, developer scripts, custom-skill skeletons
+Whichever env-access mechanism `dev-architecture` chose — the **advisory-lock helper** baked into the
+bring-up/teardown commands (lock file gitignored) and/or the **per-run isolation** params — plus the
+**skeletons of the developer & test scripts** it specified (fast, intentionally-divergent local paths;
+full implementation is backlog work), and the **skeleton `.claude/skills/<name>/SKILL.md` stubs** of
+the **custom project skills** it specified (frontmatter `name` + discoverable `description` and a thin
+body invoking the wrapped script, with the procedure left as a TODO; full authoring is a backlog
+task). See `../../_shared/build-pipeline/env-access.md` and §6 above.
+
+### The design system (UI projects only)
+The spec already decided it; here you make it real, in this order:
+
+1. **Install** the UI kit and icon set `define-design-decisions` named, per the kit's **current
+   official instructions** — check them, install commands go stale; don't run them from memory.
+2. **Write the committed root `DESIGN.md`** — tokens + rationale, straight from the spec's design
+   direction and the installed kit's own theme. Format and the full procedure:
+   `design-md-format.md`; per-kit token mapping: `adoption-recipes.md`. Plus the short
+   `.dev-skills/project-setup/design-system.md` record.
+3. **Write the UI rule into the project `CLAUDE.md`** — components come from the kit, colours and
+   spacing from the design tokens, icons from the one chosen set. Without that rule the next session's
+   agent hand-rolls its own button.
+
+Skipped entirely for a no-UI project, or when `design-decisions` says no system is needed.
+
+### The quality tooling the release phase will need
+Repo-local dev dependencies wired behind the project's own commands: whatever `dev-architecture` named
+for measuring the codebase and the suite — a duplication/dead-code analyzer, a mutation-testing runner,
+an accessibility checker, a load tool. Install them **here**, because the release phase deliberately
+cannot: `refactor`, `write-tests` and every `audit-*` are forbidden from installing anything and record
+a missing tool as *unmeasured*. A tool nobody installed is a measurement nobody takes.
+
+### The three records
+- `.dev-skills/project-setup/setup-plan.md` — the approvable plan (§1).
+- `.dev-skills/project-setup/setup-log.md` — done / skipped / deferred to the human (§2).
+- `.dev-skills/project-setup/verification.md` — the run/drive/prove contract `verify-feature` reads (§3).

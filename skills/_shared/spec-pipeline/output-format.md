@@ -126,3 +126,10 @@ lives in each .research.md.>
 
 It re-derives nothing — it rolls up the per-phase reports' **Decide** + **Risks** and adds a 2–4
 bullet gist. Decisions come first so the human's action list is the first thing they see.
+
+## Every phase closes with «What you should do»
+
+Whatever else a phase reports, its **last block** is the numbered, imperative list of what the human
+has to do — one line each, in their language, with no vocabulary from this skill set in it. Nothing is
+a legitimate answer, written as one line. The full rule, including how to report timings so they add
+up: **`../build-pipeline/report-format.md`**.

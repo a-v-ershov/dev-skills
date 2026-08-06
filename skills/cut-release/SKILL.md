@@ -1,7 +1,7 @@
 ---
 name: cut-release
 disable-model-invocation: true
-description: "Cut a release: update the docs, bump the version if needed, write the changelog / release notes, and tag + commit + open the PR — in one gated step. Use as the final step of the release phase (run by release-product once the audits are clean, or standalone). A release engineer + tech writer: it FIRST checks the preconditions (clean working tree, no open 🔴 blocker from the audits), then refreshes the human-facing docs (README, the project documentation map, release notes), proposes the version bump (semver — proposed and confirmed, NEVER decided silently), updates the changelog from the work since the last release, and via the commit skill commits, tags, and opens the PR. Always confirms before acting, in BOTH modes (the careful pattern), and STOPS before any production deploy — putting the product live is setup-production-environment's job, invoked by hand, and this skill hands off to it. Never edits product code. The only outward-facing step of the release phase."
+description: "Cut a release in one gated step: check the preconditions (clean tree, no open blocker from the audits), refresh the human-facing docs and the handover README, propose the version bump (semver — proposed and confirmed, never decided silently), update the changelog from the work since the last release, then commit, tag and open the PR through the commit skill. Use as the final step of the release phase, run by release-product once the audits are clean, or standalone. Always confirms before acting in both modes, and STOPS before any production deploy — putting the product live is setup-production-environment's job. Never edits product code."
 argument-hint: "[--version <x.y.z>] [--no-pr]"
 ---
 
@@ -42,32 +42,24 @@ step and a fix for `build-tasks`, not a patch here. You touch docs, version file
   `## Shipped` section of `.dev-skills/release/release-summary.md`. Then a **commit + tag + PR** via the
   `commit` skill. Never product code.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write the release notes, questions,
+Respond and reason in the user's language — write the release notes, questions,
 and report in that language and think in it too. **Commit messages, the tag message, and the PR title
 are always English** (the `commit` skill enforces this); the human-facing CHANGELOG / release notes
 follow the user's language.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
-
-**The PR is the one place this can bite** (Stage 4): a pull request cannot be opened from the base
-branch. If the current branch *is* the base, do not silently branch — commit and tag on it, then
-either ask for a branch (name it, wait for an explicit yes) or hand the PR back to the user as a
-remaining step, exactly as `--no-pr` does. Cutting the release never reorganizes the user's branches.
+**The PR is the one place this can bite** (Stage 4): a pull request cannot be opened from the
+base branch. If the current branch *is* the base, do not silently branch — commit and tag on it,
+then either ask for a branch (name it, wait for an explicit yes) or hand the PR back as a
+remaining step, exactly as `--no-pr` does. Cutting a release never reorganizes the user's branches.
 
 ## Modes
 
@@ -96,9 +88,12 @@ audit verdicts, and the mode. Honor `--version <x.y.z>` (use it as the proposed 
 (commit + tag locally, skip the PR).
 
 ### Stage 1: Docs
-Refresh the **README** to the now-complete product (features, how to run it). Refresh the **project
-documentation map** block in the root `CLAUDE.md` — idempotent, only between the markers, per
-**`../_shared/agent-guide.md`**. **Draft the release notes** — the human-readable "what's in this
+Refresh the **README** — invoke **`/write-readme`** rather than editing it here: it verifies every
+command against the repo instead of recalling it, and a release that ships a README whose install step
+no longer works is the failure this delegation exists to prevent. Run standalone (outside
+`release-product`, which already ran it), invoke it now; inside a release-phase run it has just run —
+refresh only if the tree changed since. Then refresh the **project documentation map** block in the
+root `CLAUDE.md` — idempotent, only between the markers, per **`../_shared/agent-guide.md`**. **Draft the release notes** — the human-readable "what's in this
 release", derived from the `done` tasks since the last release (their summaries) + the merged work, in
 the user's language.
 
@@ -148,3 +143,4 @@ open and point at `release-product`.
    coherent commit + tag (+ PR).
 8. **Cut on the current branch.** No `release/*` branch, no branch "for the PR" — if the PR needs one,
    ask; a no means commit + tag locally and hand the PR to the user.
+9. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

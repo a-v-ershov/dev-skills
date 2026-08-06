@@ -69,8 +69,13 @@ Built by `release-product` at the end of a run — decisions-first, for the huma
 ## Shipped (if cut-release ran)
 - version <x.y.z> · tag <…> · PR <link> · changelog updated
 
-## Next, by hand
-- the hands-on pass above · `/setup-production-environment` when the product goes live
+## What you should do
+1. <imperative, one line, in the user's language — no pipeline jargon>
+2. …
+   (the hands-on pass above · `/setup-production-environment` when the product goes live · nothing, if
+   nothing genuinely needs a person)
 ```
 
-Roll up; do not re-derive — concatenate each step's verdict + the cut-release result.
+Roll up; do not re-derive — concatenate each step's verdict + the cut-release result. The **«What you
+should do»** block is always last and always present, even when it says there is nothing:
+**`../build-pipeline/report-format.md`**.

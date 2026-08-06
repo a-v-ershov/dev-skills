@@ -70,6 +70,51 @@ deliberately. Selection rule 2 (the tests of the changed modules) covers the com
 gate covers the rest, and the alternative — a full suite on every hand-off, every verification and
 every commit — is what makes agents start working around the gate.
 
+## When the project has no scoped run yet
+
+The three targets are `setup-dev-environment`'s output, so a repo that adopted this skill set
+mid-flight usually has `make check` and nothing else. The loop must not silently fall back to running
+everything — that is precisely the cost this design exists to avoid, and it hides the gap forever.
+
+- **Check at intake, once per run.** `build-tasks` (and a standalone `run-task`) confirms that the
+  scoped target named in `verification.md` exists and runs. It does not check again per task.
+- **Missing → say so and offer the fix.** One line, at the start: the target is absent, the loop will
+  pay for the whole suite on every hand-off until it exists, and `/setup-dev-environment` adds it (or
+  it becomes one `setup` task). Then proceed — the run is not blocked on it.
+- **Present but useless → the same treatment.** A `test-scoped` that runs the whole suite anyway is a
+  finding, not a selection. `setup-dev-environment`'s smoke test is supposed to catch this by proving
+  the scoped run executes visibly fewer tests than the full one.
+- **The selector finds nothing for a changed module** — no test lives beside it and no tag matches.
+  That is a **coverage gap to report**, never a licence to run everything: run what the selection did
+  find, and note the module the loop could not select for. It is `write-tests`' input.
+
+## The full run has a budget too
+
+`refactor`, `write-tests` and `cut-release` run `make check` over the whole suite, and each of them
+**reports that run's wall-clock in one line**. Compare it against the budget recorded in
+`verification.md` (set it at setup; **5 minutes** is a sane default for a small product):
+
+- over budget → a **performance finding about the suite**, filed like any other, with the slowest
+  files named. It is not a reason to skip the run, and it is not something to be patient with
+  release after release. A suite nobody can afford is a suite that stops being run.
+- The build loop's own budget is per task and much tighter (below).
+
+## A test that will not reproduce is quarantined, not tolerated
+
+A test whose result changes between two runs of the *same* code is worse than no test: it makes every
+green meaningless and every red a coin-toss. Measured in the field, one suite produced two different
+second failures on two consecutive runs of one commit, and every "this made it green" claim after that
+was unfalsifiable.
+
+- **Confirm it before calling it flaky** — re-run the failing selection on the unchanged tree. Same
+  failure twice → it is a real red, treat it as one.
+- **Different result → quarantine it**: mark it with the project's skip/quarantine mechanism **plus a
+  task id and one line of what was observed**, so it stops gating the loop, and file the task. A
+  quarantine marker without a task id is a suppression, and the gate fails on those.
+- **Never adjust a test to make it pass.** A test that is red because the behaviour moved is the
+  finding; a test that is red at random is a defect in the test.
+- **Never "prove" a speed-up or a fix with a single green run** of a suite known to flake.
+
 ## Prefer the cheapest level that proves the thing
 
 Test level is a cost decision, and the default runs from the bottom:

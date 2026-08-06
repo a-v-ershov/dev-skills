@@ -1,6 +1,6 @@
 ---
 name: build-tasks
-description: "Work through the development plan: take tasks from .dev-skills/build-plan/ one at a time and run each through the run-task skill (implementer → separate verifier → one fix round → green gate → human acceptance → checkpoint commit). The order is deterministic and not a judgement call: the next task is the ready one (status todo, all blocked_by done) with the lowest id; no parallel tasks, one working tree. Before starting it checks whether the spec moved ahead of the plan and, if so, offers to reconcile via plan-development first rather than confidently building something already abandoned. A task that escalates to needs_human is not retried — the run continues and reports it at the end. By default it runs straight through, pausing only for a real reason (a task whose work a human can check by hand, needs_human, a red gate, the per-run limit); a one-at-a-time mode with confirmation before each task is opt-in, as is thinning acceptance to every Nth task. It takes at most 8 tasks per run, then stops and asks the human to compact the context and start it again — beyond that the session is full of diffs and reports and tasks start blurring together. Resumable: the backlog is the source of truth, so an interrupted run continues where it stopped and never rebuilds finished work. Use after plan-development. It writes no code and duplicates no cycle — all per-task work is run-task's."
+description: "Work through the development plan: take tasks from .dev-skills/build-plan/ one at a time and run each through run-task. The order is deterministic, not a judgement call — the ready task (status todo, all blocked_by done) with the lowest id; no parallel tasks, one working tree. It refuses to start when the spec has moved ahead of the plan and offers plan-development first, skips tasks another session has claimed, and never retries a needs_human task. By default it runs straight through, pausing only for a real reason; one-at-a-time and thinned acceptance are opt-in. Resumable — the backlog is the source of truth. Use after plan-development. It writes no code and duplicates no cycle."
 argument-hint: "[one-at-a-time | run N | review every N | <task-id> to start from]"
 ---
 
@@ -15,27 +15,20 @@ the source of truth, so a killed run resumes without losing anything.
 check the plan isn't stale → compute ready set → lowest id → /run-task → regen board → next (max 8)
 ```
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in. Never translate code, identifiers,
+Respond and reason in the user's language. Never translate code, identifiers,
 commands, or file paths.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Every agent you spawn inherits this — pass it down together with
-the language rule, and an agent that thinks the work needs a branch reports it to you instead of
-creating one. Full rule: **`../_shared/git-workflow.md`**.
+Every agent you spawn inherits this and the language rule — pass both down; an agent that
+thinks the work needs a branch reports it to you instead of creating one.
 
 ## Modes
 
@@ -76,12 +69,25 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode` (write it if absent, d
   rebuilt.
 - **Also reclaim a stale env lock** left by a killed run
   (**`../_shared/build-pipeline/env-access.md`**).
+- **Is another session working here?** List the tasks whose `claim.heartbeat` is fresher than 30
+  minutes and say so in one line — those are skipped, not waited for. The user does run two sessions on
+  one repository, and a run that quietly re-does another's task is worse than one that stops
+  (**`../_shared/build-pipeline/backlog-format.md`** → `claim`). If a "study only, don't write" mode is
+  asked for, read the tasks and plan them, and change no file until the other session's claim clears.
+- **Does the scoped test target exist?** Confirm the `make test-scoped` equivalent named in
+  `verification.md` is there and really selects. Missing or fake → say it once, now: every hand-off
+  will otherwise pay for the whole suite, and `/setup-dev-environment` is the fix. Then proceed — the
+  run is not blocked on it (**`../_shared/build-pipeline/quality-gate.md`**).
 - An argument that is a task id → start from that task (its blockers must still be `done`).
 
 ### The loop
 Repeat while ready tasks remain:
 
 1. **Compute the ready set** — `todo` tasks whose `blocked_by` are all `done`. Empty → go to Done.
+   If the **open** count (todo + in_progress + needs_human) is over **15**, say so once and offer
+   `/plan-development consolidate` before continuing — the ceiling is the backlog's, not just the
+   planner's, and it is what keeps tasks coarse (**`../_shared/build-pipeline/planning-method.md`**).
+   The human decides; the run is not blocked on it.
 2. **Take one** — the **lowest `id`** among them, so two runs produce the same order. Announce it in
    one line and continue without asking; wait for confirmation only in one-at-a-time mode.
 3. **Run it through `/run-task`** (via the Skill tool) — the whole cycle, no steps skipped and no
@@ -91,7 +97,9 @@ Repeat while ready tasks remain:
    it whether this task's acceptance is deferred and where the manual one lands.
 4. **A task that went `needs_human`** → don't take it again; show it to the human and move to the next
    ready task. One stuck task must not stop the whole plan.
-5. **Regenerate `.dev-skills/build-plan/board.md`** from the task files.
+5. **Regenerate `.dev-skills/build-plan/board.md`** from the task files — the progress header
+   (done/total, %, and the **Now** line) included. `run-task` already refreshes it at each stage
+   boundary; here you refresh the totals.
 6. **Acceptance, when the human asked for it.** In *acceptance every N* mode, if this was the **Nth**
    task of the run — or the run's **last** one — do the manual acceptance now, before taking anything
    else: show the batch (one line per auto-accepted task since the previous acceptance: what was built
@@ -108,9 +116,11 @@ list, one line each on where it got stuck) · which remain blocked and by what �
 `.dev-skills/build-plan/board.md` for the detail.
 
 Give each task a **time** column from its `timings.total`, and one line under the table splitting the
-run into build / verify / fix / solve. Report the numbers flat, with no verdict attached — they are
-wall-clock, so they include every stretch the run spent waiting on you
-(**`../_shared/build-pipeline/backlog-format.md`**).
+run into build / verify / fix / solve **plus the time spent waiting on you**, so the parts reconcile
+with the total. Report the numbers flat, with no verdict attached
+(**`../_shared/build-pipeline/backlog-format.md`**). End the report with the **«What you should do»**
+block — imperative, one line per item, no pipeline jargon
+(**`../_shared/build-pipeline/report-format.md`**).
 
 **Stopped at the limit with ready tasks left** — ask the human to compact and re-run:
 

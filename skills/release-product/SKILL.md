@@ -1,6 +1,6 @@
 ---
 name: release-product
-description: "Take a built, verified product to a cut release. Use after build-tasks, as the release phase — the third pipeline, after the project-spec and build phases. A thin orchestrator that runs the release chain in one command: first the two steps that change the repository, strictly in order — refactor (clean the structure without changing behaviour) then write-tests (map the test gaps and close the risky ones, red-first) — and then the read-only audits as fresh, independent subagents in PARALLEL (audit-security, audit-performance, audit-product), since they mutate nothing and collide on nothing, and finally manual-test to brief the human on what only a person can judge. It collects and ranks every finding by severity, files blockers and majors as rework tasks into the backlog, drives ONE build-tasks run to fix them and re-runs only the affected audits ONCE to confirm; anything still open after that round is needs_human, never another loop. When no blocker remains it invokes cut-release (version + changelog + release notes + tag + commit + PR, always confirmed) and stops there: putting the product live is setup-production-environment's job, invoked by hand. Audits only audit — they never fix code and never install anything; a missing production capability is a finding that goes back to setup-production-environment. Resumable: the findings docs plus the backlog are the source of truth. It conducts the focused sub-skills; it does not duplicate their logic."
+description: "Take a built, verified product to a cut release. Use after build-tasks, as the third pipeline. A thin orchestrator: first the two steps that change the repository, strictly in order — refactor, then write-tests — then the read-only audits as fresh independent subagents in PARALLEL (audit-security, audit-performance, audit-product), then write-readme and manual-test. It ranks findings by severity, files blockers and majors as coarse rework tasks, drives ONE build-tasks fix run and re-runs the affected audits ONCE; anything still open is needs_human, never another loop."
 argument-hint: "[--only <step>] [--skip-ship]"
 ---
 
@@ -17,7 +17,8 @@ The chain:
 1. refactor            (changes code — alone, first: everything downstream reads the cleaned tree)
 2. write-tests         (changes tests — alone, second: the audits should run against the real net)
 3. audit-security · audit-performance · audit-product   ← fresh agents, IN PARALLEL (read-only)
-4. manual-test         (read-only briefing for the human)
+4. write-readme        (the handover document — refreshed against the tree as it now stands)
+5. manual-test         (read-only briefing for the human)
    → collect findings → rank (severity-rubric) → file 🔴/🟡 as rework tasks
    → ONE build-tasks run → re-run ONLY the affected audits, ONCE
    → still open?  → needs_human, surface it, stop
@@ -37,28 +38,21 @@ on the one running stack while the static ones run freely.
 tooling belongs to `setup-dev-environment`, production capabilities to `setup-production-environment`.
 An audit that needs something that does not exist records it as a finding.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in. Each sub-skill follows the same rule
+Respond and reason in the user's language. Each sub-skill follows the same rule
 on its own. Never translate code, identifiers, commands, or file paths. (Commit messages are always
 English — the `commit` skill, invoked by `cut-release`, enforces that.)
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Every agent you spawn inherits this — pass it down together with
-the language rule, and an agent that thinks the work needs a branch reports it to you instead of
-creating one. Full rule: **`../_shared/git-workflow.md`**.
+Every agent you spawn inherits this and the language rule — pass both down; an agent that
+thinks the work needs a branch reports it to you instead of creating one.
 
 ## Modes
 
@@ -79,7 +73,7 @@ Read `.dev-skills/release/.release-config.md` for `mode` and the enabled `steps`
 - [ ] Step 0: Intake — confirm the build is complete; read the spec contracts + .release-config.md (write if absent); detect resume
 - [ ] Step 1: Repo steps, in order and alone — /refactor, then /write-tests
 - [ ] Step 2: Audits — spawn audit-security · audit-performance · audit-product in parallel (fresh agents)
-- [ ] Step 3: Briefing — /manual-test for the human's hands-on pass
+- [ ] Step 3: Handover + briefing — /write-readme, then /manual-test for the human's hands-on pass
 - [ ] Step 4: Triage — rank all findings; file 🔴/🟡 as rework tasks (plan-development amend); ⚪ logged only
 - [ ] Step 5: One fix round — build-tasks fixes the rework → re-run ONLY the affected audits, once → still open = needs_human
 - [ ] Step 6: Cut — no open 🔴 → invoke cut-release (always confirmed); honor --skip-ship
@@ -114,8 +108,15 @@ and returns its verdict (clean / N blockers / N majors). **A sub-skill not yet a
 collection is a stop condition** regardless of mode: report it and let the user decide whether to skip
 that step or build the skill first.
 
-### Step 3: The human's briefing
-Invoke **`/manual-test`**. It proves nothing and changes nothing — it writes
+### Step 3: Handover document, then the human's briefing
+Invoke **`/write-readme`** first. It writes or refreshes `README.md` against the tree as it now stands
+— the verified way another person clones this and gets it running, what deploying actually takes
+today, what they must bring themselves, and how to reach a clean seeded state. It is read-only on
+product code and every command in it is verified against the repo rather than recalled. No README, or
+one that has drifted a release behind, is the most common reason a finished product cannot be handed
+to anyone.
+
+Then invoke **`/manual-test`**. It proves nothing and changes nothing — it writes
 `.dev-skills/release/manual-test-brief.md` so the human can check by hand what no machine decides,
 starting with everything accepted as `review: auto`. Its output is a handoff, not a gate: it never
 blocks the cut, but it is always surfaced in the summary.
@@ -183,3 +184,4 @@ live — `/setup-production-environment`, which is never auto-run from here.
    rebuild a finished fix without reason.
 9. **release-summary.md is always rolled up** from the step outputs and the cut result; never
    hand-authored from scratch.
+10. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

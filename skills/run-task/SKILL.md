@@ -1,6 +1,6 @@
 ---
 name: run-task
-description: "Drive ONE task through the full development cycle: the implementer builds it, a separate fresh verifier independently proves the acceptance criteria, its findings go back for exactly one fix round, the static gate plus this task's scoped test selection must be green (the whole suite is never run here — that is the release pipeline's), the human accepts the work (or it is auto-accepted when the diff holds nothing a person could check by hand), the spec is offered a catch-up edit if the product's behavior changed, and a checkpoint commit carrying the task id lands. Two entry points: a task id from the backlog (run-task T07) or a free-form request (run-task 'the card doesn't show the date'), in which case it files the task itself with origin: adhoc and acceptance criteria the user confirms. No iteration loop and no cap to tune — anything the single fix round leaves open escalates to needs_human. Use to build one task; build-tasks calls it repeatedly to work through the backlog. Sequential, single working tree, current branch. It conducts the implementer/verifier agents and the commit skill; it does not duplicate their procedures."
+description: "Drive ONE task through the full development cycle: the implementer builds it, a separate fresh verifier independently proves the acceptance criteria, its findings go back for exactly one fix round, the static gate plus this task's scoped test selection must be green (the whole suite is never run here), the human accepts the work or it is auto-accepted, and a checkpoint commit carrying the task id lands. Two entry points: a task id from the backlog, or a free-form request it files itself with origin: adhoc. A small, obvious change can take the quick lane instead. Anything the single fix round leaves open escalates to needs_human. Sequential, single working tree, current branch."
 argument-hint: "[<task-id> | <free-form request>]"
 ---
 
@@ -32,28 +32,21 @@ spawned **fresh for this task** and kept through the fix round (so it fixes code
 **`verifier`** agent (it preloads `verify-feature`) is a **separate** agent with no implementer bias.
 Lifecycle rules: **`../_shared/build-pipeline/build-config.md`**.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in. Each sub-skill and agent follows
+Respond and reason in the user's language. Each sub-skill and agent follows
 the same rule. Never translate code, identifiers, commands, or file paths. (Commit messages are
 always English — the `commit` skill enforces that.)
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Every agent you spawn inherits this — pass it down together with
-the language rule, and an agent that thinks the work needs a branch reports it to you instead of
-creating one. Full rule: **`../_shared/git-workflow.md`**.
+Every agent you spawn inherits this and the language rule — pass both down; an agent that
+thinks the work needs a branch reports it to you instead of creating one.
 
 ## Modes
 
@@ -71,11 +64,20 @@ skip the acceptance question for this task (record the digest and `review: auto`
 change nothing else: the verifier, the fix round, the green gate and the `needs_human` stop all still
 apply. Deferring acceptance is the human's decision, never yours.
 
+## The quick lane
+
+Not every task deserves the full cycle — a padding fix does not need a separate verifier. The lane
+exists **inside** this skill so a small change keeps its record instead of going round the pipeline.
+Its four eligibility bounds, what it drops (only the separate verifier), and the one-way escalation
+rule are in **`references/lanes-and-timing.md`** → "The quick lane". Read it before using the lane, and
+state the bounds out loud when you do. **Uncertain counts as ineligible.**
+
+
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Stage 0: Intake — resolve the input to a task file (id, or file a new adhoc task); confirm it's ready
-- [ ] Stage 1: Start — status in_progress; show the acceptance criteria; acquire the env lease; start the clock
+- [ ] Stage 0: Intake — resolve the input to a task file (id, or file a new adhoc task); confirm it's ready and unclaimed; full cycle or quick lane?
+- [ ] Stage 1: Start — status in_progress + claim written BEFORE any spawn; show the acceptance criteria; acquire the env lease; start the clock
 - [ ] Stage 2: Build — spawn the implementer agent (or dispatch a setup task to setup-dev-environment)
 - [ ] Stage 3: Verify — spawn the verifier agent, ONCE
 - [ ] Stage 4: Fix — one round by the same implementer + green gate, else needs_human
@@ -86,19 +88,11 @@ apply. Deferring acceptance is the human's decision, never yours.
 ```
 
 ### Timing the stages
+**You** time the work — an agent cannot see its own clock and a subagent's duration never comes back
+inside its result. Bracket each dispatched stage with `date -u '+%Y-%m-%dT%H:%M:%SZ %s'` and write the
+`timings` block in one edit when the task leaves you. Full method:
+**`references/lanes-and-timing.md`** → "Timing the stages".
 
-**You** time the work, because nobody else can: an agent cannot see its own clock, and the duration of
-a subagent never comes back inside the result you receive — only its text does. So bracket the stages
-you dispatch. At Stage 1, and at each boundary of Stages 2–5, take one reading:
-
-```sh
-date -u '+%Y-%m-%dT%H:%M:%SZ %s'
-```
-
-Keep the epoch seconds and subtract: `build` (Stage 2), `verify` (Stage 3), `fix` (Stage 4 — only when
-the fix round actually ran), `solve` (Stage 5), and `total` (Stage 1 → the end). Write them into the
-task's `timings` block in **one** edit when the task leaves you, at Stage 8 or at the `needs_human`
-stop. Schema and how to read the numbers: **`../_shared/build-pipeline/backlog-format.md`**.
 
 ### Stage 0: Intake
 **A task id** (`T012`) → read that task file. **A free-form request** ("the card doesn't show the
@@ -115,10 +109,23 @@ product, so filing three where one would do spends a budget the plan needs.
 Then confirm the task is **ready**: `status: todo` (or a stale `in_progress` from a killed run) and
 every `blocked_by` is `done`. A task with an unmet blocker stops here — say which one.
 
+**And confirm nobody else holds it.** A task whose `claim.heartbeat` is fresher than 30 minutes belongs
+to another session — stop, name the holder and its stage, and offer the next ready task instead.
+Older than that, the holder is presumed dead: say you are reclaiming it and why, then continue
+(**`../_shared/build-pipeline/backlog-format.md`** → `claim`). Never take a fresh claim silently; the
+user runs more than one session on this repository.
+
 ### Stage 1: Start
-Set `status: in_progress` with a `history` entry, and **regenerate `board.md` now** so the task moves
-out of `Ready` into `In progress` — the build runs for an hour or more, and a board that only catches
-up at the commit shows "nothing in progress" for exactly the stretch someone would look at it.
+Set `status: in_progress` with a `history` entry **and write the `claim` block** — holder id,
+`stage: build`, `since`, `heartbeat` — **before you spawn anything**, then **regenerate `board.md`
+now** so the task moves out of `Ready` into `In progress` and the board's **Now** line says what is
+happening. The build runs for an hour or more; a board that only catches up at the commit shows
+"nothing in progress" for exactly the stretch someone would look at it.
+
+**Re-stamp `claim.stage` + `heartbeat` and regenerate the board at every stage boundary** (2→3→4→5→6).
+That is the whole status mechanism: someone can answer "what is it doing, and for how long?" from the
+board alone, without interrupting the run.
+
 **Show the human the acceptance criteria** this task
 will be judged by, one line each — it is the last cheap moment to catch a criterion that describes the
 wrong thing. Acquire the **env lease** (**`../_shared/build-pipeline/env-access.md`**); subagents
@@ -132,20 +139,11 @@ Dispatch by `type`:
   gets the cheap gate green before handing back.
 - **`verify`** (cross-cutting) → skip to Stage 3 and spawn the verifier directly.
 
-**What the spawn prompt must carry.** The agent is fresh and knows nothing you know; a prompt that
-passes only a task id makes it rediscover the project. Name: the task file's path · the project
-`CLAUDE.md` and its invariants · **what recently changed** — the files the last closed tasks
-rewrote, so it reads the current state instead of trusting line numbers in the task description ·
-the branch rule and that it must not commit · the test boundary (unit inner loop, no e2e, no
-adversarial suite — those are the verifier's; and it runs this task's scoped selection, never the
-whole suite).
+**What the spawn prompt must carry, and what to do when the agent dies before it reports** —
+including why a killed build is resumed from the task's `## Log` rather than rebuilt from zero:
+**`references/lanes-and-timing.md`** → "Spawning and recovering an implementer". Read it before the
+first spawn of a run.
 
-**If the agent dies before it reports** — an API error, a session limit, an interrupt — that is not a
-failed task and not a `needs_human`. Check `git status`: an empty tree means nothing was lost, so
-spawn a fresh implementer with the same brief. A non-empty tree means work landed with no account of
-itself, so read its `## Log` (opened at its Stage 0) and either resume the same agent, or go to
-Stage 3 telling the verifier plainly that the build is unattested and it must judge completeness too.
-Never assume an interrupted build is finished, and never assume it is worthless.
 
 ### Stage 3: Verify (once)
 Spawn the **`verifier` agent** (`subagent_type: verifier`, separate agent — it preloads
@@ -163,44 +161,26 @@ for the whole suite (**`../_shared/build-pipeline/quality-gate.md`**).
   the lease, and **stop**. Report it plainly. **Never a second fix round.**
 
 ### Stage 5: Solve pass + gate
-Direct the **same implementer agent** to a light cleanup **scoped to this task's own diff** — remove
-dead or duplicated code it introduced, collapse needless abstraction, drop over-built generality —
-strictly **behaviour-preserving** — and a flag, parameter or command named in
-`.dev-skills/project-setup/verification.md` **is** behaviour: from inside the diff it looks like an
-argument nobody varies, but it is part of the contract the verifier drives the product by.
-Pre-existing rot in code this task didn't touch is out of scope: note it as a `rework` task, never
-tidy it here. (Agents over-produce and don't feel maintenance cost;
-a deliberate pass stops bloat from compounding.)
+Direct the **same implementer** to a light cleanup **scoped to this task's own diff**, strictly
+behaviour-preserving — and remember that a flag, parameter or command named in `verification.md` **is**
+behaviour. Pre-existing rot elsewhere is a `rework` note, never tidied here. Then confirm the **static
+gate + this task's scoped run** are green; the whole suite is never run in the build loop. Red is never
+committed and never triggers another round — it goes to `needs_human`. Full detail:
+**`references/lanes-and-timing.md`** → "The solve pass".
 
-Then confirm the **static gate** (`make check-fast`) and this task's **scoped test run** are green —
-the selection now includes the verifier's tests and the tests of every module this task touched, so
-the tidy stays honest. **Do not run the whole suite here**: the build loop never does, and the
-release pipeline runs it over everything (**`../_shared/build-pipeline/quality-gate.md`**). Red is
-never committed and never triggers another round — it goes to `needs_human`.
 
-### Stage 6: Accept
-Look at the **actual diff** and decide whether a person could check anything by hand:
+### Stage 6: Accept · Stage 7: Spec catch-up
+Look at the **actual diff**: nothing a person could check by hand (tests, internal logic, config, every
+criterion proven by the verifier) → accept it yourself with `review: auto` and a one-line reason.
+Something hand-checkable → show a short digest (what it does now in plain language · how to see it
+yourself · what the verifier already proved) and, in interactive, wait.
 
-- **Nothing hand-checkable** (the diff is tests, internal logic, config; every criterion was proven by
-  the verifier) → accept it yourself, set `review: auto`, and record the one-line reason. Don't
-  manufacture a question.
-- **Something hand-checkable** → show a short digest and, in interactive, wait:
-  > **Built:** <what it does now, in plain language — not file names>
-  > **See it yourself:** <the URL/screen · which seeded user · the exact steps>
-  > **Already proven:** <what the verifier asserted, one line each>
-  In autopilot, record the same digest with `review: auto`.
+If the work changed observable behaviour the spec doesn't describe, set `spec_sync: pending` and
+**propose the concrete edit**, written out rather than described; it lands in the **same commit**.
 
-Deferring acceptance is the human's call. If they ask for changes, that is a **new task** (or a
-`rework` one) — not a reopening of this cycle.
+Both stages in full, including what the digest looks like and what to do when the user declines:
+**`references/lanes-and-timing.md`** → "Accepting the work and catching the spec up".
 
-### Stage 7: Spec catch-up
-If the work changed observable product behavior the spec doesn't describe — a new screen, a changed
-rule, an `adhoc` task with no `traces_to` — set `spec_sync: pending` and **propose the concrete
-edit**, written out rather than described: the feature line for `product-requirements.research.md`,
-the step or screen for `user-flows.research.md`. Interactive: offer it, apply on a yes. Autopilot:
-apply and log it. It lands in the **same commit** as the code, so the spec never drifts by a whole
-task; then set `spec_sync: done`. If the user declines, leave `spec_sync: pending` — the board
-surfaces it and the next planning run will see it. Never block the task on this.
 
 ### Stage 8: Commit + hand back
 Set `status: done` (history entry), take the final clock reading, and write the `timings` block — both
@@ -210,10 +190,12 @@ commit** via the `commit` skill — the message carries this task's id (e.g. `[T
 Regenerate `.dev-skills/build-plan/board.md` from the task files. Report in three lines — what was
 built, how it was proven, what state the task is in — plus one line of timings:
 
-> **Time:** build 6m52s · verify 3m07s · fix 1m36s · solve 1m14s · total 15m03s
+> **Time:** build 6m52s · verify 3m07s · fix 1m36s · solve 1m14s · waiting on you 2m14s · total 15m03s
 
-Give it as it is, without commentary: it is wall-clock including every moment you waited on a human,
-so it explains where the task's time went and nothing more.
+Give it as it is, without commentary — and **make it add up**: the stages plus the waiting must
+reconcile with the total, because a report whose parts sum to less than its total invites exactly one
+question, and it is a fair one. Close with the **«What you should do»** block, even when it is one line
+saying there is nothing (**`../_shared/build-pipeline/report-format.md`**).
 
 ## Rules
 
@@ -232,8 +214,13 @@ so it explains where the task's time went and nothing more.
 6. **Let the spec catch up in the same commit.** A stale spec is what makes the *next* plan wrong.
 7. **One task, one working tree, current branch.** No worktrees, no parallel tasks, no new branch
    unless the user asked for one.
-8. **Hold the env lease for the task's span** and release it when the task leaves — committed or
+8. **The quick lane is bounded, asserted and one-way.** State the four bounds before you use it and
+   escalate to the full cycle the moment one breaks. It drops the separate verifier and nothing else —
+   never the task file, never the gate, never human acceptance.
+9. **Claim before you spawn, re-stamp at every stage.** The board must be able to answer "what is it
+   doing, and since when?" while the work is running, and a task another session holds is never taken.
+10. **Hold the env lease for the task's span** and release it when the task leaves — committed or
    escalated. See **`../_shared/build-pipeline/env-access.md`**.
-9. **Record the timings on the way out — escalated tasks included.** A task that went `needs_human` is
+11. **Record the timings on the way out — escalated tasks included.** A task that went `needs_human` is
    exactly the one whose time is worth knowing; dropping it leaves a record where only the smooth
    tasks were measured. Never estimate a stage you forgot to clock — omit the key instead.

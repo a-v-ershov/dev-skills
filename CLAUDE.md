@@ -33,7 +33,7 @@ root, so the marketplace `source` is `"./"`.
 skills/<name>/SKILL.md            # one dir per skill (+ references/*.md, load on demand; helper scripts alongside)
 skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md, glossary.md, git-workflow.md)
 agents/*.md                       # named subagent roles (auto-discovered — no plugin.json entry)
-scripts/*.sh                      # hook helpers (e.g. guard-write-scope.sh)
+scripts/*.sh                      # helpers: guard-write-scope.sh (hook) · check-skill-size.sh (budget)
 ```
 
 - Component dirs (`skills/`, `agents/`) sit at the **plugin root**, not inside `.claude-plugin/`.
@@ -83,11 +83,18 @@ nothing until the user picks numbers. It is never invoked by `release-product` a
 
 ## Skill & agent authoring conventions
 
-- **Description = discoverability.** Write the `description` in the third person stating WHAT the skill
-  does and WHEN to use it. Claude selects skills from this field — no literal "trigger phrases".
-- **Progressive disclosure.** Thin body (~1,500–2,000 words) + a copyable checklist; long
-  templates/rubrics go in `references/`. Shared methodology lives in `_shared/` — read it for the *how*,
-  don't restate it.
+- **Description = discoverability, and it is never free.** Write it in the third person stating WHAT
+  the skill does and WHEN to use it — Claude selects skills from this field, so no literal "trigger
+  phrases". It is loaded in **every** session whether or not the skill is used, so it is capped at
+  **700 characters**.
+- **Progressive disclosure, enforced.** Thin body + a copyable checklist; long catalogues, templates
+  and rubrics go in `references/`. Shared methodology lives in `_shared/` — read it for the *how*,
+  don't restate it. **A skill body is capped at 15,000 characters**, checked by
+  **`scripts/check-skill-size.sh`** (run it after any edit). The cap is not style: after a `/compact`
+  the harness re-injects a loaded skill's body and clips it at ~20,000 characters, silently and
+  mid-sentence — three skills in this set were measured coming back as 19,997 / 19,992 / 20,000 chars
+  with `[... skill content truncated for compaction]` where their `## Rules` used to be, in sessions
+  that compacted nine and eleven times. Anything in `references/` is read on demand and never clipped.
 - **Persona + anti-sycophancy.** Validation/review/audit skills adopt a critical persona, take a
   position, and name failure patterns instead of hedging.
 - **Named agents** (`agents/`, auto-discovered) carry the pipelines' subagent roles: `spec-reviewer` and
@@ -105,7 +112,11 @@ nothing until the user picks numbers. It is never invoked by `release-product` a
   turn a prose invariant into a harness guarantee: `verify-feature` and `write-tests` write tests +
   `.dev-skills/` only; `generate-mockups` the scratch mockups tree only; each release `audit-*`
   `.dev-skills/**` + the backlog only; `manual-test` `.dev-skills/**` only; `audit-skills` skill / agent /
-  command / `CLAUDE.md` files only — never product code, never the version-carrying manifests.
+  command / `CLAUDE.md` files only; `write-readme` `README*.md` + `.dev-skills/**` only — never product
+  code, never the version-carrying manifests. The test-authoring roles are additionally allowed the
+  **test harness's own configuration** (`playwright.config.*`, `vitest`/`jest` config, `pytest.ini`,
+  `conftest.py`, `tsconfig*.json`, the eslint config, `e2e/`): a role that may write a test but not
+  register it with the runner has a broken permission, not a smaller one.
   **`allowed-tools` is deliberately unused** — we keep the user's permission prompts intact.
 
 ## Authoring language

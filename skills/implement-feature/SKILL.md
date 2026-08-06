@@ -1,6 +1,6 @@
 ---
 name: implement-feature
-description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by run-task, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.dev-skills/project-setup/verification.md) — optionally writing its own fast unit tests and running the environment for a fast inner loop — and gets the static gate plus this task's scoped test selection green before handing off, to catch obvious breakage before the independent verifier runs. It never runs the whole accumulated suite: the build loop pays only for the tests of the work in hand, and the full suite belongs to the release pipeline. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — run-task orchestrates verify-feature and the checkpoint commit. After a failed verification it gets exactly ONE fix round: it reads the verifier's findings, runs the tests the verifier just committed to reproduce them, and fixes them — there is no second attempt, so anything it cannot close it says so plainly instead of guessing, and the task escalates to needs_human."
+description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by run-task, or standalone on a task id. It reads the task's description and acceptance criteria, builds on the current branch following the project's CLAUDE.md and existing patterns, writes its journal into the task file as it goes, then self-verifies against .dev-skills/project-setup/verification.md and gets the static gate plus this task's scoped test selection green before handing off. It never runs the whole suite, does not run the verifier and does not commit."
 argument-hint: "[task-id]"
 ---
 
@@ -37,25 +37,17 @@ not commit — those are the orchestrator's job.
 Task schema: **`../_shared/build-pipeline/backlog-format.md`**. Self-check uses the run/drive/prove
 commands in `.dev-skills/project-setup/verification.md` (method: **`../_shared/build-pipeline/verification-method.md`**).
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write notes and reports in that
+Respond and reason in the user's language — write notes and reports in that
 language and think in it too. Never translate code, identifiers, commands, or file paths.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Operating principles (non-negotiable)
 
@@ -98,14 +90,29 @@ each failure, then fix to green; that is the whole priority, and a full-suite ru
 the failing test doesn't). Read the spec sections it `traces_to` and the project `CLAUDE.md`.
 Confirm the task is `ready` (its `blocked_by` are all `done`); if a blocker isn't done, stop and report
 — don't build on an unmet dependency. Set the task `status: in_progress` with a `history` entry, and
-**open the `## Log` note now**, before building — then append each decision as you take it. A note
-composed at the end is lost whole when the run is cut short, and the next reader is left with a diff
-and no reasons.
+**open the `## Log` note now**, before building — then **write it as you go, not at the end**.
+
+This is a survival mechanism, not bookkeeping. You are a subagent: if you are interrupted, hit a
+session limit, or die on an API error, **everything in your context is gone and only what you wrote to
+disk survives**. Measured in the field, six agents died after 18–61 minutes of work and their
+orchestrator had no account of any of it. So append a line whenever you finish something a resumer
+would need to know:
+
+- what you just changed and in which file,
+- a decision you took and why (especially one that constrains what comes next),
+- something you tried that did not work, so nobody pays for it twice,
+- what you are about to do next.
+
+Short lines, newest last, tagged `[implement-feature]`. `run-task` reads exactly this to decide
+whether a killed build can be resumed or must be rebuilt — a thin journal costs you the whole hour
+again.
 
 ### Stage 1: Build
 Implement the feature on the current branch. Follow the project's conventions and existing patterns;
 keep the change scoped to this task's acceptance criteria. **For UI work, build against the root
-`DESIGN.md`** — its tokens (colors, type, spacing, components) and its Do's/Don'ts are the design
+`DESIGN.md`** — its tokens are **frozen** (**`../_shared/build-pipeline/design-freeze.md`**): build
+from them, never change one, and stop and ask if a screen seems to need a new token. Its tokens
+(colors, type, spacing, components) and its Do's/Don'ts are the design
 system; apply them rather than inventing styles. If the task's `## Description` carries a **design-note**
 from `generate-mockups` (a chosen mockup variant — layout, hierarchy, component usage, with a screenshot
 path), follow that arrangement; the mockup is the reference, you build the real, wired version. On a

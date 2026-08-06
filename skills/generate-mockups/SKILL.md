@@ -1,6 +1,6 @@
 ---
 name: generate-mockups
-description: "Generate several stub UI variants for a screen and render them so a human can compare and choose — no business logic, just static pages styled against the committed design system (the root DESIGN.md). Use on demand when working a feature and you want to see UI options before implementing: given a task id or a free screen description, it produces N variants against DESIGN.md and records the chosen one as a design-note on the task so implement-feature follows it. It explores arrangement within the settled design system — it never proposes alternative design systems (that is decided in the spec by define-design-decisions and made concrete by setup-dev-environment). Rendering degrades gracefully: render in the project's own stack via .dev-skills/project-setup/verification.md when runnable, else standalone HTML against the DESIGN.md tokens + any available screenshot tool, else generate files only with view instructions. Mockups are throwaway scratch under .dev-skills/build-plan/mockups/ (gitignored); it writes ONLY mockups/task-notes/temp and never the feature's implementation. Not auto-run by build-tasks — on demand only."
+description: "Generate several stub UI variants for a screen and render them so a human can compare and choose — static pages styled against the committed root DESIGN.md. Use on demand when working a feature and you want to see options before implementing: given a task id or a screen description it produces N variants and records the chosen one as a design-note on the task, so implement-feature follows it. It explores arrangement within the settled design system and never proposes an alternative one. Mockups are throwaway scratch under .dev-skills/build-plan/mockups/ (gitignored); it writes only mockups, task notes and temp files, never the implementation. Not auto-run by build-tasks."
 argument-hint: "[<task-id> | <screen description>]"
 hooks:
   PreToolUse:
@@ -36,7 +36,8 @@ record a **design-note** on the task so `implement-feature` follows it.
 
 - **Stubs, not features.** Hard-coded sample content, fake/empty handlers, no data layer, no auth, no
   network. The mockup proves a *look and arrangement*, nothing more.
-- **Real tokens, not invented pixels.** Style strictly against the design system (`DESIGN.md`) — its
+- **Real tokens, not invented pixels, and never an adjusted one** — they are frozen
+  (**`../_shared/build-pipeline/design-freeze.md`**). Style strictly against the design system (`DESIGN.md`) — its
   colors, type, spacing, components, and Do's/Don'ts. A mockup that ignores the system isn't a useful
   comparison.
 - **Never touch product code.** You write only the scratch mockups tree, the task file (the design-note,
@@ -58,28 +59,21 @@ Rendering, token resolution, scratch location, and the chosen-variant recording 
 **`../_shared/build-pipeline/mockup-method.md`** — read it; don't restate it. Variant-design guidance:
 **`references/mockup-variant-guide.md`**.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write notes and the comparison in
+Respond and reason in the user's language — write notes and the comparison in
 that language and think in it too. Instruct every subagent you spawn to do the same. Never translate
 code, identifiers, file paths, commands, or `DESIGN.md` token keys.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Every agent you spawn inherits this — pass it down together with
-the language rule, and an agent that thinks the work needs a branch reports it to you instead of
-creating one. Full rule: **`../_shared/git-workflow.md`**.
+Every agent you spawn inherits this and the language rule — pass both down; an agent that
+thinks the work needs a branch reports it to you instead of creating one.
 
 ## Operating principles (non-negotiable)
 

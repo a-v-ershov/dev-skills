@@ -45,3 +45,34 @@ per run and skip the lock.
 - **Standalone** runs of `implement-feature` / `verify-feature` / `setup-dev-environment` acquire and
   release the env themselves.
 - The concrete commands and which mechanism applies are recorded in `.dev-skills/project-setup/verification.md`.
+
+## Permissions the loop needs
+
+The verification loop reads its own output constantly — the test runner's report directory, the
+coverage output, the evidence files a verifier writes, the local binaries it invokes. When each of
+those reads raises a permission prompt, an autonomous run stops being autonomous: measured in one
+project, a single build phase collected 27 classifier denials and 18 blocked directory reads, almost
+all of them the agent trying to read `test-results/` after a failing run and then reasoning without the
+error it had just produced.
+
+`setup-dev-environment` writes a committed **allow** block into `.claude/settings.json` covering the
+harness's own artefacts, alongside the `permissions.deny` list that keeps generated trees out of
+navigation. What belongs in it is derived from the stack, not from a fixed list — the rule is:
+
+> Anything **this project's own tooling writes** and the agent is expected to read back is allowed.
+> Anything that reaches **outside the repository** is not.
+
+Typical members: the test-report directory (`test-results/`, `playwright-report/`, `.pytest_cache/`),
+the coverage output, the build log directory, the local binary directory the runner uses
+(`node_modules/.bin/`, `.venv/bin/`), and whatever path `verification.md` names for evidence. Never in
+it: the network, the package manager's install commands, anything under `$HOME` outside the repo,
+production credentials.
+
+Two consequences for the rest of the pipeline:
+
+- **A skill that reads evidence says so at intake.** If the allow block is missing, name it once, at
+  the start of the run, and offer to add it — do not discover it as twenty prompts spread across an
+  hour of work.
+- **A blocked read is reported, never worked around.** Do not infer what a report probably said. Say
+  the read was blocked, and put the settings fix in the closing «What you should do» block
+  (`report-format.md`).

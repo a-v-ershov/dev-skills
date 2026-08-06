@@ -1,13 +1,13 @@
 ---
 name: verify-feature
-description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .dev-skills/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. It writes them at the cheapest level that proves the criterion (unit by default, integration for a real seam, at most one end-to-end test per task) and runs only the selection that belongs to this task — never the whole accumulated suite, which is the release pipeline's run. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log and sets a pass/fail verdict. It runs ONCE per task: a fail sends its findings to the implementer for a single fix round, which is then checked by running the tests it just committed — it is not re-spawned to re-check, and anything the fix round leaves open escalates to needs_human. Runs after implement-feature; can also be invoked standalone on a task id."
+description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so it carries no bias from the implementer. It reads the project's run/drive/prove commands from verification.md and the task's criteria, authors and runs adversarial automated tests for them (committed — the regression net), drives the real running stack and proves observable outcomes, never trusting 'it ran'. Tests go at the cheapest level that proves the criterion, at most one e2e per task. Writes only tests, never the implementation, and writes its findings into the task log as it goes."
 argument-hint: "[task-id]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/e2e/*' '*playwright.config.*' '*vitest.config.*' '*jest.config.*' '*pytest.ini' '*conftest.py' '*/tsconfig*.json' '*eslint.config.*' '*.eslintrc*' '*/.dev-skills/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Verify Feature Skill
@@ -45,25 +45,17 @@ additional to any the implementer wrote — aimed at breaking the feature.
 Method (the loop, recording, escalation): **`../_shared/build-pipeline/verification-method.md`**. Task
 schema: **`../_shared/build-pipeline/backlog-format.md`**.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write findings and reports in that
+Respond and reason in the user's language — write findings and reports in that
 language and think in it too. Never translate code, identifiers, commands, or file paths.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Operating principles (non-negotiable)
 

@@ -1,6 +1,6 @@
 ---
 name: manual-test
-description: "Prepare the briefing a human needs in order to sit down and check the product by hand. Use as the last step of the release phase (run by release-product, after the audits) or standalone before a demo or an acceptance pass. Read-only: it proves nothing itself and changes nothing — it removes the barrier that makes hands-on testing get skipped, by answering 'what do I even poke, and how do I log in?' in advance. It works out how to bring the product up and observe it, which seeded users and data exist and what state they are in RIGHT NOW (compared against the seed, not just quoted from it), what has been built and which user journeys that covers with the exact steps and real texts to click through, how to trigger the rare states — errors, limits, payment declines — through the project's own mock switches rather than live calls, and above all what genuinely needs a person: tasks left at needs_human, work that shipped ahead of the spec, risky surfaces (money, sign-in and access, deletion, layout and copy), and every task accepted with review: auto, which is precisely the work no human has ever looked at. Two modes: with no argument it briefs the whole product; given a feature or scenario in words it compresses the briefing down to that one thing. Nothing is taken from memory or from a typical project — every line points at a file, a command, or the running product's own answer, and anything it could not establish is written as 'not found' rather than filled in with something plausible. Writes .dev-skills/release/manual-test-brief.md."
+description: "Prepare the briefing a human needs in order to check the product by hand. Use as the last step of the release phase (run by release-product, after the audits) or standalone before a demo or an acceptance pass. Read-only: it proves nothing and changes nothing — it answers 'what do I poke, and how do I log in?' in advance. It works out how to bring the product up, which seeded users and data exist right now, what has been built and which journeys that covers with exact steps and real texts, how to trigger rare states through the project's own mock switches, and above all what genuinely needs a person — needs_human tasks, risky surfaces, and every task accepted as review: auto."
 argument-hint: "[<feature / scenario in words> | empty = whole product]"
 hooks:
   PreToolUse:
@@ -37,25 +37,17 @@ a minute to start.
 - **Writes:** `.dev-skills/release/manual-test-brief.md`, and nothing else (enforced by a write-scope
   hook). Never code, tasks, spec, or data.
 
-## Language
+## Language & git
 
 Respond and write the briefing in whatever language the user addressed you in, and think in it too.
 Never translate code, commands, identifiers, paths, or the product's own on-screen texts.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Focused mode (called with words)
 
@@ -166,3 +158,4 @@ the human finds as a task through `/run-task`.
    marking is the whole reason this skill exists.
 8. **You prepare, you do not accept.** The briefing is a map, not a verdict, and not a substitute for
    the human's judgement.
+9. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

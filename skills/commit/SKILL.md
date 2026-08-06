@@ -10,7 +10,7 @@ Analyze uncommitted changes, group them intelligently by logic (not just paths),
 
 ## Language
 
-Respond and reason in whatever language the user addressed you in — write user-facing text (the
+Respond and reason in the user's language — write user-facing text (the
 commit plan, the execution summary, questions, error messages) in that language and think in it
 too.
 
@@ -18,12 +18,8 @@ too.
 language. The user's language affects only the report shown to the user, never the text written
 into git. Likewise, never translate code, identifiers, file paths, or commands.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
 ## Git workflow / safety
 

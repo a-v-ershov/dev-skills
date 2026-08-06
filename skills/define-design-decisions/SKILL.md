@@ -1,6 +1,6 @@
 ---
 name: define-design-decisions
-description: "Decide the design direction that shapes scope and architecture — design system (or none) including WHICH UI kit to adopt (chosen on component coverage against the key screens, platform fit, and ubiquity), the icon set, and the theming approach, plus the inventory of key screens, responsive/viewport behavior, target platforms and their conventions, media-heaviness, offline/connectivity expectations, and the accessibility target — WITHOUT producing pixel layouts, colors, components, or mockups (those are implementation). Use after create-user-flows (reads .dev-skills/project-spec/user-flows.research.md and .dev-skills/project-spec/product-requirements.research.md) and before design-architecture, because these decisions feed the architecture's quality-attribute scenarios. Writes a detailed, source-cited .dev-skills/project-spec/design-decisions.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. The bridge from the product layer to the technical layer — design decisions only, never visual production."
+description: "Decide the design direction that shapes scope and architecture: design system or none, WHICH UI kit to adopt (on component coverage against the key screens, platform fit and ubiquity), the icon set and theming approach, the inventory of key screens, responsive behaviour, target platforms, media-heaviness, offline expectations and the accessibility target — without pixel layouts, colours, components or mockups, which are implementation. Use after create-user-flows and before design-architecture, because these decisions feed its quality-attribute scenarios. Writes a source-cited design-decisions.research.md plus a short human summary. The bridge from the product layer to the technical one."
 ---
 
 # Define Design Decisions Skill
@@ -41,32 +41,22 @@ Scope discipline (read carefully):
 
 ## Outputs in `.dev-skills/project-spec/` (two kept files)
 
-- **`design-decisions.research.md`** — the detailed, source-cited design decisions (for the AI/next phases).
+- **`design-decisions.research.md`** — the detailed, source-cited design decisions.
 - **`design-decisions.summary.md`** — the short human summary (essence + forks to answer).
 
-Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
-to the research doc. (No ADRs here either — those belong to the technical layer.)
+Nothing else — the reviewer returns findings; the fix stage applies them.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — ask your questions and write
+Respond and reason in the user's language — ask your questions and write
 the docs in that language, and think in it too. Instruct every subagent you spawn to do the same.
 This never translates code or identifiers (design-system, platform, and tool names stay as-is).
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -122,47 +112,22 @@ flows imply. If either of the two required files is missing, tell the user and o
 here. Read the mode.
 
 ### Stage 1: Elicitation
-**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
-a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
-When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. Work
-the design decisions across five dimensions:
-1. **Design system** — does the product need one? If yes, the *intent* (type scale, color approach,
-   spacing system, motion stance) and the **component strategy**: adopt an existing library vs
-   bespoke vs hybrid, and why. Decisions and direction, NOT concrete tokens or values. If the
-   brief records a **design-taste preference**, treat it as a **soft prior** here — bias toward it,
-   but let the product's needs and the category conventions decide; log it as a fork with
-   `Source = preference`.
-   **When the strategy is "adopt", name the kit here** — this is the decision, not a build-time
-   detail, because it fixes a dependency and constrains what the screens can be. Pick it on three
-   criteria, in this order:
-   - **Coverage** — walk the key-screen inventory (dimension 2) for the components the product
-     actually needs (data table with sorting, rich-text editor, date picker, command palette, toast,
-     skeleton…). A kit missing a component the product leans on means hand-building it, which
-     defeats the consistency the kit was for. Say so out loud rather than discovering it in build.
-   - **Platform fit** — the kit must target the platforms from dimension 3.
-   - **Ubiquity** — the more widely used the kit, the more reliably an AI agent writes against it.
-     Prefer boring and common over novel.
-   Also settle two decisions that travel with it: the **icon set** — one for the whole product,
-   mixing two shows immediately — and the **theming approach** (start from a ready-made theme of
-   that kit vs author tokens from the brand intent). Present the kit and the icon set as **closed
-   forks with a recommendation first** (`AskUserQuestion`), each option one line of consequence.
-   A kit already present in the repo's dependencies is the default — replacing it is a
-   rewrite of every screen and needs the user's explicit decision (log it as drift).
-   This dimension is the input `setup-dev-environment` builds `DESIGN.md` from; it does not re-open it.
-2. **Key-screen inventory** — the set of screens/surfaces the product has, drawn from the flows.
-   Per screen: name, the flow(s) it serves, its job. Structure and purpose, not layout.
-3. **Viewport & platform behavior** — target platforms (web/responsive, iOS, Android, desktop) and
-   the per-viewport intent for the key screens (what's primary on small vs large); platform
-   conventions to honor.
-4. **Media & connectivity** — media-heaviness (images/video/audio, at what scale), offline /
-   low-connectivity expectations, real-time / live-update needs. Each is flagged as an
-   architecture input.
-5. **Accessibility** — the WCAG target (A / AA / AAA) and any specific requirements.
+Work the dimensions in **`references/elicitation-topics.md`** — the design direction and system
+(including **which UI kit**, chosen on component coverage against the key screens), the icon set and
+theming approach, the key-screen inventory, responsive and viewport behaviour, target platforms and
+their conventions, media-heaviness, offline expectations, and the accessibility target. Read it now and
+work from it. Interview technique: **`../_shared/spec-pipeline/elicitation-method.md`**.
 
-- **interactive:** ask, one dimension at a time; do not slide into pixel design.
-- **autopilot:** choose each from the product spec + flows + (stage 2) conventions + best judgment;
-  record each material choice in the Forks / Decisions log with rationale, confidence, source. Mark
-  uncertain ones `Needs human confirm? = yes`.
+Whatever is settled here becomes **frozen** once `setup-dev-environment` writes `DESIGN.md`: no later
+skill re-opens a colour, a ratio or a scale on its own initiative
+(**`../_shared/build-pipeline/design-freeze.md`**). Say so when you record the decisions, and record any
+**deliberately accepted trade-off** (a contrast ratio chosen by hand below its target, say) in the same
+breath — an accepted trade-off written down once stops every later audit from rediscovering it as a bug.
+
+- **interactive:** ask one dimension at a time; do not let the conversation jump to pixels.
+- **autopilot:** decide from the flows + product requirements + best judgment, and log each material
+  choice in the Forks / Decisions log with rationale and confidence.
+
 
 ### Stage 2: Research (budgeted)
 Verify the design conventions you adopt. Topics: **the candidate UI kit's current component
@@ -186,17 +151,11 @@ section explicitly — each weighty decision paired with the quality-attribute s
 Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review
-Delegate to the `spec-reviewer` agent (offline — it reads the draft and the prior docs, not the web)
-to find inconsistencies + gaps. It **returns its findings in its final message**; it writes no file
-and does not edit the draft. Method + return format:
-**`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this phase the reviewer
-especially probes: a design decision that silently forces a costly architecture but isn't flagged as
-an architecture input; a key screen with no flow (or a flow with no screen); a missing accessibility
-target; media/offline/realtime implications left unsurfaced; a design system absent where the
-category demands one (or bespoke where adopting a library would do); **an adopted UI kit that
-doesn't cover a component the key screens lean on, a kit that doesn't target one of the stated
-platforms, more than one icon set, or a "we'll adopt a library" with no kit actually named**; and
-pixel/mockup/copy detail that leaked in (out of scope — that's implementation).
+Delegate to the `spec-reviewer` agent (offline). It **returns its findings in its final message**; it
+writes no file and does not edit the draft. Method + return format:
+**`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. What this phase's reviewer
+probes: **`references/elicitation-topics.md`** → "What the reviewer probes".
+
 
 ### Stage 5: Fix
 Apply the findings to `design-decisions.research.md` **in place** (targeted edits, not a rewrite)
@@ -240,21 +199,13 @@ scenarios. Log differences in `## Divergences (code vs intended)`. Method:
 
 ## Amend mode (an upstream doc changed)
 
-Re-run on an existing document — because an upstream phase was edited, or the user changed their
-mind — and you **amend** rather than regenerate: reconcile
-`design-decisions.research.md` to the change instead of producing it from scratch. Per
-**`../_shared/build-pipeline/propagation-method.md`**:
-
-1. Read the changed upstream document and your current `design-decisions.research.md`.
-2. **Assess impact** — if this phase is not affected, self-skip: report "no change needed", touch nothing.
-3. If affected, **amend surgically** — update only the parts the change touches in
-   `design-decisions.research.md` (and `design-decisions.summary.md` if the essence changed),
-   **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
-4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
-5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
-6. **Hand off, don't chase.** Say in one line what's next in the chain (`/design-architecture`) and offer to run it. If
-   `.dev-skills/build-plan/tasks/` exists, add: the plan may now be stale — `/plan-development` will
-   reconcile it with task deltas. The user decides how far to walk; you never edit the backlog here.
+Re-run on an existing document and you **amend** rather than regenerate — reconcile
+`design-decisions.research.md` to the change. Follow **`../_shared/build-pipeline/propagation-method.md`**
+in full: assess impact and self-skip if unaffected; otherwise amend surgically (only what the change
+touches, plus `design-decisions.summary.md` if the essence changed), preserve the `## Forks / Decisions log` and
+add an entry for what changed, ask only on a decision-changing fork, and hand off in one line
+(`/design-architecture`; if `.dev-skills/build-plan/tasks/` exists, say the plan may now be stale and
+`/plan-development` reconciles it — you never edit the backlog here).
 
 ## Rules
 
@@ -269,3 +220,4 @@ mind — and you **amend** rather than regenerate: reconcile
 7. Never make technical/architecture decisions — surface gaps back to the product layer instead.
 8. Every *verified* adopted standard is cited and every unverified one is labelled as such; every
    fork is logged; the review always runs (both modes) and its findings are always applied.
+9. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

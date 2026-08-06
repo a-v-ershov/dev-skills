@@ -19,6 +19,11 @@ tests, the verifier's tests once they exist, and the tests of the modules your d
 separate verifier and you do **not** commit. `run-task` orchestrates `verify-feature` and the
 checkpoint commit.
 
+**Write your journal into the task's `## Log` as you go, never at the end.** You are a subagent —
+when you are interrupted or die, your context is gone and only what reached disk survives. Each line:
+what changed where, a decision and why, a dead end not worth repeating, what is next. `run-task` reads
+it to resume you instead of rebuilding from zero.
+
 **Write fast tests at the cheapest level.** Yours are unit tests over the logic you are writing;
 integration only for a seam you cannot exercise otherwise; end-to-end is the verifier's call, not
 yours.

@@ -1,6 +1,6 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.dev-skills/project-spec/product-requirements.research.md), the user flows, the architecture, and the dev-architecture (incl. its developer/test scripts and the custom project skills that wrap them, which become build-out/authoring tasks), and emit a kanban backlog under .dev-skills/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Tasks are sized coarse on purpose — the backlog holds at most 15 of them, so related features are grouped into one independently verifiable slice rather than split into micro-tasks. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. When the repo already has working code it plans only the gap: it reads the spec's Divergences sections plus the code itself and emits rework tasks for divergent code, new tasks for what isn't built, verify tasks to prove pre-existing features against their criteria, and a quality-gate setup task if none is enforced — features that already work and match are recorded done. Re-run it after the spec changes and it works in amend mode instead: it reconciles the backlog with the new spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate, and clears spec_sync flags the spec now covers. Run before build-tasks."
+description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build phase: it reads the committed feature set, the user flows, the architecture and the dev-architecture, and emits a kanban backlog under .dev-skills/build-plan/ — one markdown file per task plus a derived board.md and a short plan.summary.md. Tasks are coarse on purpose: the backlog holds at most 15 open ones. When the repo already has working code it plans only the gap. Re-run after the spec changes and it amends instead — task deltas, never a regenerate; re-run with 'consolidate' and it merges the open backlog back under the ceiling. Run before build-tasks."
 ---
 
 # Plan Development Skill
@@ -41,26 +41,18 @@ and no conflict tracking: blockers, and the build loop's one-at-a-time disciplin
 
 `.dev-skills/build-plan/` is committed project documentation.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write the plan, questions, and
+Respond and reason in the user's language — write the plan, questions, and
 summary in that language and think in it too. Never translate code, identifiers, file paths, or
 acceptance-criteria keywords inside the spec.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -152,6 +144,19 @@ task, `remove` → a confirmed removal, already-working-and-matching → a task 
 **`../_shared/build-pipeline/planning-method.md`** → "When the repo already has code".
 
 
+## Consolidate mode (`/plan-development consolidate`)
+
+Run with the argument `consolidate` — or whenever the human asks for fewer, bigger tasks — and you
+merge the **open** backlog back under the ceiling instead of planning anything new. Full operation:
+**`../_shared/build-pipeline/planning-method.md`** → "Consolidating an overgrown backlog". In short:
+only `todo` tasks are eligible; group by coherence; every acceptance criterion moves across verbatim;
+blockers are recomputed; the board records what moved into what; the merge plan is confirmed before
+anything is written, in both modes. No code is touched and no spec is read — this is bookkeeping on
+the backlog alone.
+
+**Offer it without being asked** when a run leaves more than 15 open tasks. `build-tasks` says the
+same thing from its side; between them the ceiling stops being a number that only held on day one.
+
 ## Amend mode (change propagation)
 
 Run against an existing backlog after a spec change and you are in amend mode: diff the new
@@ -170,7 +175,8 @@ and confirm rather than filing past it.
 ## Rules
 
 1. Never build code — output is the backlog only.
-2. Tasks are coarse: **at most 15 open tasks in the backlog**, in every mode (create, amend, delta),
+2. Tasks are coarse: **at most 15 open tasks in the backlog**, in every mode (create, amend, delta,
+   consolidate),
    and the ceiling is shared with every other skill that files tasks (the audits, `refactor`,
    `write-tests`, adhoc). One task per coherent piece of work, never one per finding.
    Exceeding it needs the user's explicit yes.
@@ -178,3 +184,4 @@ and confirm rather than filing past it.
 4. Dependencies are real and shallow; no `conflicts_with` (there is no parallel execution).
 5. `board.md` is always derived from the task files — never hand-authored.
 6. Amend, never regenerate; destructive deltas always confirm.
+7. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

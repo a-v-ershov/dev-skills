@@ -1,6 +1,6 @@
 ---
 name: audit-product
-description: "Audit the built product end-to-end against the spec's user flows, and — since it is already driving the real UI — against the spec's accessibility decisions in the same pass. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent QA lead: it reads the user flows + their acceptance criteria from .dev-skills/project-spec/user-flows.research.md and drives the WHOLE running product through each journey, proving the cross-feature integration that per-task verify-feature could not see (state carried across steps, the seams between features, the flow's success outcome and its significant/error states); then it re-walks the core journeys for accessibility against the target conformance level in design-decisions.research.md — an automated axe pass plus what automation misses: keyboard-only operability, focus order and visible focus, screen-reader semantics, contrast, reduced motion, and form errors. Read-only: it drives, observes, and ranks (blocker = a broken core journey or a WCAG-A failure on one, per the rubric) but NEVER edits product code and NEVER installs anything — it files blockers/majors as rework tasks into the backlog and writes .dev-skills/release/qa-report.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs once after the fix round to confirm the journey now completes."
+description: "Drive the whole running product through the spec's user flows end to end and, since it is already in the real UI, check the accessibility target on the same journeys. Use in the release phase (run by release-product) or standalone once features are built. It proves the cross-feature integration a per-task verifier could not see — state carried across steps, the seams between features, success and error states — then re-walks the core journeys with an automated axe pass plus what automation misses (keyboard operability, focus order, screen-reader semantics, contrast, reduced motion, form errors)."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
@@ -49,25 +49,17 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
   the backlog for 🔴/🟡 (via `plan-development` amend); evidence (screenshots, captured responses, DB
   rows, axe output) under `.dev-skills/release/artifacts/`. Never the product's code.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write findings and the report in that
+Respond and reason in the user's language — write findings and the report in that
 language and think in it too. Never translate code, identifiers, commands, or file paths.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## What you prove (each flow, end-to-end against the integrated system)
 
@@ -99,7 +91,11 @@ optional.
 - **Screen-reader semantics** — roles, names, labels; landmarks and heading structure; `alt` text; live
   regions for dynamic updates; form fields with programmatic labels.
 - **Colour & contrast** — text and meaningful UI meet the level's ratio; nothing is conveyed by colour
-  alone.
+  alone. **Measure it, report the number, and change nothing**: the palette is frozen
+  (**`../_shared/build-pipeline/design-freeze.md`**). A ratio that misses its target on a frozen token
+  is an **owner decision**, filed as such — never a rework task telling a developer to darken it, and
+  never an edit you make yourself. If `DESIGN.md` already records the miss as an accepted trade-off,
+  say so in one line and do not re-raise it.
 - **Motion & preferences** — `prefers-reduced-motion` honoured, nothing flashing past the threshold,
   OS text scaling and zoom respected to the committed viewport.
 - **Forms & errors** — errors in text (not colour alone), tied to their field, and announced.
@@ -171,3 +167,4 @@ is cleared only when you **re-drive it end-to-end and it now completes** — nev
    flow's stated states and the committed conformance level, not taste.
 6. No finding without a driven, observed failure (with evidence); the re-run clears a 🔴 only by
    re-driving the journey to completion.
+7. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

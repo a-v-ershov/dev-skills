@@ -1,6 +1,6 @@
 ---
 name: audit-security
-description: "Audit the built product for security at the system level, against the spec's threat model. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent security engineer: it reads the STRIDE-lite threat model + trust boundaries from .dev-skills/project-spec/architecture.research.md and proves, with evidence, whether the running system upholds them — secrets in code and git history, authn/authz on every protected path, injection (SQL/command/template/path), the lethal trifecta (private data + untrusted input + external exfiltration in one agent/tool path), insecure data handling (PII, crypto, logging), dependency and supply-chain exposure, row-level security on every table of a client-reachable database, rate limiting on paid endpoints, and the production configuration a shipped product depends on (hard spending caps, prod/test data separation, debug off, every variable set in the target environment, public prefixes only on public values). Read-only: it probes, reproduces, and ranks (blocker/major/minor per the rubric) but NEVER edits product code and NEVER configures a provider or an environment — code holes become rework tasks in the backlog, while a production gap is reported as owned by setup-production-environment rather than filed against a developer. Never prints a secret's value; a committed key is reported for rotation, not deletion. Writes .dev-skills/release/security-audit.md; runs the shared audit machine and re-runs once after the fix round to confirm the hole is closed."
+description: "Prove with evidence whether the running system upholds the spec's STRIDE-lite threat model and trust boundaries: secrets in code and git history, authn/authz on every protected path, injection, the lethal trifecta, insecure data handling, dependency exposure, row-level security, rate limits on paid endpoints,. Use in the release phase (run by release-product) or standalone. Read-only: it probes, reproduces and ranks, but never edits code and never configures a provider — code holes become rework tasks, a production gap is reported as setup-production-environment's. Never prints a secret's value. Writes .dev-skills/release/security-audit.md."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
@@ -47,25 +47,17 @@ tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what block
   tasks in the backlog for 🔴/🟡 (via `plan-development` amend); evidence under `.dev-skills/release/artifacts/`.
   Never the product's code.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write findings and the report in that
+Respond and reason in the user's language — write findings and the report in that
 language and think in it too. Never translate code, identifiers, commands, file paths, or CVE/CWE ids.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## What you prove (the checklist — against the threat model first, this baseline always)
 
@@ -166,3 +158,4 @@ only cleared when you **re-reproduce and it no longer works**.
 8. No threat model in the spec → audit against the OWASP/trifecta baseline and record the gap; never
    invent a contract and pass against it silently.
 9. The re-run clears a 🔴 only by re-reproducing it and finding it closed — never by assumption.
+10. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

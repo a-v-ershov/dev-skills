@@ -23,6 +23,22 @@ This governs **new** names too: identifiers you author — variables, functions,
 parameters, test-function names — are written in **Latin script**, whatever language the conversation
 is in. The user's language belongs in comments, docstrings and human-visible strings, never in a name.
 
+**Anything a tool turns into a path is a name, not prose.** That includes the title string of a test
+(`test('...')`, `it('...')`, `describe('...')`), snapshot names, fixture and artefact filenames, and
+task-file slugs — all **Latin script, whatever language the conversation is in**. This is not
+pedantry: Playwright and most runners derive an output directory from the test title, so a Russian
+title becomes a Cyrillic path under `test-results/`, which then has to be quoted, matched and read
+back by shell commands — and that combination has already produced both `ENAMETOOLONG` failures and a
+run whose own evidence the agent could not open. A test title also has to stay stable across the
+project's lifetime; a translated one silently changes identity the moment someone answers in another
+language.
+
+Write the criterion the test proves in a **comment or docstring above it** in the user's language if
+that helps a person read it; keep the title itself a stable Latin identifier
+(`test('criterion 3: an empty project shows no count')`). Do not mix the two conventions inside one
+suite — half-Russian, half-English test titles in the same directory is the state this rule exists to
+prevent.
+
 ## Kept in Latin script (Russian output)
 
 `fork` · `commit` · `backlog` · `mockup` · `deploy` · `checklist` · `baseline` · `harness` ·

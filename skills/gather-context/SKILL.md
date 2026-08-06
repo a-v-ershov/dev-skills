@@ -1,6 +1,6 @@
 ---
 name: gather-context
-description: "Interview the human to extract maximum context before (and during) spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles. As the FIRST step of the create-project-spec pipeline it runs a full intake interview after the user's brief and writes .dev-skills/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent. On demand it is a reusable grill: any phase can invoke it scoped to a fork that's blocked on context only the human holds, and the user can invoke it directly at any time to be interviewed on any topic. Captures the user's intent, audience, scope, constraints, and developer preferences (stack, code style, design taste, tooling, architecture leanings — kept as soft priors for later phases) — it does NOT validate the idea or define features (those are validate-idea and define-product-requirements)."
+description: "Interview the human to extract maximum context before and during spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles: as the FIRST step of create-project-spec it runs a full intake interview and writes .dev-skills/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent; on demand it is a reusable grill any phase can invoke, scoped to a fork blocked on context only the human holds. Captures intent, audience, scope, constraints and developer preferences as soft priors. It does NOT validate the idea or define features."
 argument-hint: "[topic or fork to grill on]"
 ---
 
@@ -52,26 +52,18 @@ carrying a specific question/topic is B.
 Nothing else — the coverage critic writes no file; it returns its findings and the fix stage applies
 them. Role B produces no kept files either — it returns context to its caller.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — ask your questions and write the
+Respond and reason in the user's language — ask your questions and write the
 docs in that language, and think in it too. Instruct every subagent you spawn to do the same. This
 never translates code or identifiers.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -221,3 +213,4 @@ Differences between the code and the intent go in `## Divergences (code vs inten
 5. Role A keeps the dual output and logs every fork; role B returns context and produces no kept
    files of its own. The review (role A) always runs in both modes and its findings are applied in
    place — it never becomes a file.
+6. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

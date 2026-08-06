@@ -82,8 +82,8 @@ Config in `.dev-skills/build-plan/.build-config.md`.
 | # | Skill | Role |
 |---|-------|------|
 | 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check-fast` / `make test-scoped` / `make check` + hooks); for a UI project install the spec's UI kit + icon set and write the root `DESIGN.md` from the spec |
-| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) — coarse tasks, **at most 15 open, a ceiling every task-filing skill shares**. Re-run later = amend mode (task deltas) |
-| 3 | `run-task` | **One task, end to end** — the whole cycle for a single task; also takes a free-form request (`origin: adhoc`) |
+| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) — coarse tasks, **at most 15 open, a ceiling every task-filing skill shares**. Re-run later = amend mode (task deltas), or `consolidate` to merge an overgrown backlog back under the ceiling |
+| 3 | `run-task` | **One task, end to end** — the whole cycle for a single task; also takes a free-form request (`origin: adhoc`), and a **quick lane** for a small, provably bounded change (it drops the separate verifier and nothing else) |
 | — | `implement-feature` | The implementer agent's procedure: build one task into code, UI against `DESIGN.md` |
 | — | `verify-feature` | The verifier agent's procedure: a **separate, unbiased** agent authoring adversarial tests, proving observable outcomes |
 
@@ -98,6 +98,14 @@ release pipeline (`_shared/build-pipeline/quality-gate.md`). Anything the fix ro
 counter. `build-tasks` stops after **8 tasks** per run (context fills with diffs) and asks for a
 `/compact`, and refuses to start when the spec has moved ahead of the plan. Resumable — the backlog is
 the source of truth.
+
+Two things make a long run legible and safe to share. Each task carries a **`claim`** — holder, current
+stage and a heartbeat, written **before** any agent is spawned — so `board.md` can answer "what is it
+doing, and since when?" at any moment, and a **second session** on the same repository skips a task
+somebody else holds instead of redoing it. And the implementer **writes its journal into the task file
+as it goes**, so an agent killed after fifty minutes is resumed from that journal rather than rebuilt
+from zero.
+
 The design ladder is **decide → systematize → render**: `define-design-decisions` (spec) decides the
 direction (including the UI kit), `setup-dev-environment` (build) systematizes it into `DESIGN.md`, and `generate-mockups`
 (on demand) renders disposable stub UI variants against it to compare before building.
@@ -110,7 +118,8 @@ scale of the whole product — briefs the human on what only a person can judge,
 release. Config in `.dev-skills/release/.release-config.md`.
 
 The chain has two halves. Steps 1–2 **change the repository**, so they run **sequentially and alone**.
-Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**. **This is also where the
+Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**; steps 6–7 then write the
+handover document and brief the human. **This is also where the
 whole test suite is run** — `refactor` around its steps, `write-tests` at the end, `cut-release` before
 the cut — because the build loop only ever ran each task's own selection. Findings are **filed as
 coarse `rework` tasks (one per coherent fix, never one per finding), never fixed in place**; the audits also **never install or configure anything** —
@@ -123,7 +132,8 @@ tooling is `setup-dev-environment`'s job, production capabilities are `setup-pro
 | 3 | `audit-security` | the STRIDE-lite threat model + the production surfaces (caps, RLS, prod config) → `.dev-skills/release/security-audit.md` |
 | 4 | `audit-performance` | the quality-attribute scenarios → `.dev-skills/release/performance-audit.md` |
 | 5 | `audit-product` | the user flows end-to-end (cross-feature) **and** the WCAG target on the same journeys → `.dev-skills/release/qa-report.md` |
-| 6 | `manual-test` | Read-only briefing for the human's hands-on pass — starting with everything accepted as `review: auto` → `.dev-skills/release/manual-test-brief.md` |
+| 6 | `write-readme` | The handover document — the verified clone→run path, what deploying actually takes today, what the receiver must bring, how to reach a clean state → `README.md` |
+| 7 | `manual-test` | Read-only briefing for the human's hands-on pass — starting with everything accepted as `review: auto` → `.dev-skills/release/manual-test-brief.md` |
 | — | `cut-release` | clean tree + no open 🔴 → docs + version bump + changelog + tag/commit/PR (always confirmed; stops before production) |
 
 `release-product` runs the chain, ranks findings by severity, files 🔴/🟡 as `rework` tasks, drives
@@ -198,7 +208,10 @@ lives, so the audits can stay pure audits.
   `verifier`, `ui-prototyper`) for the pipelines' subagent roles.
 - Shared methodology lives in `_shared/` (no `SKILL.md`): `spec-pipeline/`, `build-pipeline/`, and
   `release-pipeline/` hold the elicitation, research, review, output-format, backlog, quality-gate,
-  propagation, audit, severity, and report methods; `agent-guide.md` defines the project-map block;
+  propagation, audit, severity, and report methods — plus `build-pipeline/design-freeze.md` (the
+  product's visual decisions are settled once and never re-opened by a skill) and
+  `build-pipeline/report-format.md` (every run ends with «What you should do», and timings that add
+  up); `agent-guide.md` defines the project-map block;
   `glossary.md` fixes how the workflow vocabulary is rendered in the user's language;
   `git-workflow.md` fixes the one-branch invariant. Read these for the *how*; don't restate them
   in skills.

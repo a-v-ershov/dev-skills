@@ -1,6 +1,6 @@
 ---
 name: validate-idea
-description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited .dev-skills/project-spec/idea-validation.research.md plus a short human summary; an independent reviewer pass returns its findings and the phase applies them in place. The first validation step of the create-project-spec pipeline; runs after gather-context (reads .dev-skills/project-spec/project-brief.research.md if present) and before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
+description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project or a major new feature, when the idea is still vague — to validate demand, audience, the problem and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a source-cited .dev-skills/project-spec/idea-validation.research.md plus a short human summary; an independent reviewer returns its findings and the phase applies them in place. The first validation step of create-project-spec: it runs after gather-context and before define-product-requirements."
 ---
 
 # Idea Validation Skill
@@ -22,26 +22,18 @@ redirect: "That's a later phase — first we validate whether this should exist.
 Nothing else — the reviewer writes no file; it returns its findings and the fix stage applies them
 to the research doc.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — ask your questions and write
+Respond and reason in the user's language — ask your questions and write
 the docs in that language, and think in it too. Instruct every subagent you spawn to do the
 same. This never translates code or identifiers.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
@@ -194,3 +186,4 @@ Method: **`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo 
 4. If the idea fails KILL, say so honestly — a well-argued "don't build this" is a success.
 5. Every *verified* world-claim is cited and every unverified one is labelled as such; every fork
    is logged; the review always runs (both modes) and its findings are always applied.
+6. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

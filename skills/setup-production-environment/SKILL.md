@@ -1,7 +1,7 @@
 ---
 name: setup-production-environment
 disable-model-invocation: true
-description: "Turn the spec's deployment and analytics decisions into a real production environment, and put the product live. The outward-facing sibling of setup-dev-environment: where that one makes the local inner loop real, this one makes the PRODUCTION side real — the deploy platform and release channel, the production database with its migrations and backups, the configuration and secrets set in the target environment (not just in a local .env), hard spending caps on every paid provider, the analytics events and error tracking the architecture committed to, and optionally CI + branch protection. Not tied to a stack: what production needs is derived from THIS project's technologies and from .dev-skills/project-spec/architecture.research.md, never from a fixed list. Every gap is sorted into three groups and only then acted on: what the skill does itself in the repo, what it can do through an already-authorized provider CLI (an external, often irreversible action — only on an explicit yes, one at a time), and what only the human can do in a provider's dashboard (with the exact steps and what to bring back). Ends by deploying and smoke-testing the LIVE version — readiness is proven by the deployed product actually coming up and its short path working, never by 'the config looks right' — and writes a runbook in plain language: what to press to ship, how to tell it worked, what to do next time, how to roll back. Run it by hand whenever production changes; it is never auto-run by the release phase. Audits only audit — anything production needs installed is installed here."
+description: "Turn the spec's deployment and analytics decisions into a real production environment, and put the product live. The outward-facing sibling of setup-dev-environment: the deploy platform and release channel, the production database with migrations and backups, configuration and secrets in the target environment, hard spending caps on every paid provider, the analytics and error tracking the architecture committed to, optionally CI. Every gap is sorted into three groups before anything happens — what the skill does in the repo, what an already-authorized provider CLI can do on an explicit yes, and what only the human can do in a dashboard."
 argument-hint: "[--no-deploy] [<area>: platform | data | config | money | observability | ci]"
 ---
 
@@ -54,26 +54,18 @@ say so and stop — that is a spec change (`/design-architecture`), not a call t
 The full per-category checklist (what "ready" means for each area, and how it is derived from the
 stack): **`references/production-checklist.md`**.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write the plan, the questions, the
+Respond and reason in the user's language — write the plan, the questions, the
 record, and the runbook in that language and think in it too. Never translate code, identifiers,
 commands, environment-variable names, or file paths. (Commit messages stay English — the `commit` skill.)
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes
 
@@ -200,3 +192,4 @@ something in ✅/🔧 blocks a step, say which step will hit the wall and why.
    whose data loss was called painful does not ship without a tested restore path.
 10. **Audits install nothing** — if a `release-product` audit reports a missing production capability
     (no error tracking, no spend cap, no rate limit), it comes back here as the fix.
+11. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

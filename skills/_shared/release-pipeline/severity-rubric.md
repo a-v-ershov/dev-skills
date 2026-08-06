@@ -36,6 +36,14 @@ as **one** coarse rework task carrying each as its own acceptance entry, and eac
 — the backlog's grain rule (`../build-pipeline/planning-method.md`) applies to release findings like to
 everything else. Ten one-finding tasks make three blockers hard to see.
 
+## One thing severity never buys: an edit to a frozen design decision
+
+A finding against a value under `## Frozen decisions` in `DESIGN.md` — a colour, a contrast ratio, a
+type scale, spacing, motion — is ranked like any other finding and then filed **as an owner decision**,
+never as a rework task and never fixed in place. Rank it 🔴 if the rubric says 🔴; the rank describes
+the impact, it does not grant permission. Full rule:
+**`../build-pipeline/design-freeze.md`**.
+
 ## Guard against over-engineering (anti-sycophancy, in reverse)
 
 A reviewer asked to find problems will always find some — that is the documented failure mode. The

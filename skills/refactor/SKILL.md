@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: "Improve the internal structure of the code without changing what the product does. Use in the release phase (run first by release-product, before the audits, or standalone whenever a part of the codebase has become hard to work with). It measures the rot a per-commit quality gate cannot see across the whole tree — duplicate-block clusters and the clone-vs-refactor trend, oversized files and functions, dead code and orphan exports, standing suppression debt (accumulated eslint-disable / type:ignore / noqa) — and turns the top of that list into behaviour-preserving transformations. Tests are the safety net: it refuses to refactor on a red suite, and an uncovered area is a reason to lay the net first (write-tests) rather than edit blind. Scope comes from the argument: a path refactors just that file or folder, a phrase refactors just that concern, empty means the whole project starting at the hot spots — never a big-bang rewrite. It plans, waits for approval, then applies one transformation at a time with the quality gate after each; a test that goes red after a step means the behaviour moved, so the refactor is reverted rather than the test adjusted. It adds no features and fixes no bugs: a bug noticed along the way is filed as a rework task, never quietly patched. Writes .dev-skills/release/refactor.md with what changed, the measured signals before and after, and the bugs it filed."
+description: "Improve the internal structure of the code without changing what the product does. Use in the release phase (run first by release-product, before the audits) or standalone whenever a part of the codebase has become hard to work with. It measures the rot a per-commit gate cannot see across the whole tree (duplication, oversized files, dead code, suppression debt) and turns the top of that list into behaviour-preserving transformations, one at a time with the full gate after each. Tests are the safety net: it refuses to work on a red suite, and a step that turns a test red is reverted rather than the test adjusted. It adds no features and fixes no bugs. Writes .dev-skills/release/refactor.md."
 argument-hint: "[<path> | <concern in words> | empty = whole project, hot spots first]"
 ---
 
@@ -36,25 +36,17 @@ promise you make, it is a fact the tests prove: green before, green after.
   the measured signals before and after, the proof of unchanged behaviour, and the bugs filed. Rework
   tasks in the backlog for the bugs found (via `plan-development` amend).
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write the plan, the questions, and
+Respond and reason in the user's language — write the plan, the questions, and
 the record in that language and think in it too. Never translate code, identifiers, commands, or paths.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Modes
 
@@ -70,7 +62,7 @@ choices; it may not skip the approval or the gate.
 - [ ] Stage 1: Safety net — is the area covered, and is the suite green RIGHT NOW? red → stop · uncovered → net first
 - [ ] Stage 2: Measure — duplication, size/complexity, dead code, suppression debt; numbers, not impressions
 - [ ] Stage 3: Plan → approval — ranked by payoff over risk, as the last message of the turn; wait
-- [ ] Stage 4: Apply — one transformation at a time, the gate after each; red = revert the refactor
+- [ ] Stage 4: Apply — one transformation at a time (long tails delegated to a subagent), the gate after each; red = revert the refactor
 - [ ] Stage 5: Prove + record — green before and after, the signals moved, bugs filed as rework tasks
 ```
 
@@ -80,7 +72,9 @@ the checklist for it: the common core (duplication → one function; a long func
 → split; pure logic tangled with side effects → extract the pure part; dead code → delete; vague names →
 name the intent; deep nesting → early returns; magic numbers → named constants; drift from the project's
 own style → conform) plus the smells of *this* stack (a component framework: oversized components,
-repeated markup, logic that belongs in a hook or a helper, hardcoded colours instead of design tokens ·
+repeated markup, logic that belongs in a hook or a helper, hardcoded colours **replaced by the token
+that already matches them** — never by a new or adjusted value, which is frozen
+(**`../_shared/build-pipeline/design-freeze.md`**) ·
 a backend: fat handlers, repeated queries, validation scattered across layers · a typed language: `any`
 and widened types · native mobile: business logic inside the view).
 
@@ -121,6 +115,23 @@ Show the plan **as the last message of the turn** (in some interfaces text writt
 not visible, and the human must read the plan before approving). They may take all of it or part.
 
 ### Stage 4: Apply in small steps
+
+**Delegate the mechanical half; keep the judgement.** A refactor is a long tail of near-identical
+edits, and doing them in your own context is what makes this the most expensive step in the release
+phase — measured in the field, one run spent 13 h 19 m and 355 tool calls in the main thread and
+forced eleven compactions, which cost far more than the refactor bought. So:
+
+- **You keep**: the plan, the ordering, the approval, the verdict on every gate run, the decision to
+  revert, and the record.
+- **You delegate**: one **cluster** of the approved plan per subagent — a cluster being the edits that
+  share a mechanism (all call sites of one extracted helper, all instances of one duplicated block).
+  Give it the exact transformation, the files, the constraint that behaviour must not change, and the
+  scoped gate command to run. It reports the diff summary and the gate result; **you** decide.
+- **One cluster at a time, never in parallel** — this is one working tree, and the whole safety
+  argument rests on knowing which step turned the gate red.
+- **A cluster too small to brief is a cluster to do yourself.** The hand-off has a cost; use it for the
+  long tails, not for a two-line rename.
+
 One transformation, or one small coherent bundle, at a time. **Run the gate after each**: the static
 checks plus the tests covering what the step touched (`make check-fast` + `make test-scoped` over the
 step's files and their dependents). Then run the **full gate** (`make check` — lint, types, the whole
@@ -163,3 +174,4 @@ ungrouped list. When `release-product` runs you, hand back the same summary plus
 8. **The scope is respected** — a path, a concern, or hot-spots-first; never wider than asked.
 9. **Install nothing.** A missing analyzer is recorded as unmeasured; tooling is `setup-dev-environment`'s job.
 10. **The plan always waits for approval**, in both modes.
+11. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

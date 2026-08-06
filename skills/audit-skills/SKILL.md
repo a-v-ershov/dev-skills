@@ -1,6 +1,6 @@
 ---
 name: audit-skills
-description: "Audit the skills, slash commands and subagents that ran in this Claude Code session — a standalone meta-utility invoked by hand, NOT part of the release chain and never run by release-product. Use it after a spec, build or release run to make the skills that drove it better next time. It reads the session transcript (scan_session.py) plus the live conversation and works out how each target actually behaved: steps it got wrong or skipped, gates it passed silently, work it repeated, questions it should not have asked, calls that were needlessly slow, invariants of this set it broke (one branch, the user's language, its own write scope, English commit messages) and artifacts it produced that do not match their own templates. Then it reports numbered, file-level edit proposals — pointing each one at the file that actually owns the rule (a SKILL.md, an agent, or a _shared/*.md method the whole pipeline reads) — and STOPS. It changes nothing on its own initiative: a proposal is applied only after the caller names the numbers, and even then only to skill/agent/command files, never to product code and never to the plugin version. Invoked manually as /audit-skills [<skill or agent name>] [--session <id>]."
+description: "Audit the skills, slash commands and subagents that ran in this Claude Code session and propose numbered edits to the files that own each rule. Invoked by hand; never part of the release chain. It reads the session transcript (scan_session.py) plus the live conversation and works out how each target actually behaved: steps got wrong or skipped, gates passed silently, work repeated, questions it should not have asked, needlessly slow calls, invariants of this set broken (one branch, the user's language, write scope, English commit messages), artifacts that do not match their templates. It applies nothing until the caller names numbers, and even then writes only skill, agent and command files."
 argument-hint: "[<skill or agent name>] [--session <id>]"
 hooks:
   PreToolUse:
@@ -49,25 +49,21 @@ version-carrying manifests are out of reach.
   `dev-skills:verify-feature`, `implementer`); substring match is fine, default is every skill and
   agent that ran. `--session <id>` — audit a previous session (ids: `scan_session.py --list`).
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — the report, the findings and the
+Respond and reason in the user's language — the report, the findings and the
 questions all go in that language. Never translate code, identifiers, file paths, commands, skill or
 agent names, or text you quote verbatim from a skill file.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate
-it (`findings` → замечания, `gate` → контрольная точка, `rework` → доработка), keep `fork`, `commit`,
-`backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check` in
-Latin script and uninflected, never build hybrid verbs («закоммитить», «отскаффолдить»), and leave
-template section headings and task fields (`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session. Applying proposals is not a reason to branch,
-and this skill never commits — committing is `/commit`'s job and the user's call. Full rule:
-**`../_shared/git-workflow.md`**.
+Applying proposals is not a reason to branch, and this skill never commits — that is `/commit`'s
+job and the user's call.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 

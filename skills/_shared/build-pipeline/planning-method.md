@@ -26,6 +26,28 @@ the blockers a task carries are the graph.
 Planning never re-opens product or technical decisions. A gap in the spec is surfaced back, not
 invented here.
 
+## Consolidating an overgrown backlog
+
+When the **open** count has drifted past the ceiling — or the human simply asks for fewer, bigger
+tasks — merge instead of re-planning. The operation is destructive to task files, so it confirms in
+both modes.
+
+1. **Only `todo` tasks are eligible.** Never touch `in_progress` (someone may hold a claim), `done`,
+   `cancelled`, or `needs_human` — a `needs_human` task carries a human decision and is never merged
+   away.
+2. **Group by coherence, not by count** — same surface, same subsystem, same cause. A group that only
+   has "they are both small" in common is a bag, not a task.
+3. **Nothing is lost.** Every merged task's `acceptance` entries move into the survivor **verbatim**,
+   its `traces_to` are concatenated, and its `## Description` is carried over under a sub-heading. A
+   consolidation that drops a criterion is a scope change wearing a tidy-up costume.
+4. **Blockers are recomputed**, not copied: the survivor's `blocked_by` is the union of the members',
+   minus any member of the same group.
+5. **Write down where everything went.** The board carries a "what moved into what" table, and each
+   survivor's `## Log` names the ids it absorbed. The old ids stay resolvable in prose even after the
+   files are removed.
+6. **Confirm the merge plan before writing** — the list of groups and what each absorbs — in both
+   modes.
+
 ## Task granularity — coarse, at most 15 tasks
 
 Tasks are **deliberately large**. The whole backlog holds **no more than 15 tasks**, and that ceiling
@@ -39,6 +61,11 @@ verified on their own, and hides the real build order in noise.
   independently verifiable slice** (a whole screen with its CRUD, an auth flow end to end, one
   integration including its config and error handling), and carry **all** the grouped features'
   acceptance criteria into that task's `acceptance` — grouping tasks never drops criteria.
+- **The ceiling has to be re-imposed, not just imposed once.** It is enforced at planning time, but the
+  backlog grows afterwards — rework tasks from audits, adhoc requests, findings from a release round.
+  Both field projects planned at 15 and finished at 68 and 69 open-and-closed tasks, with the owner
+  asking four separate times to merge them back down ("consolidate these into at most four"). So
+  **consolidation is an operation, not a favour**: see "Consolidating an overgrown backlog" below.
 - **Never split for tidiness.** A split is justified only when a feature's acceptance criteria are
   independently buildable *and* verifiable **and** the backlog still fits under 15. "Backend then
   frontend of the same thing", "the model, then the API, then the UI", "one task per field / per

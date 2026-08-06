@@ -32,6 +32,7 @@ components: { … }
 ## Shapes
 ## Components
 ## Do's and Don'ts
+## Frozen decisions   (what is settled, and why — never re-opened by a skill)
 ```
 
 ## Token schema (YAML front matter)
@@ -156,3 +157,35 @@ Validate before adopting: front matter parses as YAML; `name` present; the prose
 and in order; every `{path}` reference resolves to a real token; color roles cover at least
 background/surface/text/primary; text-on-surface contrast meets the project's WCAG target. Report any
 gap rather than silently "fixing" the author's intent.
+
+---
+
+## Writing `DESIGN.md` during setup (Stage 5b detail)
+
+The design decisions are already made — `define-design-decisions` chose the UI kit, the icon set, the
+theming approach and the type/colour/spacing/motion intent. This stage only makes them concrete and
+machine-readable. **No candidates, no mockups, no picking.**
+
+- **Source of the tokens: the theming approach from the spec.** "Start from the kit's ready-made
+  theme" → read that theme's *actual* token values from the installed kit (its theme file / CSS
+  variables / config in the repo — the kit is installed now, so read the real values rather than
+  recalling them) and record them. "Author from brand intent" → derive a coherent token set from the
+  design direction plus the product's audience and brand notes.
+- **Format:** the canonical section order above. Per-kit token mapping — which of the kit's variables
+  becomes which token — is in `adoption-recipes.md`.
+- **Also record** the icon set, the installed kit and its version, and how tokens are wired into the
+  stack (Tailwind `theme.extend`, CSS custom properties, a `components.json`, a Material theme file),
+  so `implement-feature` uses tokens rather than literals.
+- **Then prove it renders.** Apply the tokens to one real screen or the scaffold's start page, take a
+  screenshot, and put it in the setup log — a `DESIGN.md` nobody has rendered is paper. If the tokens
+  don't actually take effect, fix the wiring before moving on.
+- **Write the short record** `.dev-skills/project-setup/design-system.md`: which kit + icon set, where
+  the tokens came from, how they are wired, the screenshot path.
+- **Mark the frozen block.** The tokens and the visual decisions land under `## Frozen decisions` —
+  from here on nobody re-opens them on their own initiative. See
+  `../../_shared/build-pipeline/design-freeze.md`.
+
+Deviating from the spec's design decisions here is **out of scope**. If the kit turns out to be wrong
+(a needed component genuinely doesn't exist), stop and say so: that is a spec change
+(`/define-design-decisions`, then `/plan-development` to reconcile the plan), not a call to make
+during setup.

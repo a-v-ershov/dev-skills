@@ -1,6 +1,6 @@
 ---
 name: create-project-spec
-description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — gather-context → validate-idea → define-product-requirements → create-user-flows → define-design-decisions → design-architecture → design-dev-architecture — where each phase researches real-world facts within a fixed budget, runs an adversarial review whose findings it applies in place, and emits a detailed research doc + a short human summary. Opens with gather-context, which interviews the user to turn a short brief into a rich shared understanding the whole pipeline builds on. Works on an empty repo or one that already has code: when code is present each phase reads it, reports what it found, and confirms rather than re-asks, recording anything the user wants changed as a divergence. Asks two setup choices up front (interactive vs autopilot; final combined summary) and can finish with one human-readable spec summary. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
+description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project or a major new initiative and you want the full guided flow rather than running each step by hand. Orchestrates gather-context, validate-idea, define-product-requirements, create-user-flows, define-design-decisions, design-architecture and design-dev-architecture — each phase researching real-world facts within a fixed budget, running an adversarial review whose findings it applies in place, and emitting a research doc plus a short human summary. Works on an empty repo or one that already has code."
 argument-hint: "[--from <step>]"
 ---
 
@@ -35,25 +35,17 @@ differences the user wants become a `## Divergences (code vs intended)` section 
 There is no separate mode, no extra phase, and no setting for it. Method:
 **`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in. Each sub-skill follows the same
+Respond and reason in the user's language. Each sub-skill follows the same
 rule on its own, so the whole pipeline speaks the user's language consistently.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Two setup choices (ask once, up front)
 
@@ -157,3 +149,4 @@ When the last available step completes:
 3. **Resume, don't restart.** Reuse existing artifacts; only redo a step on explicit request.
 4. **Settings are set once and shared.** Write `.spec-config.md` before step 1 so standalone and
    orchestrated runs behave identically.
+5. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

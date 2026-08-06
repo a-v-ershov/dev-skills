@@ -1,13 +1,13 @@
 ---
 name: write-tests
-description: "Map where the product is NOT protected by an automated test, then close the top of that list with honest tests. Use in the release phase (run by release-product, after refactor and before the audits) or standalone whenever the test net needs checking. First it builds the gap map: what SHOULD be covered (the spec's flows and their states, tasks' acceptance criteria, and the risk surfaces that always count — money, sign-in and ownership, deletion, external side effects, idempotency, data-access rules) against what IS covered, read from the tests' contents rather than their names, with mutation testing on the critical modules to expose a suite that executes lines without catching bugs. Gaps come in three kinds — no test at all, happy path only, and a hollow test that would not fail on a real breakage — ranked by risk. Then it writes the top gaps at the cheapest level that proves each one (unit by default, integration for a real seam, end-to-end only for a genuine user journey and one per journey — every e2e test is paid for on every release run), following the style of the project's neighbouring tests, keeping them fast and selectable by the scoped runner, with hostile cases always included and paid APIs driven through the project's own mocks. The rule that makes it worth anything is red-first: a test is not accepted until it has been seen going red on the behaviour it claims to check. It NEVER edits product code — a genuine bug found this way becomes a rework task and the test is left RED and visible, because the red is the finding; only on the human's explicit request is it marked expected-to-fail. Writes .dev-skills/release/test-gaps.md."
+description: "Map where the product is NOT protected by an automated test, then close the top of that list with honest tests. Use in the release phase (run by release-product, after refactor) or standalone whenever the test net needs checking. It builds the gap map — what should be covered against what is covered, read from the tests' contents rather than their names, with mutation testing to expose a suite that executes lines without catching bugs — ranks it by risk, and writes the top ones at the cheapest level that proves each, keeping them fast and selectable. Red-first: a test is not accepted until it has been seen going red."
 argument-hint: "[<feature / flow / task-id> | empty = whole product]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/.dev-skills/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/e2e/*' '*playwright.config.*' '*vitest.config.*' '*jest.config.*' '*pytest.ini' '*conftest.py' '*/tsconfig*.json' '*eslint.config.*' '*.eslintrc*' '*/.dev-skills/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Write Tests Skill
@@ -34,25 +34,17 @@ a **rework task** and the test stays **red**.
   for the bugs found (via `plan-development` amend). **Never product code** — enforced by a write-scope
   hook, not just by this sentence.
 
-## Language
+## Language & git
 
-Respond and reason in whatever language the user addressed you in — write the map, the findings, and the
+Respond and reason in the user's language — write the map, the findings, and the
 report in that language and think in it too. Never translate code, identifiers, commands, or paths.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `../_shared/glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
+stays Latin, no hybrid verbs, template anchors verbatim.
 
-## Git workflow
-
-**One branch — the current one, normally `main`.** Never create a branch, never switch to another
-branch, and never open a worktree on your own initiative. **The single exception:** the user
-explicitly asked for a separate branch in this session — then use the name they gave (or propose one
-and confirm it) and say plainly which branch the work is on. A request to commit, to fix, or to ship
-is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
+**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
+a worktree on your own initiative; only an explicit request in this session changes that, and a
+request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
@@ -61,7 +53,8 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
 - [ ] Stage 1: What SHOULD be covered — flows + their states, acceptance criteria, the always-count risk surfaces
 - [ ] Stage 2: What IS covered — read the tests by content; mutation-test the critical modules to expose hollow ones
 - [ ] Stage 3: Gaps — three kinds, ranked by risk → .dev-skills/release/test-gaps.md
-- [ ] Stage 4: Write the top gaps — level chosen deliberately, style from the neighbours, hostile cases always
+- [ ] Stage 4: Write the top gaps — delegated in batches; level chosen deliberately, style from the neighbours, hostile cases always
+- [ ] Stage 4b: Prune — duplicate coverage, tests that cannot fail, e2e a unit proves; proposed, never silent
 - [ ] Stage 5: RED-FIRST — prove each new test goes red on the behaviour it claims to check
 - [ ] Stage 6: Triage the red — my test's fault → fix the test · a real bug → rework task, test stays red
 - [ ] Stage 7: Full gate + record — what was closed, what is red and why, which tasks were filed
@@ -108,32 +101,20 @@ Rank by risk: **money → sign-in, access and ownership → deletion → externa
 data-access rules → visual → everything else**, and lift anything a **human has never seen** (a task
 accepted with `review: auto`). Write the map to `.dev-skills/release/test-gaps.md`.
 
-### Stage 4: Write the top gaps
+### Stage 4: Write the top gaps · Stage 4b: Prune
 Close the top of the list — in a `release-product` run, everything ranked at the risk surfaces; run
-standalone, agree how far to go. For each:
+standalone, agree how far to go. **Delegate the authoring in batches** (you keep the map, the ranking
+and the red-first verdict); choose the **cheapest level that proves each gap**; keep the new tests fast
+and selectable; hostile cases always; paid APIs through the project's own mocks.
 
-- **Choose the cheapest level that proves it**: pure logic, calculation, validation, formatting →
-  **unit** (the default — this is where most gaps close); a seam (a route writes to the database and
-  reads it back, a rule refuses another user, a repeat does not charge twice) → **integration**; a
-  person's path across a screen from entry to outcome → **end-to-end**, and only when the gap is
-  genuinely about that path. E2E is the slowest and flakiest thing you can add, and every one of them
-  is paid for on every release run from now on — one per journey, not one per case. Push what you can
-  down a level (the same rule the build loop follows,
-  **`../_shared/build-pipeline/quality-gate.md`**). One gap sometimes needs two tests at two levels.
-- **Keep the new tests fast.** No `sleep` where waiting for a condition works, no per-case rebuild of a
-  fixture that could be per-file, no live network where the project has a local stand-in, and
-  slow-by-design primitives (Argon2/bcrypt, backoff, rate limits) at their test-cost settings. A test
-  that is slow because the *product* is slow is a performance finding, not something to be patient
-  with — record it.
-- **Make the new tests selectable** — tag or place them so `make test-scoped` can address them (per
-  area / per task id, following the project's convention). A test nobody can select is a test the
-  build loop can only run by running everything, which it does not do.
-- **Follow the neighbours.** Read one or two nearby tests of the same level and copy their style,
-  helpers, data setup, and placement, so the test lands in the project's regression run instead of
-  beside it.
-- **Hostile cases always**, even when the request named only the happy path.
-- **Paid and external APIs go through the project's own mocks** (the switch `verification.md` documents)
-  — never live: that costs money and touches real data.
+Then, in the same pass, **take cost back out**: duplicate coverage, tests that cannot fail (the
+mutation run already found them), e2e cases a unit test proves identically, and the fixtures they leave
+behind. Deletion is **proposed, never silent**, and a **failing** test is never deleted to make the
+suite green — that is a finding.
+
+Full rules for both, including what a delegated batch must be told:
+**`references/writing-and-pruning.md`**.
+
 
 ### Stage 5: RED-FIRST (the rule that makes the rest worth anything)
 Run each new test and **see it red on exactly the behaviour it claims to check**.
@@ -179,8 +160,17 @@ run — the build loop only ever ran each task's own selection
 real finding, not noise: it is a regression the loop could not have seen. Your own test red because of
 a real bug is the *result*, not a failure — show the run as it is and name what is red and why.
 
-Report the **wall-clock of that full run** in one line. It is the number that decides whether the
-suite is still affordable, and nobody else measures it.
+Report the **wall-clock of that full run** in one line, against the budget in `verification.md`
+(default 5 minutes). Over budget → that is a **finding about the suite**, filed like any other, with
+the slowest files named (**`../_shared/build-pipeline/quality-gate.md`** → "The full run has a budget
+too"). It is the number that decides whether the suite is still affordable, and nobody else measures
+it. Report the **test count and wall-clock before and after** this run, pruning included — a release
+where both went up is a release that made every future one more expensive.
+
+**A red that will not reproduce is quarantined, not re-run until it is green.** Confirm a failure by
+re-running the same selection on the unchanged tree; a different result twice means the test is flaky,
+which is its own finding with its own task, and no claim about the suite is provable until it is
+handled.
 
 Write `.dev-skills/release/test-gaps.md`: the ranked map (surface · needed level · kind of gap · why it
 is risky · what to check), which gaps you closed and with what — including **what each new test went red
@@ -205,3 +195,4 @@ Hand `release-product` the same summary plus the task ids.
 9. **Install nothing.** A missing mutation-testing tool is recorded as unmeasured.
 10. **Not a replacement for `verify-feature`** — that proves one task as it is built; this is the
     retrospective sweep over everything nobody proved.
+11. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
