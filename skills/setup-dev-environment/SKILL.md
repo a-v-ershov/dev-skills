@@ -1,6 +1,6 @@
 ---
 name: setup-dev-environment
-description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .dev-skills/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. For a UI project it also installs the UI kit and icon set the spec chose and writes the committed root DESIGN.md (tokens + rationale) straight from the spec's design decisions and the installed kit's own theme — no candidate systems, no mockups, no picking: the design decisions were made in the spec. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. In a repo that already has a working setup it adopts and extends what's there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .dev-skills/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-tasks."
+description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .dev-skills/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. For a UI project it also installs the UI kit and icon set the spec chose and writes the committed root DESIGN.md (tokens + rationale) straight from the spec's design decisions and the installed kit's own theme — no candidate systems, no mockups, no picking: the design decisions were made in the spec. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. In a repo that already has a working setup it adopts and extends what's there (compose, Makefile, existing lint/type tools wired behind make check-fast / make test-scoped / make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .dev-skills/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-tasks."
 ---
 
 # Setup Dev Environment Skill
@@ -39,12 +39,14 @@ settled in the spec; orphan setup that traces to nothing is a defect.
   **project documentation map** — write/refresh that block per **`../_shared/agent-guide.md`** so an
   agent can navigate `.dev-skills/project-spec/`, `.dev-skills/build-plan/`, and `.dev-skills/project-setup/`. (An earlier
   `create-project-spec` run may already have seeded the map block; refresh it in place, idempotently.)
-- **The quality gate** (repo-local): linter + formatter + type-checker configs (zero-tolerance), a
-  `make check-fast` target (static checks) and a `make check` target (static + the suite), and a
-  **pre-commit hook that runs the static gate** and blocks the commit on red. **No test step in that
-  hook, and no Claude Code Stop / PostToolUse hook that runs a gate when a turn or an edit ends** —
-  both are ruled out in **`../_shared/build-pipeline/quality-gate.md`**, which defines the gate once;
-  it executes the test levels `design-dev-architecture` already specified and does not re-pick tools.
+- **The quality gate** (repo-local): linter + formatter + type-checker configs (zero-tolerance) and
+  **three targets** — `make check-fast` (static checks), **`make test-scoped SCOPE=…`** (run only the
+  tests belonging to given paths/pattern — what the whole build loop uses), and `make check` (static +
+  the whole suite, run by the release pipeline) — plus a **pre-commit hook that runs the static gate**
+  and blocks the commit on red. **No test step in that hook — not the suite, not a scoped run — and no
+  Claude Code Stop / PostToolUse hook that runs a gate when a turn or an edit ends**; both are ruled
+  out in **`../_shared/build-pipeline/quality-gate.md`**, which defines the gate once. It executes the
+  test levels `design-dev-architecture` already specified and does not re-pick tools.
 - **Environment access + developer scripts + custom-skill skeletons** (repo-local): whichever
   env-access mechanism `dev-architecture` chose — the **advisory-lock helper** baked into the
   bring-up/teardown commands (lock file gitignored) and/or the **per-run isolation** params — plus the
@@ -124,9 +126,11 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
 - **Smoke-test, not paper.** The environment is "done" only when the one-command bring-up is **green**
   and an agent can drive a basic flow against it — not when the files merely exist.
 - **The gate is enforced, not advisory.** Stand up the quality gate so a red **static** gate blocks
-  the commit (pre-commit hook), and the full gate — the one with the suite — is what
-  `implement-feature`, `verify-feature` and `build-tasks` run deliberately. No turn-end hook. See
-  **`../_shared/build-pipeline/quality-gate.md`**.
+  the commit (pre-commit hook); give the build loop a **scoped test run** it can point at a task's
+  paths or tag (`implement-feature`, `verify-feature` and `run-task` use only that); and keep the
+  **full suite** in `make check` for the release pipeline. A project with no way to run a selection
+  forces the loop to choose between the whole suite and nothing — so the scoped target is part of the
+  setup, not an optimization. No turn-end hook. See **`../_shared/build-pipeline/quality-gate.md`**.
 - **Coordinate the shared env.** Bake the env-access mechanism into the bring-up command (acquire the
   lock on `make dev`, release on `make down`, lease + stale-reclaim) and/or set up per-run isolation —
   per **`../_shared/build-pipeline/env-access.md`**; gitignore the lock file.
@@ -139,7 +143,7 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
 - **Keep the project `CLAUDE.md` lean and layered.** The root file holds the big picture — the
   project-map block, stack notes, key commands, the load-bearing gotchas — and nothing deeper. **For
   a monorepo / multi-package repo**, also seed a short `CLAUDE.md` in each package/service with its
-  *local* conventions and its **scoped** commands (the `make check` / test command for *that*
+  *local* conventions and its **scoped** commands (the check / test command for *that*
   package, so the agent doesn't run the whole repo's suite for a one-package change); Claude loads
   them additively up the tree. For a single small package the root file is enough — don't over-split.
 - **Minimal, proven infra.** Bring up exactly what the spec says; never reproduce production scale/HA
@@ -184,8 +188,8 @@ reversibility · idempotency note · already-present?**:
   marker-delimited project documentation map per **`../_shared/agent-guide.md`** — touch only that
   block, leave the rest), directory skeleton, `docker-compose.yml`, seed scripts, the one-command
   entrypoint, app config, the **quality gate** (linter/formatter/type-checker configs with
-  zero-tolerance, a `make check-fast` and a `make check` target, a pre-commit hook that runs the
-  **static** one and blocks the commit on red —
+  zero-tolerance, a `make check-fast`, a `make test-scoped SCOPE=…` and a `make check` target, a
+  pre-commit hook that runs the **static** one and blocks the commit on red —
   **`../_shared/build-pipeline/quality-gate.md`**), the **env-access helper** (lock baked into
   bring-up + gitignored lock file, and/or per-run isolation params —
   **`../_shared/build-pipeline/env-access.md`**), the **skeleton of the developer/test scripts**
@@ -222,7 +226,10 @@ and observe a real outcome (a page renders / a health endpoint returns 200 / a s
 queryable). Also prove the **gate has teeth**: `make check` runs green on the clean tree, and a
 deliberately-introduced **type or lint** error makes `make check-fast` fail and the pre-commit hook
 block the commit (then revert the error). Use a static error, not a failing test — the hook does not
-run tests, so a broken test would prove nothing about it. "No error in the logs" is not proof. If it fails, report what failed and offer to fix it
+run tests, so a broken test would prove nothing about it. And prove the **scoped run selects**:
+`make test-scoped SCOPE=<one existing test path/pattern>` runs those tests and visibly *fewer* than
+the full run — a "scoped" target that quietly runs everything is the failure mode to catch here, and
+it is the command the whole build loop will lean on. "No error in the logs" is not proof. If it fails, report what failed and offer to fix it
 (adjust the compose file, fix a port clash, re-seed) — the environment is not "done" until this is green.
 
 ### Stage 5b: Design system → `DESIGN.md` (UI projects only)
@@ -281,7 +288,8 @@ its job**. Three specifics:
    config, not just the local files: it often defines the real gate.
 2. **Fill gaps, adopt & extend — never overwrite.** An existing `Dockerfile` / compose / `Makefile` is
    adopted and extended (back up before any edit), never blown away. The **quality gate** wires the
-   *existing* lint/format/type-check tools behind one `make check` + the hooks rather than installing
+   *existing* lint/format/type-check tools behind `make check-fast` / `make test-scoped` / `make check`
+   + the hooks rather than installing
    new ones (the gate "executes the chosen tools, it doesn't re-pick" — here they're the ones already
    in the repo). Env-access helper, dev-script skeletons, and custom-skill skeletons are scaffolded
    only where absent; an existing `.claude/skills/` skill named by the dev-architecture is extended,
@@ -306,9 +314,10 @@ its job**. Three specifics:
 7. **Install the quality tooling the release phase cannot install itself** (analyzer, mutation runner,
    accessibility checker, load tool — whatever the dev-architecture named). Production-side setup —
    platform, database, caps, telemetry — is **not** yours: that is `setup-production-environment`.
-8. Stand up the **enforced quality gate** — a red `make check-fast` blocks the commit (pre-commit
-   hook); the suite lives in `make check`, which the pipeline runs deliberately. **No test step in the
-   hook and no turn-end hook.** The gate executes the spec's test levels; it doesn't re-pick tools.
+8. Stand up the **enforced quality gate** in three targets — a red `make check-fast` blocks the commit
+   (pre-commit hook); `make test-scoped SCOPE=…` runs a selection and is what the build loop uses; the
+   whole suite lives in `make check` for the release pipeline. **No test step in the hook and no
+   turn-end hook.** The gate executes the spec's test levels; it doesn't re-pick tools.
 9. Bake the **env-access mechanism** into the bring-up command (lock with lease + stale-reclaim, and/or
    per-run isolation; gitignore the lock file) and scaffold the **developer/test-script skeletons** and
    the **custom project-skill skeletons** (`.claude/skills/<name>/SKILL.md`) the dev-architecture named —

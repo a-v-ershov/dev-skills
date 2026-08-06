@@ -59,11 +59,13 @@ runs for you. See [`skills/CLAUDE.md`](skills/CLAUDE.md) for the full map.
   human summary*. When the repo already has code, each phase reads it and confirms rather than re-asks.
 - **Build** (`build-tasks`) — spec → working software. **Mutates the repo.** Sequential: one task at a
   time, single working tree, no parallelism. Implement ↔ an independent verifier that authors adversarial
-  tests, behind an enforced quality gate (`make check` + hooks).
+  tests, behind an enforced quality gate (`make check-fast` + `make test-scoped` + hooks) — the loop runs
+  **only the task's own tests**, never the whole suite.
 - **Release** (`release-product`) — built product → cut release. Two halves: `refactor` then
   `write-tests` **change the repo, sequentially and alone**; then the read-only audits **fan out in
-  parallel** and `manual-test` briefs the human. Findings are filed as rework (never fixed in place),
-  one fix round, one re-audit, then `cut-release` (gated, stops before production).
+  parallel** and `manual-test` briefs the human. **This is where the whole suite (`make check`) runs.**
+  Findings are filed as coarse rework tasks (never fixed in place), one fix round, one re-audit, then
+  `cut-release` (gated, stops before production).
 - **Production** (`setup-production-environment`) — a fourth, manually-invoked step, never auto-run:
   everything production-related in one place (platform, database and migrations, config and secrets,
   spend caps, analytics and error tracking), sorted into **repo · authorized CLI with a yes · human in

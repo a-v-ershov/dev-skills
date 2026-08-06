@@ -133,7 +133,13 @@ the secret location, the advisory) under `.dev-skills/release/artifacts/`.
 Rank each finding 🔴/🟡/⚪ per **`severity-rubric.md`**, against the threat model — an exploitable hole on
 a live path is 🔴; a vuln behind auth with low exploitability is 🟡; speculative hardening with no threat
 behind it is ⚪ at most. File 🔴/🟡 **code** holes as `type: rework` tasks (audit id + finding id +
-evidence link + the threat it restores) via `plan-development` amend. Do not file ⚪. **Production gaps
+evidence link + the threat it restores) via `plan-development` amend. Do not file ⚪.
+**File coarse tasks: one per coherent fix, not one per finding** — holes with the same cause or in the
+same surface (five routes missing the same ownership check, three endpoints missing the same rate
+limit) are **one** task carrying each finding as its own `acceptance` entry with its evidence; a 🔴
+keeps its own task. The backlog's 15-open-task ceiling is shared with the build phase — at it, say so
+rather than filing past it (**`../_shared/build-pipeline/planning-method.md`**). The report keeps the
+full ungrouped list either way. **Production gaps
 go in a separate section of the report, owned by `setup-production-environment`** — a missing spend cap
 is not a developer's task. **No finding without proof** — an unproven worry is a note to investigate,
 not a blocker. A secret that has ever been committed is always reported as **rotate at the provider**,

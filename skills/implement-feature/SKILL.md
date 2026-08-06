@@ -1,6 +1,6 @@
 ---
 name: implement-feature
-description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by run-task, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.dev-skills/project-setup/verification.md) — optionally writing its own tests and running the environment for a fast inner loop — and gets the quality gate (make check) green before handing off, to catch obvious breakage before the independent verifier runs. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — run-task orchestrates verify-feature and the checkpoint commit. After a failed verification it gets exactly ONE fix round: it reads the verifier's findings, runs the tests the verifier just committed to reproduce them, and fixes them — there is no second attempt, so anything it cannot close it says so plainly instead of guessing, and the task escalates to needs_human."
+description: "Build one backlog task's feature in the working tree. Use as the implementation stage of the build loop — normally spawned fresh per task by run-task, or standalone on a task id. Reads the task's ## Description and acceptance criteria, builds the feature on the current branch following the project's CLAUDE.md conventions and the existing codebase patterns, then self-verifies the happy path against the verification contract (.dev-skills/project-setup/verification.md) — optionally writing its own fast unit tests and running the environment for a fast inner loop — and gets the static gate plus this task's scoped test selection green before handing off, to catch obvious breakage before the independent verifier runs. It never runs the whole accumulated suite: the build loop pays only for the tests of the work in hand, and the full suite belongs to the release pipeline. Appends a ## Log note of what was done and moves the task to in_progress; it does NOT run the separate verifier and does NOT commit — run-task orchestrates verify-feature and the checkpoint commit. After a failed verification it gets exactly ONE fix round: it reads the verifier's findings, runs the tests the verifier just committed to reproduce them, and fixes them — there is no second attempt, so anything it cannot close it says so plainly instead of guessing, and the task escalates to needs_human."
 argument-hint: "[task-id]"
 ---
 
@@ -64,9 +64,15 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
 - **Self-check before handoff.** Run the happy path against the real stack and confirm an observable
   outcome. You **may** write your own tests and bring the environment up for a fast inner loop — to
   build well and convince yourself it works; the *adversarial* test layer is the verifier's job. Then
-  run the quality gate (`make check` — lint/type/tests, **`../_shared/build-pipeline/quality-gate.md`**)
-  and **don't hand off on a red gate**. Catching obvious breakage now saves a verify round — but your
-  self-check is not the verdict; the separate `verify-feature` agent decides.
+  run the **static gate** (`make check-fast`) and the **scoped test run** for this task
+  (`make test-scoped` — your tests plus the tests of the modules you changed;
+  **`../_shared/build-pipeline/quality-gate.md`**) and **don't hand off on red**. Catching obvious
+  breakage now saves a verify round — but your self-check is not the verdict; the separate
+  `verify-feature` agent decides.
+- **Fast tests, cheapest level.** Whatever you write for yourself is **unit** — the logic you are
+  writing this minute. Integration only for a real seam you cannot exercise otherwise; **no
+  end-to-end**, that is the verifier's call and its budget. The scoped run should finish in about two
+  minutes; if it doesn't, say so in the log instead of waiting it out.
 - **Stay in style and in scope.** Match the codebase; touch only what this task needs.
 - **Leave a clear trail.** The `## Log` note tells the verifier (a fresh agent) what you did and where.
 - **Tidy your own diff when asked (the solve pass).** After the feature passes verification,
@@ -81,14 +87,15 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
 ```
 - [ ] Stage 0: Intake — read the task (description + acceptance + any verifier findings); confirm ready; set in_progress + history; open the ## Log note
 - [ ] Stage 1: Build — implement the feature on the current branch, matching project conventions; touch only what the task needs
-- [ ] Stage 2: Self-check — happy path via verification.md + unit tests of your own logic (no e2e, no adversarial suite) + quality gate (make check) green
+- [ ] Stage 2: Self-check — happy path via verification.md + unit tests of your own logic (no e2e, no adversarial suite) + static gate (check-fast) and this task's scoped test run green
 - [ ] Stage 3: Log + hand off — close the ## Log note (what was built, self-check result); leave status in_progress for verify-feature
 ```
 
 ### Stage 0: Intake
 Read the task's `## Description`, `acceptance`, and `## Log` (in the **fix round**, the verifier's
-failures are there and its tests are now in the tree — run them to reproduce each failure, then fix to
-green; that is the whole priority). Read the spec sections it `traces_to` and the project `CLAUDE.md`.
+failures are there and its tests are now in the tree — run **those tests specifically** to reproduce
+each failure, then fix to green; that is the whole priority, and a full-suite run tells you nothing
+the failing test doesn't). Read the spec sections it `traces_to` and the project `CLAUDE.md`.
 Confirm the task is `ready` (its `blocked_by` are all `done`); if a blocker isn't done, stop and report
 — don't build on an unmet dependency. Set the task `status: in_progress` with a `history` entry, and
 **open the `## Log` note now**, before building — then append each decision as you take it. A note
@@ -116,9 +123,14 @@ lands, a response asserts). Your own tests here are a **fast inner loop, not a s
 the logic you are writing this minute. The e2e scenario, the adversarial cases and the negative paths
 belong to the verifier, and it writes them from the acceptance criteria whatever you produce — so a
 suite of your own is paid for twice, once to author it and again in the browser time to run both.
-Then run the quality gate
-(`make check`) and get it green before handing off. This is a smoke check to catch the obvious — it is
-**not** the verdict.
+
+Then run the **static gate** (`make check-fast`) and the **scoped test run** for this task, and get
+both green before handing off. The selection is: your own tests, the verifier's tests for this task
+(they exist from the fix round on), and the tests of the modules your diff touched
+(`git diff --name-only` → the tests beside them and the ones importing them). **Do not run the whole
+suite** — that is the release pipeline's job, and paying for it here costs the loop minutes per task
+for a result about code this task never touched (**`../_shared/build-pipeline/quality-gate.md`**).
+This is a smoke check to catch the obvious — it is **not** the verdict.
 
 ### Stage 3: Log + hand off
 Close the `## Log` note you opened at Stage 0 (dated, tagged `[implement-feature]`): what you built,
@@ -131,7 +143,8 @@ orchestrator (`run-task`) spawns the independent verifier next and commits on pa
 
 1. Build only this task, to its acceptance criteria; match the codebase; no unrelated refactors.
 2. Confirm the task is `ready` before building; never build on an unmet blocker.
-3. Self-check the **happy path** against the real stack and get the quality gate (`make check`) green.
+3. Self-check the **happy path** against the real stack and get the static gate + this task's scoped
+   test run green. **Never run the whole suite** — the release pipeline owns that.
    **Adversarial tests are the verifier's and you do not write them** — an adversarial suite of your
    own is duplicated work the verifier will redo. Never self-approve; the separate verifier decides.
 4. Do not commit and do not run the verifier — the orchestrator owns both.

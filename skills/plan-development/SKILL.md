@@ -116,6 +116,11 @@ count toward the 15, so fold them together when the feature tasks need the room;
 grouped feature's criteria, none dropped). In interactive, confirm the breakdown (how many tasks, how
 features were grouped, any splits) before writing.
 
+**Leave room, and say what you left.** The 15 is a ceiling on **open** tasks across the whole backlog,
+and you are not its only writer: the release audits, `refactor`, `write-tests` and adhoc requests file
+into the same board later (`planning-method.md`). Planning the initial backlog right up to 15 means the
+first audit finding has nowhere to go. Say in `plan.summary.md` how many slots the plan uses.
+
 ### Stage 2: Blockers (the implicit graph)
 Set each task's `blocked_by` from real constraints — data/domain order, auth before user-scoped
 features, foundational setup, flow order. Keep it shallow. In interactive, confirm the load-bearing
@@ -155,10 +160,19 @@ spec against the current tasks and apply **deltas** — add / modify / cancel / 
 `done` one) **always confirm with the human**, in both modes. Then regenerate `board.md`. Amend mode
 never writes code.
 
+Amend mode is also how the **release phase files its findings** (`audit-*`, `refactor`,
+`write-tests`). Same grain rule as everywhere: **one `rework` task per coherent fix, not one per
+finding** — findings sharing a surface or a cause become one task with each finding as its own
+`acceptance` entry (a 🔴 keeps its own task), and prefer **extending an existing open task** whose
+slice already covers the finding over adding a new one. The ceiling counts open tasks; at it, say so
+and confirm rather than filing past it.
+
 ## Rules
 
 1. Never build code — output is the backlog only.
-2. Tasks are coarse: **at most 15 open tasks in the backlog**, in every mode (create, amend, delta).
+2. Tasks are coarse: **at most 15 open tasks in the backlog**, in every mode (create, amend, delta),
+   and the ceiling is shared with every other skill that files tasks (the audits, `refactor`,
+   `write-tests`, adhoc). One task per coherent piece of work, never one per finding.
    Exceeding it needs the user's explicit yes.
 3. Every task traces to the spec; every `feature` task carries acceptance criteria.
 4. Dependencies are real and shallow; no `conflicts_with` (there is no parallel execution).

@@ -123,7 +123,14 @@ blocks the cut, but it is always surfaced in the summary.
 ### Step 4: Triage
 Collect every findings doc. The audits (and `refactor` / `write-tests` for what they found and did not
 fix) already filed 🔴/🟡 as rework tasks (`type: rework`, via `plan-development`'s amend mode) and ranked
-per **`severity-rubric.md`**; you reconcile and present the combined picture. In interactive, confirm
+per **`severity-rubric.md`**; you reconcile and present the combined picture.
+
+**Reconcile the grain too.** Each step grouped its own findings into coarse tasks
+(**`../_shared/build-pipeline/planning-method.md`**), but they cannot see each other: two audits often
+file separate tasks for the same surface or the same cause. Merge those into one before the fix run —
+keeping every finding as its own `acceptance` entry — and keep each 🔴 in its own task. If the merged
+backlog still exceeds **15 open tasks**, say so and confirm the count with the human rather than
+handing `build-tasks` a wall of one-finding tasks. In interactive, confirm
 before the fix run; before any **destructive** backlog change (cancelling or reopening a `done` task)
 always stop, in both modes.
 

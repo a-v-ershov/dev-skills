@@ -18,15 +18,16 @@ This is also why the verifier **authors its own tests**. The implementer may wri
 own fast self-check, to build well — but tests written by the agent whose code they cover drift toward
 the happy path it had in mind. The verifier writes *additional, adversarial* tests, aimed at breaking
 the feature (the writer/reviewer split): authored by the side whose job is to find failure, they stay
-honest. Both sides' tests are committed and feed the regression net (the quality gate runs them — see
-**`quality-gate.md`**).
+honest. Both sides' tests are committed and feed the regression net — run **scoped to this task**
+during the build loop, and over the whole suite at the release boundary (**`quality-gate.md`**).
 
 ## Inputs
 
 - The **task file** — its `acceptance` criteria (the definition of done) and `## Description`.
 - **`.dev-skills/project-setup/verification.md`** — the concrete run / drive / prove commands for this stack
-  (one-command bring-up, per-surface drive/prove, dummy auth, seed/reset, log access), the gate command
-  (`make check`), and where tests live + how to name a new one. Written by `setup-dev-environment`. If it
+  (one-command bring-up, per-surface drive/prove, dummy auth, seed/reset, log access), the gate commands
+  (`make check-fast` · `make test-scoped SCOPE=…` · `make check`) and which of them this pipeline stage
+  runs, and where tests live + how to name a new one (and how to make it selectable). Written by `setup-dev-environment`. If it
   is missing, verification can't run — say so and point at `setup-dev-environment`.
 
 The verifier **writes test files** into the project's test structure (the convention is in
@@ -41,9 +42,16 @@ For each acceptance criterion the verifier produces **two independent proofs**, 
 
 0. **Author it** — write an *adversarial* automated test for the criterion (additional to any test the
    implementer wrote), aimed at the empty input, the error path, the boundary — the cases a happy-path
-   builder skips. Commit it into the project's test structure; it joins the regression suite the gate
-   runs (**`quality-gate.md`**).
-1. **Run it** — bring the stack up with the one command from the contract (or confirm it's up). This
+   builder skips. **At the cheapest level that proves the criterion**: unit by default, integration
+   for a real seam, end-to-end only when the criterion is itself about a person's path across a
+   running screen — at most one such test per task (**`quality-gate.md`**, "Prefer the cheapest level
+   that proves the thing"). Commit it into the project's test structure; it joins the regression suite
+   the release gate runs.
+1. **Run it** — run the tests you just authored, **scoped to this task** (your tests plus the tests of
+   the modules the task changed — `quality-gate.md`), never the whole accumulated suite: the suite is
+   the release pipeline's run, and a full pass here costs the loop minutes per task while proving
+   nothing about *this* criterion. Then bring the stack up with the one command from the contract (or
+   confirm it's up). Bring-up
    goes through the **coordinated entrypoint** (env lock or per-run isolation — `env-access.md`); when
    spawned by `build-tasks` the lease is already held, a standalone verifier acquires/releases it
    itself. Reset to a known seeded state if the criterion needs it.
@@ -98,10 +106,11 @@ iteration counter and no cap to tune, because there is no loop to bound.
   its context, so it is fixing code it just wrote against a concrete list — the round where most
   findings actually close.
 - **After the fix**, the verifier is *not* re-spawned. Its tests are already written and committed, so
-  the fix is checked by running the **quality gate** (`make check`, which now includes those tests).
-  Green → the task proceeds. Red, or a critical criterion the implementer couldn't close → **`status:
-  needs_human`** with a `## Log` entry naming what still fails and what was tried. This is one of the
-  two things that always stops regardless of mode (`build-config.md`).
+  the fix is checked by running the **static gate plus this task's scoped test selection** — which now
+  includes those tests (`quality-gate.md`). Green → the task proceeds. Red, or a critical criterion the
+  implementer couldn't close → **`status: needs_human`** with a `## Log` entry naming what still fails
+  and what was tried. This is one of the two things that always stops regardless of mode
+  (`build-config.md`).
 
 Why one round rather than a loop: the second round is where an agent stops fixing the cause and starts
 fighting the test. A finding that survives its own author's targeted fix is a signal about the task or

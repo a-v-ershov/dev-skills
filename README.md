@@ -69,15 +69,20 @@ parallelism — mutating the real repo.
 
 | Step | Skill | Role |
 |------|-------|------|
-| 1 | `setup-dev-environment` | Scaffolds the repo, brings up the one-command stack, stands up the enforced quality gate (`make check` + hooks), writes `DESIGN.md` for a UI project |
-| 2 | `plan-development` | Emits a kanban backlog — one file per task, where `blocked_by` *is* the dependency graph |
+| 1 | `setup-dev-environment` | Scaffolds the repo, brings up the one-command stack, stands up the enforced quality gate (`make check-fast` · `make test-scoped` · `make check` + hooks), writes `DESIGN.md` for a UI project |
+| 2 | `plan-development` | Emits a kanban backlog — one file per task, where `blocked_by` *is* the dependency graph. Coarse tasks: **at most 15 open**, a ceiling every task-filing skill shares |
 | 3 | `run-task` | Runs **one** task end to end: implement → verify → one fix round → gate → you accept it → commit |
 | — | `build-tasks` | Works through the plan: next ready task → `run-task` → repeat, up to 8 per run |
 
 It picks the lowest-id ready task, builds it, verifies it in a separate agent, allows exactly one fix
 round, then asks you to accept the work (or auto-accepts when there's nothing to check by hand) and
 offers the spec edit that keeps the docs honest — all in one checkpoint commit. Anything the fix round
-leaves open escalates to `needs_human`. `generate-mockups`
+leaves open escalates to `needs_human`.
+
+**The loop runs only the task's own tests** — the ones written for it plus the ones covering the files
+it changed — never the whole suite; and tests are written at the cheapest level that proves the
+criterion, so end-to-end is the exception rather than the default. The full suite runs at the release
+boundary, where the question is actually "does all of this still work together?". `generate-mockups`
 renders UI options on demand. A later spec edit needs no separate skill: re-run the phase (it amends),
 then `plan-development` (it emits task deltas); a task that changed the product proposes its own spec
 edit in the same commit.
@@ -183,8 +188,8 @@ also runs on its own.
 | `run-task` | One-task cycle | implement → verify → one fix round → gate → acceptance → commit | a finished task |
 | `setup-dev-environment` | Platform engineer | Scaffolds the repo, brings up the stack, stands up the quality gate | repo + `.dev-skills/project-setup/` |
 | `plan-development` | Delivery tech lead | Turns the spec into a kanban backlog, one file per task | `.dev-skills/build-plan/` |
-| `implement-feature` | Implementer | Builds one backlog task into code and gets the quality gate green | code |
-| `verify-feature` | Independent verifier | Authors adversarial tests and proves a built task's observable outcomes | tests + verdict |
+| `implement-feature` | Implementer | Builds one backlog task into code and gets the static gate + the task's own tests green | code |
+| `verify-feature` | Independent verifier | Authors adversarial tests at the cheapest level that proves each criterion, and proves a built task's observable outcomes | tests + verdict |
 | `generate-mockups` | UI prototyper | *(on demand)* Renders stub UI variants against `DESIGN.md` to compare | throwaway mockups |
 
 ### Release — working software → cut release

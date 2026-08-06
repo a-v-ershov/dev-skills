@@ -31,6 +31,11 @@ the release skills and `release-product` reference it.
   but a release may be cut with open majors at the human's call (logged).
 - **⚪ minors never block.**
 
+**Severity ranks findings; it does not count tasks.** Majors that share a surface or a cause are filed
+as **one** coarse rework task carrying each as its own acceptance entry, and each 🔴 keeps its own task
+— the backlog's grain rule (`../build-pipeline/planning-method.md`) applies to release findings like to
+everything else. Ten one-finding tasks make three blockers hard to see.
+
 ## Guard against over-engineering (anti-sycophancy, in reverse)
 
 A reviewer asked to find problems will always find some — that is the documented failure mode. The

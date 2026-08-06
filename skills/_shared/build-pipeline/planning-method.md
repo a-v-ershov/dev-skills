@@ -56,6 +56,28 @@ verified on their own, and hides the real build order in noise.
 The ceiling counts **open** tasks (`todo` / `in_progress` / `needs_human`); `done` and `cancelled`
 tasks are history and don't consume it.
 
+### This applies to everyone who files a task, not just planning
+
+`plan-development` is not the only writer of task files. The release audits (`audit-security`,
+`audit-performance`, `audit-product`), `refactor` and `write-tests` file `rework` tasks for what they
+find; `run-task` files an `adhoc` task from a free-form request. **One backlog, one ceiling, one
+grain** — they all follow this section, and they all count against the same 15 open tasks.
+
+- **One task per coherent fix, not one per finding.** Findings that live in the same surface, share a
+  cause, or would be fixed in one sitting by one agent are **one** `rework` task. Six missing
+  authorization checks across five routes is one task ("enforce ownership on the document routes"),
+  not six. **Nothing is dropped by grouping**: every finding becomes an entry in that task's
+  `acceptance` with its own evidence link, so the fix is still verified finding by finding.
+- **Split only when a single sitting genuinely can't hold it** — different subsystems, different
+  fixes, or one part blocked on something the other isn't. "They were reported separately" and "they
+  have different finding ids" are not reasons.
+- **Severity groups separately from cause.** A 🔴 is not folded into a 🟡 bundle just to save a slot:
+  the blocker gets its own task so it can be fixed and re-audited on its own.
+- **At the ceiling, say so — never file silently past it.** If the honest grouping still doesn't fit
+  under 15 open tasks, name the smallest honest number and get the user's yes (interactive) or log it
+  as a fork (autopilot). A backlog of 40 findings-as-tasks is how a release phase buries the three
+  things that actually block the cut.
+
 ## Deriving tasks (create mode)
 
 1. **One `feature` task per committed feature** when the feature set fits the 15-task ceiling above;
@@ -178,7 +200,8 @@ proves it against its acceptance criteria (a failure there files a `rework` task
 
 Then the two gap-closers:
 
-- **Quality gate.** No enforced gate (lint/format/type-check/test behind one `make check` + hooks —
+- **Quality gate.** No enforced gate (lint/format/type-check behind `make check-fast` + a hook, a
+  scoped test run, and the full suite behind `make check` —
   see `quality-gate.md`)? Emit a `setup` task to stand it up over the existing code — an early blocker
   for everything else.
 - **Design-system reskin.** If `setup-dev-environment` recorded that the realized design system is to

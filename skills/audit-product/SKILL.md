@@ -144,6 +144,12 @@ cannot be completed assistively — a keyboard trap, an unlabeled essential cont
 degraded secondary path, a rough error state, or a level-AA gap is 🟡; cosmetic friction off the core
 path is ⚪. File 🔴/🟡 as `type: rework` tasks (audit id + finding id + evidence link + the flow or WCAG
 criterion it restores) via `plan-development` amend. **No finding without a driven, observed failure.**
+**File coarse tasks: one per coherent fix, not one per finding** — a flow's broken steps belong in one
+task, and accessibility failures of the same kind across screens (unlabeled controls, missing focus
+styles) are one task per kind, each finding kept as its own `acceptance` entry with its evidence; a 🔴
+keeps its own task. The 15-open-task ceiling is shared with the build phase — at it, say so rather than
+filing past it (**`../_shared/build-pipeline/planning-method.md`**). The report keeps the full
+ungrouped list.
 
 ### Stage 3: Record + verdict
 Write `.dev-skills/release/qa-report.md` (**`report-template.md`**): the verdict, the findings table (each row

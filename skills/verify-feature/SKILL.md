@@ -1,6 +1,6 @@
 ---
 name: verify-feature
-description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .dev-skills/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log and sets a pass/fail verdict. It runs ONCE per task: a fail sends its findings to the implementer for a single fix round, which is then checked by running the tests it just committed — it is not re-spawned to re-check, and anything the fix round leaves open escalates to needs_human. Runs after implement-feature; can also be invoked standalone on a task id."
+description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from .dev-skills/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. It writes them at the cheapest level that proves the criterion (unit by default, integration for a real seam, at most one end-to-end test per task) and runs only the selection that belongs to this task — never the whole accumulated suite, which is the release pipeline's run. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log and sets a pass/fail verdict. It runs ONCE per task: a fail sends its findings to the implementer for a single fix round, which is then checked by running the tests it just committed — it is not re-spawned to re-check, and anything the fix round leaves open escalates to needs_human. Runs after implement-feature; can also be invoked standalone on a task id."
 argument-hint: "[task-id]"
 hooks:
   PreToolUse:
@@ -71,7 +71,13 @@ is not a request to branch. Full rule: **`../_shared/git-workflow.md`**.
   what the implementation happens to do and bless it.
 - **Author your own adversarial tests.** Write automated tests for the criteria — additional to any the
   implementer wrote — aimed at breaking the feature (empty, error, boundary). Commit them; they join the
-  suite the gate runs (**`../_shared/build-pipeline/quality-gate.md`**).
+  regression net (**`../_shared/build-pipeline/quality-gate.md`**).
+- **Cheapest level that proves the criterion, and a fast run.** Unit by default; integration for a real
+  seam (a route writing and reading back, a rule refusing another user); **end-to-end only when the
+  criterion is itself about a person's path across a running screen — at most one per task.** Push the
+  case down: "empty query → 400" is a unit or integration test even when the criterion was written
+  about a search box. Run **only this task's selection** (your tests + the tests of the modules the
+  task changed) — never the whole suite; it should finish in about two minutes.
 - **Tests, never the implementation.** You write tests and drive the stack; you never edit the feature's
   code. A criterion that needs a testing seam in the code is a finding for the implementer, not a self-edit.
 - **Prove the real outcome.** A screenshot, a queried DB row, a structured log line, an asserted
@@ -103,13 +109,19 @@ Then **open the `## Log` entry now**, before authoring anything — dated and ta
 ### Stage 1: Author → run → drive → prove
 For **each** acceptance criterion, produce two independent proofs. **Author** an adversarial automated
 test from the criterion — independently of whatever the implementer wrote, and without reading their
-tests first: you start from the criteria, not from their suite. Commit it into the project's test
-structure and run it. Then
+tests first: you start from the criteria, not from their suite — **at the cheapest level that proves
+it**. Commit it into the project's test structure and run it. Then
 bring the stack up (or confirm it's up), reset to a known seeded state if needed, **drive** the behavior
 per the contract, and **prove** the real outcome — observe and capture it. Cover the negative/error
-criteria explicitly. Drive **your own** scenario, not the whole accumulated e2e suite: regressions in
-other tasks are the quality gate's job, and a full run's report directory can redden the gate on
-vendored code nobody here wrote.
+criteria explicitly.
+
+**Run and drive only your own scope, never the whole accumulated suite.** Your selection is the tests
+you just authored plus the tests of the modules this task changed; the full suite is the release
+pipeline's run (**`../_shared/build-pipeline/quality-gate.md`**). Driving the stack to observe an
+outcome is also not the same as leaving a browser test behind: prove the criterion however the
+contract says, but only commit an e2e test when the criterion genuinely lives at that level. A full
+run costs the loop minutes per task, and its report directory can redden the gate on vendored code
+nobody here wrote.
 
 **Write captures to the harness's scratch output, never straight into `artifacts/`.** Evidence belongs
 in `.dev-skills/build-plan/tasks/artifacts/` under names carrying **this** task's id, and the log
@@ -144,6 +156,8 @@ rather than fixing.
 1. You author tests but never touch the feature implementation — you verify and report; a missing
    testing seam is a finding, not a self-edit.
 2. Prove every criterion with an observable outcome; "it ran" is never proof; probe the error paths.
+   Author each test at the **cheapest level that proves it** (e2e at most once per task), and run
+   **only this task's selection** — the whole suite belongs to the release pipeline.
 3. You run **once** per task. Write findings a fresh reader could act on without you — there is no
    second pass to clarify them in.
 4. No verification contract (`verification.md`) → stop and point at `setup-dev-environment`.

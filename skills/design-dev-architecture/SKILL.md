@@ -214,11 +214,24 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
      asserting on a mock.
    - **The design system is checked by the gate, not by eye** — but only where the kit or stack
      already ships a rule for it (a Tailwind/ESLint plugin, the kit's own lint config, a token
-     linter). Wire that existing rule into `make check` so "components from the kit, colors from
+     linter). Wire that existing rule into `make check-fast` — it is a static check, so it belongs in
+     the target the pre-commit hook runs — so "components from the kit, colors from
      tokens" is enforced instead of hoped for. **Do not invent a custom grep-based checker** — a
      home-grown color-literal hunt produces false positives, and a noisy gate gets disabled.
    Plus the **test levels** (unit / integration / e2e) and what each covers, and **test data**
-   provisioning/reset. Also name the **release-phase measurement tooling** for this stack — the
+   provisioning/reset. Design them **bottom-heavy and selectable**, because the build loop pays for
+   tests on every task while the whole suite runs only at the release boundary
+   (**`../_shared/build-pipeline/quality-gate.md`**):
+   - **Unit is the default level**, integration is for real seams, **e2e is the exception** — reserved
+     for a person's path across a screen that cannot be proven below. Say so explicitly in the doc, or
+     the suite drifts browser-heavy and every later task pays for it.
+   - **Specify how a selection is run** — the scoped command for this stack (`pytest -k` / `vitest run
+     <path>` / `playwright --grep @tag`) and the tagging or folder convention that makes tests
+     addressable per area and per task. This is what `setup-dev-environment` turns into
+     `make test-scoped`; without it the loop can only choose between everything and nothing.
+   - **Name the test-cost settings for slow-by-design primitives** (Argon2/bcrypt work factor, retry
+     backoff, rate limits) and how they are switched — this is the difference between a 33-second and
+     a 95-second suite. Also name the **release-phase measurement tooling** for this stack — the
    duplication / dead-code analyzer, the mutation-testing runner, the accessibility checker, the load
    tool — because `setup-dev-environment` installs them and the release phase is forbidden to: an
    unnamed tool means `refactor`, `write-tests`, and the audits later record that signal as
@@ -301,7 +314,10 @@ migration path (or one seeding can't stand in for), a platform-required env var 
 contract, or analytics that would fire at the production counter during checks**. Also: a
 developer/test script whose purpose or intentional divergence isn't documented (or one drifting toward
 re-implementing prod); **no fast path**, forcing the agent to run the full expensive stack just to
-verify a small change; an env two actors can clobber with no lock or isolation, or a lock with no
+verify a small change; **no way to run a selection of tests** (no scoped command, no tagging or folder
+convention), which leaves the build loop choosing between the whole suite and nothing; a **top-heavy
+test design** that puts at e2e what unit or integration would prove; slow-by-design primitives with no
+test-cost setting named; an env two actors can clobber with no lock or isolation, or a lock with no
 stale-reclaim (a killed agent deadlocks the env). And on the **custom project skills**: a skill that
 duplicates `verify-feature` or just restates `verification.md`; a skill wrapping a script that doesn't
 exist (or isn't a planned dev/test script); a thin one-per-script alias that adds no procedure; or the

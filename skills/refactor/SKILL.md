@@ -87,7 +87,9 @@ and widened types · native mobile: business logic inside the view).
 ### Stage 1: Safety net (this decides whether you may proceed)
 Refactoring is only safe where behaviour can be checked.
 
-- Find whether the scope is **covered by tests** and run them: are they **green right now**?
+- Find whether the scope is **covered by tests** and run the **full suite** (`make check`): is it
+  **green right now**? This is the baseline the whole refactor is measured against, and the build loop
+  never ran the suite whole — so this may be the first full run since the last release.
 - **Red suite → stop.** On red you cannot tell "I broke it" from "it was already broken". Report it and
   offer to fix the failure first (a `run-task` job, not yours).
 - **Uncovered scope → lay the net first.** Offer `/write-tests` for a characterization test of the
@@ -119,8 +121,13 @@ Show the plan **as the last message of the turn** (in some interfaces text writt
 not visible, and the human must read the plan before approving). They may take all of it or part.
 
 ### Stage 4: Apply in small steps
-One transformation, or one small coherent bundle, at a time. **Run the gate after each** (`make check` —
-lint, types, the whole suite).
+One transformation, or one small coherent bundle, at a time. **Run the gate after each**: the static
+checks plus the tests covering what the step touched (`make check-fast` + `make test-scoped` over the
+step's files and their dependents). Then run the **full gate** (`make check` — lint, types, the whole
+suite) **once at the start and once when the last step lands** — this is the release pipeline, so the
+whole suite genuinely does get run here; it just doesn't need to run twenty times
+(**`../_shared/build-pipeline/quality-gate.md`**). A step that touches something load-bearing across
+the tree (a shared helper, a type everything imports) gets the full gate immediately, not at the end.
 
 - **The gate goes red after a step → the refactor changed behaviour.** Revert or fix **the refactor**.
   Never adjust the test to the new result: a red test here is the proof that the behaviour moved, and
@@ -134,9 +141,12 @@ the server response is unchanged). "No errors" is not proof.
 
 Write `.dev-skills/release/refactor.md`: what was refactored, item by item; the measured signals
 **before and after** (duplication clusters, dead exports, suppression count); the proof of unchanged
-behaviour; anything skipped and why; and — as a separate list — the **bugs found and not fixed**, each
-filed as a `type: rework` task via `plan-development` amend, with what is wrong and where. When
-`release-product` runs you, hand back the same summary plus the filed task ids.
+behaviour; anything skipped and why; and — as a separate list — the **bugs found and not fixed**,
+filed as `type: rework` tasks via `plan-development` amend, with what is wrong and where. **Coarse
+tasks: one per coherent fix, not one per bug** — bugs in the same module or with the same cause go into
+one task, each kept as its own `acceptance` entry; the backlog's 15-open-task ceiling is shared with
+the build phase (**`../_shared/build-pipeline/planning-method.md`**). The record keeps the full
+ungrouped list. When `release-product` runs you, hand back the same summary plus the filed task ids.
 
 ## Rules
 

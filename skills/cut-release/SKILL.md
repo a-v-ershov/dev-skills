@@ -24,7 +24,12 @@ step and a fix for `build-tasks`, not a patch here. You touch docs, version file
   `release-summary.md`). If any 🔴 is open and unwaived (**`../_shared/release-pipeline/severity-rubric.md`**),
   **refuse** and point back at `release-product` — a release is not cut over an open blocker. Open 🟡 do
   not block, but surface their count so the human cuts with eyes open.
-- **A red suite is a stop too.** `write-tests` leaves a test red when it has found a real bug and filed
+- **A green full gate.** Run `make check` over the **whole** suite and confirm it is green before
+  anything is tagged. This is not ceremony: the build loop only ever ran each task's own selection, so
+  the release pipeline is where the suite runs whole (**`../_shared/build-pipeline/quality-gate.md`**).
+  If `write-tests` or `refactor` already ran it and nothing landed since, reuse that result rather than
+  paying twice.
+- **A red suite is a stop.** `write-tests` leaves a test red when it has found a real bug and filed
   it; that is a working outcome for that skill and a blocker for this one. Name the task and refuse.
 
 ## Inputs and outputs

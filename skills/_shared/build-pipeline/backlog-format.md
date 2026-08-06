@@ -30,6 +30,11 @@ The single-file-per-task layout is deliberate: a task's status changes only edit
 file, so there is no shared file to contend on. IDs are `T###`, assigned in creation order and never
 reused.
 
+**The board holds at most 15 open tasks, and every skill that files one respects that** —
+`plan-development`, the release audits, `refactor`, `write-tests`, and `run-task`'s adhoc entry point
+alike. Tasks are deliberately coarse; the grain rule and what to do at the ceiling live in
+`planning-method.md`.
+
 ```yaml
 ---
 id: T012
@@ -50,7 +55,7 @@ timings:                      # wall-clock seconds per stage, written by run-tas
   build: 412                  # the implementer (or setup-dev-environment on a `setup` task)
   verify: 187                 # the separate verifier
   fix: 96                     # the one fix round + gate — absent when verification passed first time
-  solve: 74                   # the solve pass + the full gate
+  solve: 74                   # the solve pass + the static gate and the scoped test run
   total: 903                  # in_progress → done/needs_human, so it also holds the human's waiting time
 history:                      # status transitions: time + actor + optional note. Append-only.
   - { at: 2026-06-18T10:00:00Z, to: todo,        by: plan-development }
@@ -85,7 +90,9 @@ was done, what was found, evidence links. The verifier's findings accumulate as 
   `write-tests` found and deliberately did not fix), a `plan-development` reopen, or
   `plan-development` delta mode reconciling a brownfield codebase against the target spec; `traces_to`
   points at the audit finding / changed spec section / as-is map finding; **dispatched exactly like
-  `feature`**: `implement-feature` then `verify-feature`).
+  `feature`**: `implement-feature` then `verify-feature`). Like every other task it is **coarse** —
+  one task per coherent fix, with each grouped finding kept as its own `acceptance` entry, never one
+  task per finding (`planning-method.md`).
 - **`summary`** — one line, plain language, no jargon; this is what the board shows a human.
 - **`status`** — see the lifecycle below.
 - **`created`** — ISO-8601 UTC, written once. Get the time at runtime (`date -u +%Y-%m-%dT%H:%M:%SZ`).

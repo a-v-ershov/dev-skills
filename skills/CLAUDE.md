@@ -81,8 +81,8 @@ Config in `.dev-skills/build-plan/.build-config.md`.
 
 | # | Skill | Role |
 |---|-------|------|
-| 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check` + hooks); for a UI project install the spec's UI kit + icon set and write the root `DESIGN.md` from the spec |
-| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) — coarse tasks, **at most 15**. Re-run later = amend mode (task deltas) |
+| 1 | `setup-dev-environment` | Execute the documented inner loop; stand up the enforced quality gate (`make check-fast` / `make test-scoped` / `make check` + hooks); for a UI project install the spec's UI kit + icon set and write the root `DESIGN.md` from the spec |
+| 2 | `plan-development` | Turn the spec into a kanban backlog under `.dev-skills/build-plan/tasks/` (one file per task) — coarse tasks, **at most 15 open, a ceiling every task-filing skill shares**. Re-run later = amend mode (task deltas) |
 | 3 | `run-task` | **One task, end to end** — the whole cycle for a single task; also takes a free-form request (`origin: adhoc`) |
 | — | `implement-feature` | The implementer agent's procedure: build one task into code, UI against `DESIGN.md` |
 | — | `verify-feature` | The verifier agent's procedure: a **separate, unbiased** agent authoring adversarial tests, proving observable outcomes |
@@ -91,7 +91,10 @@ Config in `.dev-skills/build-plan/.build-config.md`.
 it to `run-task`, which runs the fixed short cycle — build once, verify once in a separate agent,
 **one** fix round, quality gate, then human acceptance (or `review: auto` when nothing is
 hand-checkable) and a spec catch-up edit if the product changed — then sets it `done` with a
-checkpoint commit. Anything the fix round leaves open goes to `needs_human`; there is no iteration
+checkpoint commit. **The gate in that loop is the static checks plus the task's own scoped test
+selection** — the build phase never runs the whole suite, and tests are written at the cheapest level
+that proves the criterion (e2e is the exception, at most one per task); the full suite runs in the
+release pipeline (`_shared/build-pipeline/quality-gate.md`). Anything the fix round leaves open goes to `needs_human`; there is no iteration
 counter. `build-tasks` stops after **8 tasks** per run (context fills with diffs) and asks for a
 `/compact`, and refuses to start when the spec has moved ahead of the plan. Resumable — the backlog is
 the source of truth.
@@ -107,8 +110,10 @@ scale of the whole product — briefs the human on what only a person can judge,
 release. Config in `.dev-skills/release/.release-config.md`.
 
 The chain has two halves. Steps 1–2 **change the repository**, so they run **sequentially and alone**.
-Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**. Findings are **filed as
-`rework` tasks, never fixed in place**; the audits also **never install or configure anything** —
+Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**. **This is also where the
+whole test suite is run** — `refactor` around its steps, `write-tests` at the end, `cut-release` before
+the cut — because the build loop only ever ran each task's own selection. Findings are **filed as
+coarse `rework` tasks (one per coherent fix, never one per finding), never fixed in place**; the audits also **never install or configure anything** —
 tooling is `setup-dev-environment`'s job, production capabilities are `setup-production-environment`'s.
 
 | # | Skill | Does / proves against |

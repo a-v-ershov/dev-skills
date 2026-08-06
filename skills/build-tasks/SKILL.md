@@ -85,7 +85,9 @@ Repeat while ready tasks remain:
 2. **Take one** — the **lowest `id`** among them, so two runs produce the same order. Announce it in
    one line and continue without asking; wait for confirmation only in one-at-a-time mode.
 3. **Run it through `/run-task`** (via the Skill tool) — the whole cycle, no steps skipped and no
-   logic of your own; a green gate is mandatory in autopilot too. In *acceptance every N* mode, tell
+   logic of your own; a green gate is mandatory in autopilot too — the **static gate plus that task's
+   scoped test selection**, never the whole suite
+   (**`../_shared/build-pipeline/quality-gate.md`**). In *acceptance every N* mode, tell
    it whether this task's acceptance is deferred and where the manual one lands.
 4. **A task that went `needs_human`** → don't take it again; show it to the human and move to the next
    ready task. One stuck task must not stop the whole plan.
@@ -121,7 +123,11 @@ You cannot compact the context yourself — the human runs that command. Your jo
 time and say so.
 
 If no ready tasks remain but unfinished ones do, explain why (they wait on `needs_human` tasks). If
-everything is `done`, say so plainly and point at the release phase (`/release-product`).
+everything is `done`, say so plainly and point at the release phase (`/release-product`) — and add one
+line saying that **the whole test suite has not been run yet**: the build loop only ever ran each
+task's own selection, and the full run happens in the release pipeline
+(**`../_shared/build-pipeline/quality-gate.md`**). Say it as a fact about where the suite gets run, not
+as a warning to act on now.
 
 ## Rules
 

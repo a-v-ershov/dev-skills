@@ -70,6 +70,20 @@ The audit does not fix; it **files**:
   restores). `build-tasks` later fixes it, and the audit **re-runs once** afterwards to confirm (the
   orchestrator drives that single round).
 - **⚪ minor** → recorded in the findings doc only; no task.
+
+**Group findings into coarse tasks — one task per coherent fix, not one per finding.** The backlog is
+one board with **one ceiling of 15 open tasks**, shared with the build phase
+(**`../build-pipeline/planning-method.md`**, "This applies to everyone who files a task"). Findings in
+the same surface, or with the same cause, or that one agent would close in one sitting, are **one**
+task; every finding still becomes an entry in its `acceptance` with its own evidence link, so nothing
+is lost and each is verified separately. Keep a 🔴 in its own task so it can be fixed and re-audited on
+its own, split when a single sitting genuinely can't hold the work — and if the honest grouping still
+overflows the ceiling, say so and confirm the count instead of filing past it silently. Ten tasks that
+each say "fix finding S-07" is a report re-typed as a backlog; it hides which three actually block the
+cut.
+
+The findings doc keeps the **full, ungrouped list** — grouping is how the work is scheduled, not how
+it is recorded. Each finding's row names the task it was filed under.
 - **A missing production capability** (no hard spend cap, no error tracking, no rate limit configured,
   a variable unset in the target environment) → recorded as a finding **owned by
   `setup-production-environment`**, not filed against the code. Nobody fixes a billing limit in a pull

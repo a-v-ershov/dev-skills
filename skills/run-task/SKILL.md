@@ -1,6 +1,6 @@
 ---
 name: run-task
-description: "Drive ONE task through the full development cycle: the implementer builds it, a separate fresh verifier independently proves the acceptance criteria, its findings go back for exactly one fix round, the quality gate must be green, the human accepts the work (or it is auto-accepted when the diff holds nothing a person could check by hand), the spec is offered a catch-up edit if the product's behavior changed, and a checkpoint commit carrying the task id lands. Two entry points: a task id from the backlog (run-task T07) or a free-form request (run-task 'the card doesn't show the date'), in which case it files the task itself with origin: adhoc and acceptance criteria the user confirms. No iteration loop and no cap to tune — anything the single fix round leaves open escalates to needs_human. Use to build one task; build-tasks calls it repeatedly to work through the backlog. Sequential, single working tree, current branch. It conducts the implementer/verifier agents and the commit skill; it does not duplicate their procedures."
+description: "Drive ONE task through the full development cycle: the implementer builds it, a separate fresh verifier independently proves the acceptance criteria, its findings go back for exactly one fix round, the static gate plus this task's scoped test selection must be green (the whole suite is never run here — that is the release pipeline's), the human accepts the work (or it is auto-accepted when the diff holds nothing a person could check by hand), the spec is offered a catch-up edit if the product's behavior changed, and a checkpoint commit carrying the task id lands. Two entry points: a task id from the backlog (run-task T07) or a free-form request (run-task 'the card doesn't show the date'), in which case it files the task itself with origin: adhoc and acceptance criteria the user confirms. No iteration loop and no cap to tune — anything the single fix round leaves open escalates to needs_human. Use to build one task; build-tasks calls it repeatedly to work through the backlog. Sequential, single working tree, current branch. It conducts the implementer/verifier agents and the commit skill; it does not duplicate their procedures."
 argument-hint: "[<task-id> | <free-form request>]"
 ---
 
@@ -15,9 +15,9 @@ The cycle:
 ```
 task in → show its acceptance criteria → implementer builds (fresh subagent + cheap self-check)
    → verifier (separate agent, ONE pass)
-   → fail? → ONE fix round by the SAME implementer → gate (runs the verifier's own tests)
+   → fail? → ONE fix round by the SAME implementer → static gate + this task's scoped tests
              → still failing / gate red? → needs_human, surface it, stop
-   → solve pass (tidy this task's diff) → full gate green
+   → solve pass (tidy this task's diff) → static gate + scoped tests green
    → acceptance: anything a human could check by hand? yes → show the digest and ask · no → review: auto
    → product behavior changed? → offer the spec catch-up edit (spec_sync), same commit
    → set done → checkpoint commit → regen board
@@ -79,7 +79,7 @@ apply. Deferring acceptance is the human's decision, never yours.
 - [ ] Stage 2: Build — spawn the implementer agent (or dispatch a setup task to setup-dev-environment)
 - [ ] Stage 3: Verify — spawn the verifier agent, ONCE
 - [ ] Stage 4: Fix — one round by the same implementer + green gate, else needs_human
-- [ ] Stage 5: Solve pass — tidy this task's own diff, behaviour-preserving; full gate green
+- [ ] Stage 5: Solve pass — tidy this task's own diff, behaviour-preserving; static gate + scoped tests green
 - [ ] Stage 6: Accept — human digest + approval, or review: auto when nothing is hand-checkable
 - [ ] Stage 7: Spec catch-up — behavior changed and undocumented? propose the edit (spec_sync)
 - [ ] Stage 8: Commit — status done + timings + checkpoint commit via the commit skill; release the lease; regen board
@@ -104,9 +104,13 @@ stop. Schema and how to read the numbers: **`../_shared/build-pipeline/backlog-f
 **A task id** (`T012`) → read that task file. **A free-form request** ("the card doesn't show the
 date") → file it first: write a task file with `origin: adhoc`, a one-line `summary`, a full
 `## Description`, `traces_to` empty for now, and **acceptance criteria you propose and the user
-confirms** — a task with criteria you invented alone is a task nobody can verify. Check its size the
-way `plan-development` would (one sitting, a vertical slice — "user can X", not "add a table"); if it
-is really three tasks, say so and split it before building.
+confirms** — a task with criteria you invented alone is a task nobody can verify. Size it the way
+`plan-development` does (**`../_shared/build-pipeline/planning-method.md`**): **one coarse task is the
+default**, even when the request names several things — a whole screen with its CRUD, a flow end to
+end, a fix and the three places it repeats are one task, and the parts become `acceptance` entries.
+Split only when one sitting genuinely cannot hold it (different subsystems, or one part blocked on the
+other) — then say so, and remember the backlog carries **at most 15 open tasks** across the whole
+product, so filing three where one would do spends a budget the plan needs.
 
 Then confirm the task is **ready**: `status: todo` (or a stale `in_progress` from a killed run) and
 every `blocked_by` is `done`. A task with an unmet blocker stops here — say which one.
@@ -133,7 +137,8 @@ passes only a task id makes it rediscover the project. Name: the task file's pat
 `CLAUDE.md` and its invariants · **what recently changed** — the files the last closed tasks
 rewrote, so it reads the current state instead of trusting line numbers in the task description ·
 the branch rule and that it must not commit · the test boundary (unit inner loop, no e2e, no
-adversarial suite — those are the verifier's).
+adversarial suite — those are the verifier's; and it runs this task's scoped selection, never the
+whole suite).
 
 **If the agent dies before it reports** — an API error, a session limit, an interrupt — that is not a
 failed task and not a `needs_human`. Check `git status`: an empty tree means nothing was lost, so
@@ -149,14 +154,15 @@ and proves observable outcomes. It runs **once**: its findings must be actionabl
 
 ### Stage 4: Fix (one round)
 **Pass** → Stage 5. **Fail** → hand the findings to the **same** implementer agent for **exactly one**
-fix round, then run the **quality gate** — which now includes the verifier's committed tests, so the
-fix is checked without re-spawning the verifier.
+fix round, then run the **static gate plus this task's scoped test selection** — which now includes the
+verifier's committed tests, so the fix is checked without re-spawning the verifier and without paying
+for the whole suite (**`../_shared/build-pipeline/quality-gate.md`**).
 - Green → Stage 5.
 - Still red, or a finding the implementer says it cannot close → set `status: needs_human`, append a
   `## Log` entry naming what still fails and what was tried, **write the `timings` you have**, release
   the lease, and **stop**. Report it plainly. **Never a second fix round.**
 
-### Stage 5: Solve pass + full gate
+### Stage 5: Solve pass + gate
 Direct the **same implementer agent** to a light cleanup **scoped to this task's own diff** — remove
 dead or duplicated code it introduced, collapse needless abstraction, drop over-built generality —
 strictly **behaviour-preserving** — and a flag, parameter or command named in
@@ -166,10 +172,11 @@ Pre-existing rot in code this task didn't touch is out of scope: note it as a `r
 tidy it here. (Agents over-produce and don't feel maintenance cost;
 a deliberate pass stops bloat from compounding.)
 
-Then confirm the **full quality gate** is green (`make check` — lint/type + the whole accumulated
-suite, which now includes the verifier's tests, so the tidy stays honest;
-**`../_shared/build-pipeline/quality-gate.md`**). Red is never committed and never triggers another
-round — it goes to `needs_human`.
+Then confirm the **static gate** (`make check-fast`) and this task's **scoped test run** are green —
+the selection now includes the verifier's tests and the tests of every module this task touched, so
+the tidy stays honest. **Do not run the whole suite here**: the build loop never does, and the
+release pipeline runs it over everything (**`../_shared/build-pipeline/quality-gate.md`**). Red is
+never committed and never triggers another round — it goes to `needs_human`.
 
 ### Stage 6: Accept
 Look at the **actual diff** and decide whether a person could check anything by hand:
@@ -216,7 +223,9 @@ so it explains where the task's time went and nothing more.
 3. **One build, one verification, one fix.** No second fix round, no counter: whatever remains open
    goes to `needs_human`, in both modes. Never re-spawn the verifier to "check the fix" — its
    committed tests do that through the gate.
-4. **Never commit red.** A red gate is `needs_human`, not another attempt.
+4. **Never commit red.** A red gate is `needs_human`, not another attempt. The gate here is the
+   **static gate + this task's scoped test selection** — the whole suite is never run in the build
+   loop; the release pipeline runs it (**`../_shared/build-pipeline/quality-gate.md`**).
 5. **Accept before you commit.** Show what was built and how to check it; skip the question only when
    the diff genuinely holds nothing hand-checkable (`review: auto`, with the reason). Never mark
    `auto` to avoid an awkward answer.

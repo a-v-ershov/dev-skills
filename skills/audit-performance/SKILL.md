@@ -102,7 +102,12 @@ numbers/profiles under `.dev-skills/release/artifacts/`.
 Compare each measurement to its budget and rank per **`severity-rubric.md`**: a scenario **measurably
 over budget on a hot path** is 🔴; **met but with no margin** (or a slow non-critical path) is 🟡; a
 micro-optimization with no scenario behind it is ⚪ at most. File 🔴/🟡 as `type: rework` tasks (audit id
-+ finding id + the measured-vs-budget number + the scenario id) via `plan-development` amend. A scenario
++ finding id + the measured-vs-budget number + the scenario id) via `plan-development` amend.
+**File coarse tasks: one per coherent fix, not one per finding** — measurements that share a cause
+(four endpoints slow because of the same N+1, three pages heavy because of the same bundle) are **one**
+task carrying each finding as its own `acceptance` entry with its number; a 🔴 keeps its own task. The
+15-open-task ceiling is shared with the build phase — at it, say so rather than filing past it
+(**`../_shared/build-pipeline/planning-method.md`**). The report keeps the full ungrouped list. A scenario
 with **no budget set** can't be a 🔴 — record the measurement and flag the missing budget to the spec.
 
 ### Stage 3: Record + verdict

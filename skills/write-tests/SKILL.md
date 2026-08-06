@@ -1,6 +1,6 @@
 ---
 name: write-tests
-description: "Map where the product is NOT protected by an automated test, then close the top of that list with honest tests. Use in the release phase (run by release-product, after refactor and before the audits) or standalone whenever the test net needs checking. First it builds the gap map: what SHOULD be covered (the spec's flows and their states, tasks' acceptance criteria, and the risk surfaces that always count — money, sign-in and ownership, deletion, external side effects, idempotency, data-access rules) against what IS covered, read from the tests' contents rather than their names, with mutation testing on the critical modules to expose a suite that executes lines without catching bugs. Gaps come in three kinds — no test at all, happy path only, and a hollow test that would not fail on a real breakage — ranked by risk. Then it writes the top gaps, choosing the level deliberately and following the style of the project's neighbouring tests, with hostile cases always included and paid APIs driven through the project's own mocks. The rule that makes it worth anything is red-first: a test is not accepted until it has been seen going red on the behaviour it claims to check. It NEVER edits product code — a genuine bug found this way becomes a rework task and the test is left RED and visible, because the red is the finding; only on the human's explicit request is it marked expected-to-fail. Writes .dev-skills/release/test-gaps.md."
+description: "Map where the product is NOT protected by an automated test, then close the top of that list with honest tests. Use in the release phase (run by release-product, after refactor and before the audits) or standalone whenever the test net needs checking. First it builds the gap map: what SHOULD be covered (the spec's flows and their states, tasks' acceptance criteria, and the risk surfaces that always count — money, sign-in and ownership, deletion, external side effects, idempotency, data-access rules) against what IS covered, read from the tests' contents rather than their names, with mutation testing on the critical modules to expose a suite that executes lines without catching bugs. Gaps come in three kinds — no test at all, happy path only, and a hollow test that would not fail on a real breakage — ranked by risk. Then it writes the top gaps at the cheapest level that proves each one (unit by default, integration for a real seam, end-to-end only for a genuine user journey and one per journey — every e2e test is paid for on every release run), following the style of the project's neighbouring tests, keeping them fast and selectable by the scoped runner, with hostile cases always included and paid APIs driven through the project's own mocks. The rule that makes it worth anything is red-first: a test is not accepted until it has been seen going red on the behaviour it claims to check. It NEVER edits product code — a genuine bug found this way becomes a rework task and the test is left RED and visible, because the red is the finding; only on the human's explicit request is it marked expected-to-fail. Writes .dev-skills/release/test-gaps.md."
 argument-hint: "[<feature / flow / task-id> | empty = whole product]"
 hooks:
   PreToolUse:
@@ -112,10 +112,22 @@ accepted with `review: auto`). Write the map to `.dev-skills/release/test-gaps.m
 Close the top of the list — in a `release-product` run, everything ranked at the risk surfaces; run
 standalone, agree how far to go. For each:
 
-- **Choose the level deliberately**: pure logic, calculation, validation, formatting → **unit**; a seam
-  (a route writes to the database and reads it back, a rule refuses another user, a repeat does not
-  charge twice) → **integration**; a person's path across a screen from entry to outcome → **end-to-end**.
-  One gap sometimes needs two tests at two levels.
+- **Choose the cheapest level that proves it**: pure logic, calculation, validation, formatting →
+  **unit** (the default — this is where most gaps close); a seam (a route writes to the database and
+  reads it back, a rule refuses another user, a repeat does not charge twice) → **integration**; a
+  person's path across a screen from entry to outcome → **end-to-end**, and only when the gap is
+  genuinely about that path. E2E is the slowest and flakiest thing you can add, and every one of them
+  is paid for on every release run from now on — one per journey, not one per case. Push what you can
+  down a level (the same rule the build loop follows,
+  **`../_shared/build-pipeline/quality-gate.md`**). One gap sometimes needs two tests at two levels.
+- **Keep the new tests fast.** No `sleep` where waiting for a condition works, no per-case rebuild of a
+  fixture that could be per-file, no live network where the project has a local stand-in, and
+  slow-by-design primitives (Argon2/bcrypt, backoff, rate limits) at their test-cost settings. A test
+  that is slow because the *product* is slow is a performance finding, not something to be patient
+  with — record it.
+- **Make the new tests selectable** — tag or place them so `make test-scoped` can address them (per
+  area / per task id, following the project's convention). A test nobody can select is a test the
+  build loop can only run by running everything, which it does not do.
 - **Follow the neighbours.** Read one or two nearby tests of the same level and copy their style,
   helpers, data setup, and placement, so the test lands in the project's regression run instead of
   beside it.
@@ -143,7 +155,10 @@ Red means one of two things:
 - **A genuine bug** — the test is right and the code is wrong. **You may not fix it here.** File a
   `type: rework` task via `plan-development` amend: a one-line human summary, acceptance criteria stating
   exactly the behaviour the test checks, and how to reproduce it — which test goes red, what was
-  expected, what actually happened. **Leave the test red and visible** with the task id in a comment
+  expected, what actually happened. **One task per coherent fix, not one per red test**: bugs in the
+  same module or with the same cause go into one task, each red test kept as its own `acceptance`
+  entry with its reproduction; the backlog's 15-open-task ceiling is shared with the build phase
+  (**`../_shared/build-pipeline/planning-method.md`**). **Leave the test red and visible** with the task id in a comment
   beside it, and say out loud that the run is now red and what follows: the gate will fail on your test,
   and in this project the build loop depends on the gate — `run-task` does not commit red. That is not a
   reason to hide the test; it is a reason to fix the bug next, so offer `/run-task <id>` as the next step.
@@ -157,9 +172,15 @@ the test's specific input, tuning data to match the wrong answer, returning earl
 without checking anything.
 
 ### Stage 7: Full gate + record
-Run the project's **whole** check, not just the new file: the tests must join the regression net and
-must not break their neighbours. Your own test red because of a real bug is the *result*, not a failure
-— show the run as it is and name what is red and why.
+Run the project's **whole** check (`make check`), not just the new file: the tests must join the
+regression net and must not break their neighbours. This is one of the few places the whole suite is
+run — the build loop only ever ran each task's own selection
+(**`../_shared/build-pipeline/quality-gate.md`**) — so treat a failure in code nobody touched here as a
+real finding, not noise: it is a regression the loop could not have seen. Your own test red because of
+a real bug is the *result*, not a failure — show the run as it is and name what is red and why.
+
+Report the **wall-clock of that full run** in one line. It is the number that decides whether the
+suite is still affordable, and nobody else measures it.
 
 Write `.dev-skills/release/test-gaps.md`: the ranked map (surface · needed level · kind of gap · why it
 is risky · what to check), which gaps you closed and with what — including **what each new test went red
@@ -177,7 +198,9 @@ Hand `release-product` the same summary plus the task ids.
    no early return.
 5. **Read tests by content, not by name**; line coverage is not behaviour coverage.
 6. **Hostile cases always**, and the risk surfaces are covered whether or not the spec mentions them.
-7. **Level, style, and placement come from this project**; the test must land in the standard run.
+7. **Cheapest level that proves the gap** (unit by default, e2e only for a real journey, one per
+   journey); style and placement come from this project; the test must land in the standard run and be
+   **selectable** by the scoped runner.
 8. **Paid APIs go through the project's mocks** — never live.
 9. **Install nothing.** A missing mutation-testing tool is recorded as unmeasured.
 10. **Not a replacement for `verify-feature`** — that proves one task as it is built; this is the

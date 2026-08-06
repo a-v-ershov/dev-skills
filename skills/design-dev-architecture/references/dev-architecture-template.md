@@ -69,16 +69,21 @@ person can run and use the product, not only an agent.>
 | **Prove it** (observe real outcome) | <screenshot before/after> | <query the DB — did the row land? · read structured logs — did the path run?> | <replay prod traffic; assert> |
 | **Unblock it** (remove friction) | <dummy auth · seed scripts for known state> | <structured logs the agent can grep · add log lines to prove the path ran> | <safe / idempotent test data> |
 
-### Test levels
+### Test levels (bottom-heavy: unit is the default, e2e is the exception)
 
-| Level | Covers | Tool | Runs in CI? |
-|-------|--------|------|-------------|
-| Unit | <...> | <...> | <...> |
-| Integration | <against the local stand-ins> | <...> | <...> |
-| E2E (agent-driven) | <the user flows, no manual steps> | <Playwright / harness> | <...> |
+| Level | Covers | Tool | Scoped command | Runs in CI? |
+|-------|--------|------|----------------|-------------|
+| Unit — **default** | <logic, validation, formatting, state transitions> | <...> | <e.g. `pytest <path>` / `vitest run <path>`> | <...> |
+| Integration — real seams | <against the local stand-ins> | <...> | <e.g. `pytest tests/int -k <pattern>`> | <...> |
+| E2E (agent-driven) — **exception** | <a person's path across a screen that cannot be proven below; at most one per task> | <Playwright / harness> | <e.g. `playwright test --grep @<tag>`> | <...> |
 
+- **Selection convention:** <how tests are tagged / foldered so a task's subset can be addressed —
+  this becomes `make test-scoped` in the setup phase. The build loop runs only a selection; the whole
+  suite runs at the release boundary.>
+- **Test-cost settings for slow-by-design primitives:** <Argon2/bcrypt work factor, retry backoff,
+  rate limits — the cheap values used under test and how they are switched.>
 - **Test data:** <how provisioned and reset between runs.>
-- **Design-system enforcement:** <the kit's / stack's own lint rule wired into `make check` (e.g. the
+- **Design-system enforcement:** <the kit's / stack's own lint rule wired into `make check-fast` (e.g. the
   Tailwind or kit ESLint config), or "none available — reviewed by eye". Never a custom grep-based
   color hunt: false positives get the gate disabled.>
 

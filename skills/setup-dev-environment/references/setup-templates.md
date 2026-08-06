@@ -30,7 +30,8 @@ placeholders from the spec and the detected state.
 | entrypoint | Makefile `dev` target → `docker compose up` | one-command bring-up | yes | no |
 | quality gate | linter+formatter+typechecker config (zero-tolerance) | test levels / quality-gate.md | yes | no |
 | `make check-fast` | target running format + lint + type-check + suppressions (no tests) | quality-gate.md | yes | no |
-| `make check` | the same **plus** the accumulated suite — run deliberately, never by a hook | quality-gate.md | yes | no |
+| `make test-scoped` | target running **only** the tests matching `SCOPE=<paths\|pattern>` — the build loop's run | quality-gate.md | yes | no |
+| `make check` | static checks **plus** the whole accumulated suite — the release pipeline's run, never a hook's | quality-gate.md | yes | no |
 | pre-commit hook | runs `make check-fast`, blocks commit on red | quality-gate.md | yes | no |
 | env-access | lock helper baked into bring-up (gitignored lock) and/or per-run isolation | env-access.md | yes | no |
 | dev/test scripts | skeleton of fast local scripts (full impl = backlog) | dev-architecture / dev scripts | yes | no |
@@ -64,7 +65,8 @@ placeholders from the spec and the detected state.
 - Wrote project CLAUDE.md (backed up previous to CLAUDE.md.bak).
 - Registered the postgres MCP server.
 - Smoke-test: `make dev` came up green; app reachable at http://localhost:3000; seed data present;
-  `make check` green and the pre-commit hook blocks a commit with a deliberate type error.
+  `make check` green, `make test-scoped SCOPE=tests/health` ran 3 tests (not the suite), and the
+  pre-commit hook blocks a commit with a deliberate type error.
 
 ## Skipped (already present)
 - Docker (already installed). Node 20 (already on PATH).
@@ -95,14 +97,26 @@ made executable. This is the project-specific input the generic `verify-feature`
 - Acquire / release: `make dev` acquires · `make down` releases · force-clear a stuck lock: `make env-unlock`.
 - Standalone skill runs acquire and release the env themselves. Method: `_shared/build-pipeline/env-access.md`.
 
-## Gate (two commands — one automatic, one deliberate)
+## Gate (three commands — one automatic, two deliberate)
 - `make check-fast` → format check + lint + type-check + suppressions. **No tests.** This is what the
   pre-commit hook runs; a red one blocks the commit.
-- `make check` → the same plus the accumulated suite. Run deliberately: the implementer's hand-off,
-  the verifier's run, and `build-tasks` before the checkpoint commit.
+- `make test-scoped SCOPE=<paths|pattern>` → **only** the tests matching the scope. This is the
+  **build loop's** test run: the implementer's self-check and hand-off, the verifier's run, and
+  `run-task` before the checkpoint commit. Selector for this stack:
+  `<pytest tests/<area> -k <pattern> · vitest run <path> · playwright test --grep @<tag>>`.
+- `make check` → static checks plus **the whole accumulated suite**. This is the **release
+  pipeline's** run: `refactor` (before and after each step), `write-tests` (at the end),
+  `cut-release` (before the cut). The build loop never runs it.
 - Zero-tolerance: fails on lint/type errors, new warnings, and new suppression comments.
-- **No Claude Code Stop / PostToolUse hook running either one.** Method:
+- **No Claude Code Stop / PostToolUse hook running any of them.** Method:
   `_shared/build-pipeline/quality-gate.md`.
+
+## What a task's scoped run selects
+1. the tests written for the task (the implementer's unit tests + the verifier's adversarial ones);
+2. the tests of the modules the task's diff touched (`git diff --name-only` → the tests beside them
+   and the ones importing them);
+3. nothing else. Target: **under ~2 minutes**. Longer means the selection is too wide or the tests sit
+   at the wrong level.
 
 ## Drive & prove, per surface
 | Surface | Run it | Drive it | Prove it (observable) |
@@ -116,15 +130,19 @@ made executable. This is the project-specific input the generic `verify-feature`
 - Seed / reset: `make seed` / `make reset` — known starting state.
 - Structured logs the agent can grep: `<format / how>`.
 
-## Test levels
-| Level | Command | Covers |
-|-------|---------|--------|
-| Unit | `pnpm test` | <...> |
-| Integration | `pnpm test:int` | against local stand-ins |
-| E2E (agent-driven) | `pnpm e2e` | the user flows, no manual step |
+## Test levels (write at the cheapest one that proves the thing)
+| Level | Command | Scoped form | Covers | Typical cost |
+|-------|---------|-------------|--------|--------------|
+| Unit — **the default** | `pnpm test` | `pnpm test <path>` | logic, validation, formatting, state transitions | ms |
+| Integration — a real seam | `pnpm test:int` | `pnpm test:int <path>` | route writes + reads back, ownership rules, idempotency | seconds |
+| E2E (agent-driven) — **the exception** | `pnpm e2e` | `pnpm e2e --grep @<tag>` | a person's path across a screen, when it cannot be proven below — **at most one per task** | tens of seconds+ |
 
 - Tests live in `<dir>` (e.g. `tests/`); name a new one `<convention>` (e.g. `test_<unit>.py` /
   `<name>.test.ts`). The verifier writes its adversarial tests here; the implementer may add its own.
+- **Tag or path-group new tests so they can be selected** (e.g. `@<task-id>` / a folder per area) —
+  the scoped run is only as good as what it can address.
+- Slow-by-design primitives (Argon2/bcrypt, retry backoff, deliberate rate limits) run at **test-cost
+  parameters** here: `<how it is switched>`.
 
 ## Developer & test scripts (fast, intentionally-divergent local paths)
 | Command | Purpose | Diverges from prod by | Isolated? |
@@ -143,11 +161,13 @@ wired with `git config core.hooksPath .githooks`:
 #!/usr/bin/env bash
 # The static gate, on every commit. Red blocks the commit.
 #
-# NO TESTS HERE. A compiler-shaped check costs seconds and is worth paying
-# without being asked; a test suite is not, and it grows. The suite lives in
-# `make check`, which implement-feature, verify-feature and build-tasks run
-# deliberately. Do not add a test step back, and do not smuggle one in under
-# another name (a "quick subset", a changed-files runner, a wrapper target).
+# NO TESTS HERE — not the suite, not a scoped run. A compiler-shaped check
+# costs seconds and is worth paying without being asked; a test run is not.
+# Tests are run deliberately by the skills that assert something with them:
+# `make test-scoped` in the build loop (implement-feature, verify-feature,
+# run-task) and `make check` in the release pipeline. Do not add a test step
+# back under any name — "just the changed files" is still a test step, and a
+# hook cannot know which selection this commit is about.
 #
 # Escape hatch: `git commit --no-verify` — for a deliberate failure, explained
 # in the commit message.
@@ -163,9 +183,10 @@ insurance and is not:
   turns that into a blocked turn and a polling loop around it.
 - Measured case: a `Stop` hook running the full gate killed a turn over a **formatter warning** on a
   work-in-progress file. The agent spent that turn on whitespace instead of the task it was given.
-- It buys nothing the pipeline doesn't already have: `implement-feature` runs the full gate before
-  handing off, and `build-tasks` runs it before the checkpoint commit. Those are the moments where
-  something is actually being asserted; the end of a turn is not one of them.
+- It buys nothing the pipeline doesn't already have: `implement-feature` runs the static gate plus the
+  task's scoped tests before handing off, `run-task` runs them again before the checkpoint commit, and
+  the release pipeline runs the whole suite. Those are the moments where something is actually being
+  asserted; the end of a turn is not one of them.
 
 If a project already has such a hook, removing it is a fix, not a loosening
 (`_shared/build-pipeline/quality-gate.md`).
