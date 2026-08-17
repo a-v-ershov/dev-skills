@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: "Internal build-loop role — spawned fresh per task by run-task to implement one backlog task in the working tree. Its full procedure is the preloaded implement-feature skill. Not for general use: run-task orchestrates it; it self-verifies the happy path and gets the static gate plus this task's scoped test selection green, but it does NOT run the whole suite, does NOT run the separate verifier and does NOT commit."
+description: "Internal build-loop role — spawned fresh per task by run-task to build one backlog task via the preloaded implement-feature skill. Not for general use: it gets the static gate plus the task's scoped tests green, never runs the whole suite, never verifies its own work, never commits."
 skills: [implement-feature]
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch
 ---

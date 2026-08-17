@@ -1,6 +1,6 @@
 ---
 name: commit
-description: "Commit session changes with intelligent splitting for large changesets"
+description: "Commit the current uncommitted changes: read the diff, group files by logic rather than path (a definition change split from its ripple of usage updates), write conventional-commit messages in English — with the [T###] backlog task id where one applies — and commit on the current branch, never branching, pushing, merging, amending or adding AI-attribution trailers. By default only the files this session touched are committed. Invoked by run-task for checkpoint commits and by cut-release for the release commit; otherwise use ONLY on the user's explicit request to commit — finishing a task or a review is not such a request. /commit [--dry-run] [--single] [--all] [--message <msg>]"
 argument-hint: "[--dry-run] [--single] [--all] [--message <msg>]"
 ---
 
@@ -25,10 +25,15 @@ stays Latin, no hybrid verbs, template anchors verbatim.
 
 - **One branch — the current one, normally `main`.** Commit onto the branch the session is already
   on. Never create a branch, never switch to another branch, never open a worktree on your own
-  initiative — not per feature, not "to keep `main` clean", not for a large changeset. **The single
-  exception:** the user explicitly asked for a separate branch in this session; then use the name
-  they gave (or propose one and confirm it) and say which branch the commits landed on. Being asked
-  to commit is not being asked to branch. Full rule: **`../_shared/git-workflow.md`**.
+  initiative — not per feature, not "to keep `main` clean", not for a large changeset. Branching is
+  the user's decision about how their repository is organized; it is never a side effect of running
+  this skill. **The single exception:** the user explicitly asked for a separate branch in this
+  session; then use the name they gave (or propose one and confirm it), create it from the current
+  branch, and say which branch the commits landed on. Being asked to commit is not being asked to
+  branch — and neither is a large or risky change: the answer to "this could break things" is a
+  clean commit, not a branch nobody asked for. Full rule: **`../_shared/git-workflow.md`**.
+- **Already on a non-default branch?** That's the user's choice — stay there. Don't switch to
+  `main`, don't offer to merge or rebase.
 - **Never push** unless the user explicitly asks.
 - **Never merge, rebase, or reset** — a commit is the only history-changing operation you perform.
 - **Never use `--amend`** — always create a new commit.

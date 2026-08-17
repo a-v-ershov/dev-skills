@@ -1,6 +1,6 @@
 ---
 name: create-project-spec
-description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project or a major new initiative and you want the full guided flow rather than running each step by hand. Orchestrates gather-context, validate-idea, define-product-requirements, create-user-flows, define-design-decisions, design-architecture and design-dev-architecture — each phase researching real-world facts within a fixed budget, running an adversarial review whose findings it applies in place, and emitting a research doc plus a short human summary. Works on an empty repo or one that already has code."
+description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project or a major new initiative and you want the full guided flow rather than running each step by hand. Orchestrates gather-context, validate-idea, define-product-requirements, create-user-flows, define-design-decisions, design-architecture, define-code-style and design-dev-architecture — each phase researching real-world facts within a fixed budget, running an adversarial review whose findings it applies in place, and emitting a research doc plus a short human summary. Works on an empty repo or one that already has code."
 argument-hint: "[--from <step>]"
 ---
 
@@ -12,7 +12,8 @@ its own internal pipeline (research → draft → adversarial review → merge �
 on according to the chosen mode.
 
 The pipeline produces, in order — **two** files per phase (the reviewer writes none: it returns its
-findings and the phase applies them in place):
+findings and the phase applies them in place; the architecture phases add ADRs, and step 7 adds the
+distilled `code-style.md` guide the build agents follow):
 
 | Step | Sub-skill | Detailed doc | Human summary |
 |------|-----------|--------------|---------------|
@@ -22,7 +23,8 @@ findings and the phase applies them in place):
 | 4 | `create-user-flows` | `user-flows.research.md` | `user-flows.summary.md` |
 | 5 | `define-design-decisions` | `design-decisions.research.md` | `design-decisions.summary.md` |
 | 6 | `design-architecture` | `architecture.research.md` (+ `adr/*`) | `architecture.summary.md` |
-| 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
+| 7 | `define-code-style` | `code-style.research.md` (+ the distilled `code-style.md` guide) | `code-style.summary.md` |
+| 8 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
 
 All under `.dev-skills/project-spec/`. Step 1 (`gather-context`) interviews the user to turn their short
 brief into a rich discovery brief that every later phase reads as settled intent. Each phase
@@ -80,7 +82,8 @@ documentation; the pipeline writes no transient files, so the directory needs no
 - [ ] Step 4: create-user-flows                → gate / auto-advance
 - [ ] Step 5: define-design-decisions           → gate / auto-advance
 - [ ] Step 6: design-architecture              → gate / auto-advance
-- [ ] Step 7: design-dev-architecture          → gate / auto-advance
+- [ ] Step 7: define-code-style                → gate / auto-advance
+- [ ] Step 8: design-dev-architecture          → gate / auto-advance
 - [ ] Done: build summary.md (if final_summary) + refresh the project CLAUDE.md map + summarize the documentation set
 ```
 
@@ -99,9 +102,9 @@ discipline (idempotent, non-destructive): **`../_shared/agent-guide.md`**. This 
 housekeeping (like writing `.spec-config.md` / `summary.md`), not a phase — keep it to the shared
 block and never touch content outside the markers.
 
-### Steps 1–7: Run each sub-skill, then advance
+### Steps 1–8: Run each sub-skill, then advance
 For each step in order (step 1 is `gather-context` — the discovery interview that produces the
-project brief; steps 2–7 are the phases that read it):
+project brief; steps 2–8 are the phases that read it):
 
 **If the repo already has code,** each phase handles it on its own — reading the code at its intake,
 reporting what it found, and confirming rather than re-asking. You pass no flag and add no step. One

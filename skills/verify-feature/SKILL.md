@@ -92,8 +92,10 @@ request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow
 
 ### Stage 0: Intake
 Read the task's `acceptance` criteria and `## Description`. Read `.dev-skills/project-setup/verification.md`
-for the concrete commands (bring-up, drive/prove per surface, dummy auth, seed/reset, logs). Read
-`mode`. If the contract is missing, stop and report.
+for the concrete commands (bring-up, drive/prove per surface, dummy auth, seed/reset, logs), and
+`.dev-skills/project-spec/code-style.md` → `## Testing` (when present) for the project's test
+conventions — naming, structure, mock policy, test data. Read `mode`. If the contract is missing,
+stop and report.
 
 Then **open the `## Log` entry now**, before authoring anything — dated and tagged `[verify-feature]`
 — exactly as `implement-feature` opens its own at its Stage 0. See the rule on writing it as you go.

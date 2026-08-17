@@ -65,7 +65,8 @@ runs through and logs every decision; `final_summary`); config in
 | 4 | `create-user-flows` | `user-flows.research.md` |
 | 5 | `define-design-decisions` | `design-decisions.research.md` — the product→technical bridge (design direction + which UI kit / icon set / theming approach, not mockups) |
 | 6 | `design-architecture` | `architecture.research.md` (+ `adr/`) — requirements-first system architecture, incl. where it runs (hosting, environments, cost, residency, manual setup) and how success is measured (analytics/telemetry) |
-| 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/`) — the AI-first inner loop, incl. the custom project skills to author that wrap its dev/test scripts |
+| 7 | `define-code-style` | `code-style.research.md` + the distilled **`code-style.md`** guide — the development conventions on the chosen stack (code organization, naming, comments, error handling, test style): each real fork weighed as top 2–3 options with trade-offs, everything enforceable delegated to a named lint/formatter rule |
+| 8 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/`) — the AI-first inner loop, incl. the custom project skills to author that wrap its dev/test scripts |
 
 **When the repo already has code:** no separate mode and no extra phase — each phase reads the code
 at its own intake, reports what it found, and confirms instead of re-asking; anything the user wants
@@ -117,7 +118,9 @@ proves the **system-level** properties no single task could — the counterpart 
 scale of the whole product — briefs the human on what only a person can judge, and then cuts the
 release. Config in `.dev-skills/release/.release-config.md`.
 
-The chain has two halves. Steps 1–2 **change the repository**, so they run **sequentially and alone**.
+The chain has two halves. Steps 1–2 **change the repository**, so they run **sequentially and alone** —
+each inside its own preloading agent (`refactorer`, spawned twice around the human's plan approval,
+then `test-writer`), so the two longest autonomous runs don't fill the conductor's context.
 Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**; steps 6–7 then write the
 handover document and brief the human. **This is also where the
 whole test suite is run** — `refactor` around its steps, `write-tests` at the end, `cut-release` before
@@ -184,8 +187,9 @@ lives, so the audits can stay pure audits.
 
 ## Where things live
 
-- `.dev-skills/project-spec/` — spec research docs, summaries, `adr/`, `.spec-config.md` (all committed;
-  the pipeline writes nothing transient).
+- `.dev-skills/project-spec/` — spec research docs, summaries, `adr/`, the distilled `code-style.md`
+  guide (what `implement-feature` / `verify-feature` / `refactor` / `write-tests` write code and tests
+  against), `.spec-config.md` (all committed; the pipeline writes nothing transient).
 - `.dev-skills/build-plan/` — backlog (`tasks/`), `board.md`, `.build-config.md` (committed); plus
   `mockups/` — throwaway stub UI variants from `generate-mockups` (gitignored; only the chosen
   screenshot is kept).
@@ -205,7 +209,7 @@ lives, so the audits can stay pure audits.
 - Skills are **verbs**; their outputs are **nouns** (`validate-idea` → `idea-validation`).
 - Orchestrators **conduct, they do not duplicate** — they invoke focused sub-skills via the Skill tool
   and spawn the named **agents** (`agents/`: `spec-reviewer`, `spec-researcher`, `implementer`,
-  `verifier`, `ui-prototyper`) for the pipelines' subagent roles.
+  `verifier`, `ui-prototyper`, `refactorer`, `test-writer`) for the pipelines' subagent roles.
 - Shared methodology lives in `_shared/` (no `SKILL.md`): `spec-pipeline/`, `build-pipeline/`, and
   `release-pipeline/` hold the elicitation, research, review, output-format, backlog, quality-gate,
   propagation, audit, severity, and report methods — plus `build-pipeline/design-freeze.md` (the

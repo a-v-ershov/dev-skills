@@ -2,15 +2,13 @@
 
 **English** · [Русский](README.ru.md)
 
-dev-skills is a set of Claude Code skills and agents for building products.
+dev-skills is a set of Claude Code skills and agents that takes a **raw idea to a shipped release**
+through three gated pipelines — **spec → build → release** — plus one deliberate command for going
+live. **[Jump to install ↓](#install)**
 
-The method is the point: every change rides a **build → verify → ship loop** where a separate agent proves the work before it advances. **[Jump to install ↓](#install)**
-
-**Take a raw idea to a shipped release with dev-skills — one reviewed step at a time, so the AI
-builds the *right* thing and proves it works instead of just saying so.**
-
-Three gated pipelines — **spec → build → release** — installed as a plugin into any project from
-GitHub. Every skill replies in the language you write to it.
+The method is the point: at every step a **separate agent reviews or verifies the work before it
+advances**, so the AI builds the *right* thing and proves it works instead of just saying so.
+Ships as a plain Claude Code plugin; every skill replies in the language you write to it.
 
 ---
 
@@ -25,7 +23,7 @@ GitHub. Every skill replies in the language you write to it.
 1. **Three pipelines, one command each** — call `create-project-spec`, `build-tasks`, or `release-product` and one meta-skill conducts every phase for you; going live stays a separate, deliberate command.
 2. **It interviews you before it builds** — a discovery grill pulls the maximum context out of your head, down to your stack and style preferences, one question at a time, always with a recommended answer.
 3. **A separate agent always checks the work** — nothing self-certifies: a reviewer on every spec phase, plus a fresh verifier that writes adversarial tests and is hook-blocked from touching the code.
-4. **A real dev loop + a release phase that hunts the AI's own bugs** — an enforced quality gate locally, then a refactor pass, a red-first test sweep, independent security / performance / product+accessibility audits, and a hands-on briefing for you, before you ship.
+4. **A real dev loop + a release phase that hunts the AI's own bugs** — an enforced quality gate locally, then a refactor pass, a red-first test sweep, independent security / performance / product+accessibility audits, a verified handover README, and a hands-on briefing for you, before you ship.
 5. **Production in one deliberate step** — `setup-production-environment` sets up the platform, the database, the caps, and the telemetry, sorting every gap into *repo · authorized CLI with your yes · you in a dashboard*, then deploys, smoke-tests the live version, and leaves a plain-language runbook.
 
 **Plus:** replies in your language · never touches your branches — every skill works on the branch you
@@ -43,7 +41,7 @@ production step; every sub-skill also runs on its own.
 
 ### 1 — Spec: idea → buildable spec
 
-`create-project-spec` runs seven persona-driven phases; each researches the claims that would change
+`create-project-spec` runs eight persona-driven phases; each researches the claims that would change
 what you build (source-cited, on a fixed budget — the rest is labelled unverified), drafts, is
 checked by an independent reviewer whose findings it applies, and emits a research doc + a short
 human summary under `.dev-skills/project-spec/`.
@@ -56,7 +54,8 @@ human summary under `.dev-skills/project-spec/`.
 | 4 | `create-user-flows` | Product designer | `user-flows` — how users move through the product |
 | 5 | `define-design-decisions` | Design-system lead | `design-decisions` — direction + which UI kit / icons / theming; the bridge to tech |
 | 6 | `design-architecture` | Software architect | `architecture` + ADRs — quality scenarios first, then components + tech, where it runs, and how it's measured |
-| 7 | `design-dev-architecture` | DX / platform engineer | `dev-architecture` + ADRs — the local inner loop and AI tooling |
+| 7 | `define-code-style` | Staff engineer | `code-style` + the distilled guide — conventions on the chosen stack (organization, naming, comments, errors, tests); real forks weighed as top 2–3 options |
+| 8 | `design-dev-architecture` | DX / platform engineer | `dev-architecture` + ADRs — the local inner loop and AI tooling |
 
 > **Already have code?** No separate mode — every phase reads the repo at its intake, tells you what
 > it found, and confirms instead of re-asking; what you want changed is recorded as a divergence and
@@ -91,8 +90,8 @@ edit in the same commit.
 
 `release-product` cleans the tree, closes the test gaps, proves the cross-cutting properties no single
 task could, and then ships. The first two steps change the repo, so they run **alone and in order**; the
-audits are read-only, so they fan out in **parallel**. Nothing here fixes code in place, and **no audit
-installs anything**.
+audits are read-only, so they fan out in **parallel**; then the handover README is written and you get
+your briefing. Nothing here fixes product code in place, and **no audit installs anything**.
 
 | Step | Skill | Does / proves against |
 |------|-------|------------------------|
@@ -101,7 +100,8 @@ installs anything**.
 | 3 | `audit-security` | the STRIDE-lite threat model — secrets, authz, injection, the lethal trifecta, row-level security, spend caps, production config |
 | 4 | `audit-performance` | the quality-attribute scenarios — measured p95, throughput, N+1, cost |
 | 5 | `audit-product` | the user flows end-to-end and cross-feature, **plus** the WCAG target on the same journeys |
-| 6 | `manual-test` | The briefing for your hands-on pass — starting with everything accepted as `review: auto`, which no human has ever opened |
+| 6 | `write-readme` | The handover README — clone → running dev environment from that file alone; every command verified against the repo, unknowns written as unknown |
+| 7 | `manual-test` | The briefing for your hands-on pass — starting with everything accepted as `review: auto`, which no human has ever opened |
 | — | `cut-release` | clean tree + no open 🔴 → docs, version, changelog, tag, commit, PR (always confirmed; **stops before production**) |
 
 A blocker becomes a rework task, fixed by **one** `build-tasks` run, then **re-audited once to confirm
@@ -127,11 +127,11 @@ at every stage.
 
 | Tool | What it is | Where dev-skills differs |
 |------|-----------|------------------------------|
-| **[GitHub Spec Kit](https://github.com/github/spec-kit)** | Spec → Plan → Tasks → Implement; templates, agent-agnostic | It stops at implement — no independent verification, no release audits, no built-in research or adversarial review. |
-| **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** | Agentic-agile framework, 12+ specialist agents | Plans and builds, but has no read-only release-audit phase, no harness-enforced verifier, no brownfield reverse-engineering. |
-| **[Task Master](https://github.com/eyaltoledano/claude-task-master)** | PRD → task decomposition; an MCP project manager | Task management only — it doesn't validate, research, design, or audit; needs an MCP server running. |
-| **[gstack](https://github.com/garrytan/gstack)** | 23 role skills for the per-PR sprint loop | Great on an existing codebase's review/ship loop, but has no idea→spec generator and no spec reconstruction. *(Our design reference.)* |
-| **[SuperClaude](https://github.com/SuperClaude-Org/SuperClaude_Framework)** | ~30 commands + persona agents injected into `CLAUDE.md` | An à-la-carte command toolbox, not a sequenced, gated pipeline with research, review, and a writer/reviewer split baked in. |
+| **[GitHub Spec Kit](https://github.com/github/spec-kit)** | Spec-driven development: constitution → specify → plan → tasks → implement, plus `clarify` / `analyze` / `checklist`; templates, agent-agnostic | Its checks audit the *artifacts* — spec ↔ plan ↔ tasks consistency — not the built product: no independent verifier of the code, no release audits. |
+| **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** | Agentic-agile framework (v6): specialist agents + workflow modules, brownfield included | Verification is convention in prompts, not a harness rule — no hook-blocked verifier — and test strategy / release gates live in the separate TEA module, not the core loop. |
+| **[Task Master](https://github.com/eyaltoledano/claude-task-master)** | PRD → task decomposition; an AI project manager (CLI or MCP) | Task management only — it doesn't validate, research, design, or audit. |
+| **[gstack](https://github.com/garrytan/gstack)** | 40+ role skills for the per-PR sprint loop — think → plan → build → review → ship | Specs one feature forward (`/office-hours`, `/spec`); no research-backed product spec — validation, architecture, ADRs — and no spec reconstruction from an existing codebase. *(Our design reference.)* |
+| **[SuperClaude](https://github.com/SuperClaude-Org/SuperClaude_Framework)** | ~30 `/sc:` commands + ~20 agents, installed into `~/.claude` by its own installer | An à-la-carte command toolbox, not a sequenced, gated pipeline with research, review, and a writer/verifier split baked in. |
 
 ---
 
@@ -164,20 +164,21 @@ Or turn on auto-update once: `/plugin` → **Marketplaces** → `dev-skills` →
 
 ## Skill reference
 
-All 25 skills, grouped by pipeline. Orchestrators are listed first in each group; every sub-skill
+All 28 skills, grouped by pipeline. Orchestrators are listed first in each group; every sub-skill
 also runs on its own.
 
 ### Spec — idea → buildable spec
 
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
-| `create-project-spec` | Orchestrator | Sequences the seven spec phases from raw idea to buildable spec | the spec |
+| `create-project-spec` | Orchestrator | Sequences the eight spec phases from raw idea to buildable spec | the spec |
 | `gather-context` | Discovery interviewer | Interviews you to turn a short brief into shared understanding | `project-brief.research.md` |
 | `validate-idea` | Founder-investor | Pressure-tests demand, audience, problem, and business model | `idea-validation.research.md` |
 | `define-product-requirements` | Product manager | Defines who it's for and the full committed feature set + criteria | `product-requirements.research.md` |
 | `create-user-flows` | Product designer | Maps how users move through the product to get value | `user-flows.research.md` |
 | `define-design-decisions` | Design-system lead | Sets the design direction — system + UI kit, key screens, platforms, a11y | `design-decisions.research.md` |
 | `design-architecture` | Software architect | Quality scenarios first, then components + tech, hosting & cost, analytics | `architecture.research.md` + `adr/` |
+| `define-code-style` | Staff engineer | Settles the development conventions — code organization, naming, comments, error handling, test style — as options with trade-offs | `code-style.research.md` + `code-style.md` |
 | `design-dev-architecture` | DX / platform engineer | Designs the local inner loop, AI-drivable testing, and AI tooling | `dev-architecture.research.md` + `adr/` |
 
 ### Build — spec → working software
@@ -203,6 +204,7 @@ also runs on its own.
 | `audit-product` | QA lead | Drives the user flows end-to-end across features, and the same journeys keyboard-only against the WCAG target | `qa-report.md` |
 | `refactor` | Staff engineer | Cleans structure without changing behaviour; measures rot, dead code, suppression debt | `refactor.md` |
 | `write-tests` | Test engineer | Maps coverage gaps and closes them red-first; a real bug is filed, never patched | tests + `test-gaps.md` |
+| `write-readme` | Handover writer | Writes or refreshes the README so a newcomer can clone and run the project from it alone; every command verified against the repo, unknowns stay unknown | `README.md` |
 | `manual-test` | Test lead | *(read-only)* Briefs you on what only a person can judge | `manual-test-brief.md` |
 | `cut-release` | Release engineer | Bumps version, changelog, tag, commit, PR — gated, stops before production | release docs + PR |
 
@@ -221,6 +223,5 @@ also runs on its own.
 
 Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,
 the release phase's findings under `.dev-skills/release/`, setup records under
-`.dev-skills/project-setup/`. *(existing)* = brownfield projects only, *(UI)* = UI projects (self-skips
-otherwise), *(on demand)* = not auto-run in a pipeline, *(by hand)* = never auto-run at all.
-`gather-context` is also reusable on demand as a scoped grill.
+`.dev-skills/project-setup/`. *(on demand)* = not auto-run in a pipeline, *(by hand)* = never auto-run
+at all, *(read-only)* = changes nothing. `gather-context` is also reusable on demand as a scoped grill.

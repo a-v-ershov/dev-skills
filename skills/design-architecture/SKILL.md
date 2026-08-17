@@ -1,6 +1,6 @@
 ---
 name: design-architecture
-description: "Design the system's technical architecture from the product spec: elicit measurable quality-attribute scenarios first, then co-design the components AND the concrete technologies together — researching each candidate's current capabilities, pricing and limits, weighing 2-3 integrated options against the scenarios, and recording significant choices as ADRs. Settles the same way WHERE the product runs (platform, environments, secrets, backups, cost, residency, the one-time manual setup) and HOW success is measured — deciding these, never configuring or deploying them. Use after create-user-flows, before design-dev-architecture."
+description: "Design the system's technical architecture from the product spec: elicit measurable quality-attribute scenarios first, then co-design the components AND the concrete technologies together — researching each candidate's current capabilities, pricing and limits, weighing 2-3 integrated options against the scenarios, and recording significant choices as ADRs. Settles the same way WHERE the product runs (platform, environments, secrets, backups, cost, residency, the one-time manual setup) and HOW success is measured — deciding these, never configuring or deploying them. Use after create-user-flows, before define-code-style."
 ---
 
 # Design Architecture Skill
@@ -19,8 +19,8 @@ Scope discipline:
   technology together; they are interdependent.
 - **Options, not edicts** — per significant component, 2–3 *integrated* options weighed against the
   scenarios, then a recommendation.
-- **System architecture, not code structure.** Repo layout, conventions, tests and CI/CD belong to
-  `design-dev-architecture`.
+- **System architecture, not code structure.** Code conventions belong to `define-code-style`;
+  the inner loop, tests and CI/CD to `design-dev-architecture`.
 - **Where it runs and how it's measured are part of the architecture** — decided here like any other
   component. Deciding is the job; **you configure and deploy nothing**.
 - **Inherit, don't redefine.** Every component traces to a flow or a scenario.
@@ -167,8 +167,8 @@ stack in plain language, the forks the human must answer, the open risks. Format
 
 ### Stage 7: Hard gate
 - **interactive:** STOP — "Architecture done → architecture.research.md (+ ADRs under adr/),
-  architecture.summary.md (for you). Review it. When you approve, run `/design-dev-architecture` for
-  the implementation layer. I will not proceed automatically."
+  architecture.summary.md (for you). Review it. When you approve, run `/define-code-style` for the
+  development conventions. I will not proceed automatically."
 - **autopilot:** record that the gate auto-passed and hand back (or, standalone, report the files + the
   must-answer forks).
 
@@ -195,7 +195,7 @@ Re-run on an existing document and you **amend** rather than regenerate — reco
 in full: assess impact and self-skip if unaffected; otherwise amend surgically (only what the change
 touches, plus `architecture.summary.md` if the essence changed), preserve the `## Forks / Decisions log` and
 add an entry for what changed, ask only on a decision-changing fork, and hand off in one line
-(`/design-dev-architecture`; if `.dev-skills/build-plan/tasks/` exists, say the plan may now be stale and
+(`/define-code-style`; if `.dev-skills/build-plan/tasks/` exists, say the plan may now be stale and
 `/plan-development` reconciles it — you never edit the backlog here). Supersede an affected ADR rather than rewriting its history.
 
 ## Rules
@@ -207,8 +207,8 @@ add an entry for what changed, ask only on a decision-changing fork, and hand of
    proven tech and the fewest moving parts, justifying every exotic choice by a scenario.
 4. Every significant, hard-to-reverse decision gets an ADR; each component keeps its logical-role label
    so a later swap stays cheap.
-5. Never redefine features or flows — surface gaps back to the product layer. Repo/module structure,
-   conventions, tests and CI/CD belong to `design-dev-architecture`.
+5. Never redefine features or flows — surface gaps back to the product layer. Code structure and
+   conventions belong to `define-code-style`.
 6. For a security-sensitive product, threat-model the design (STRIDE-lite) and fold the mitigations into
    the architecture + ADRs; otherwise note the skip and why.
 7. Decide **where it runs** and **how success is measured** here, with options, a recommendation and an

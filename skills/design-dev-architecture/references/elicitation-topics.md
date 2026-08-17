@@ -116,11 +116,12 @@ HTTP); the **recommended Anthropic / Claude Code plugins & skills** that improve
 verification for *this* stack, and why; and equivalent config for **other agents** the team uses.
 Choose tooling for how much verification power it hands the agent, not by fashion.
 
-Where the brief records **dev-tooling or code-style preferences**, treat them as **soft priors** — fold
-tooling leanings into this pillar's choices, and **distil code-style leanings into the project
-`CLAUDE.md` content** above so `implement-feature` follows them without re-reading the brief; log each
-as a fork with `Source = preference` (**`../../_shared/spec-pipeline/elicitation-method.md`** → "Read
-the brief first").
+Where the brief records **dev-tooling preferences**, treat them as **soft priors** — fold them into
+this pillar's choices and log each as a fork with `Source = preference`
+(**`../../_shared/spec-pipeline/elicitation-method.md`** → "Read the brief first"). Code-style
+leanings are already settled: `define-code-style` distilled them into
+`.dev-skills/project-spec/code-style.md` — have the project `CLAUDE.md` content **point at that
+guide** rather than restating conventions here.
 
 Then specify the **custom, project-local Claude Code skills to author** that wrap the dev/test scripts
 (pillar 1) and the verification loop (pillar 2) into named, invocable jobs — beyond *installing

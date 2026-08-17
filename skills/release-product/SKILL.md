@@ -14,8 +14,8 @@ are the source of truth, so you can be killed and resumed.
 The chain:
 
 ```
-1. refactor            (changes code — alone, first: everything downstream reads the cleaned tree)
-2. write-tests         (changes tests — alone, second: the audits should run against the real net)
+1. refactor            (refactorer agent — alone, first: plan → human approval → execute; everything downstream reads the cleaned tree)
+2. write-tests         (test-writer agent — alone, second: the audits should run against the real net)
 3. audit-security · audit-performance · audit-product   ← fresh agents, IN PARALLEL (read-only)
 4. write-readme        (the handover document — refreshed against the tree as it now stands)
 5. manual-test         (read-only briefing for the human)
@@ -62,16 +62,17 @@ Read `.dev-skills/release/.release-config.md` for `mode` and the enabled `steps`
 **`../_shared/release-pipeline/audit-method.md`**, **`severity-rubric.md`**, **`report-template.md`**.
 
 - **interactive** — present the chain and confirm; stop at each 🔴, before filing rework, and before
-  `cut-release`. `refactor` presents its own plan and waits, in both modes.
+  `cut-release`. The refactor plan always comes back to you and waits for the human's approval, in
+  both modes.
 - **autopilot** — run the chain back-to-back without stopping; **except** the three things that always
-  stop: `refactor`'s plan, an open finding after the single fix round (`needs_human`), and `cut-release`
-  itself.
+  stop: the refactor plan's approval, an open finding after the single fix round (`needs_human`), and
+  `cut-release` itself.
 
 ## Procedure
 
 ```
 - [ ] Step 0: Intake — confirm the build is complete; read the spec contracts + .release-config.md (write if absent); detect resume
-- [ ] Step 1: Repo steps, in order and alone — /refactor, then /write-tests
+- [ ] Step 1: Repo steps, in order and alone — refactorer agent (plan → approval → execute), then test-writer agent
 - [ ] Step 2: Audits — spawn audit-security · audit-performance · audit-product in parallel (fresh agents)
 - [ ] Step 3: Handover + briefing — /write-readme, then /manual-test for the human's hands-on pass
 - [ ] Step 4: Triage — rank all findings; file 🔴/🟡 as rework tasks (plan-development amend); ⚪ logged only
@@ -91,15 +92,24 @@ tasks left by a killed run resume where they are. Honor `--only <step>` (run jus
 `--skip-ship` (everything except the cut).
 
 ### Step 1: The repo steps (sequential, alone)
-Invoke **`/refactor`** and, when it is finished, **`/write-tests`** — via the Skill tool, one at a time,
-never in parallel with anything. Both change the working tree; the audits must see the settled tree.
+Run **refactor** and, when it is finished, **write-tests** — each inside its own named agent, one at a
+time, never in parallel with anything. Both change the working tree; the audits must see the settled
+tree. The agents exist so the two longest autonomous runs of the release don't fill the conductor's
+context: each preloads its procedure skill, works in isolation, and hands back a report.
 
-- `refactor` shows its own plan and waits for approval **in both modes** — do not try to pre-approve it
-  for the user. It refuses to work on a red suite; if it stops there, fix that first (a `run-task` job)
-  before continuing the chain.
-- `write-tests` may finish with the suite **red** — that is a *result*, not a failure: it found a real
-  bug and filed a task rather than quietly patching the product. Treat those tasks as findings in
-  Step 4, and do not let a red suite from a filed bug be mistaken for a broken run.
+- **Refactor runs as two spawns of the `refactorer` agent** (`subagent_type: refactorer`). First spawn
+  it in **plan** phase: it checks the safety net (it refuses to work on a red suite — if it stops
+  there, fix that first, a `run-task` job, before continuing the chain), measures, writes the "before"
+  signals into `.dev-skills/release/refactor.md` and returns the ranked plan **without executing
+  anything**. Show that plan to the human and wait for approval **in both modes** — do not try to
+  pre-approve it for the user. Then spawn the agent again in **execute** phase with the approved
+  items; a large plan may be split across several sequential execute spawns, one batch each. It
+  applies them one at a time with the gate after each and finishes the record.
+- **Spawn the `test-writer` agent once** (`subagent_type: test-writer`). It may finish with the suite
+  **red** — that is a *result*, not a failure: it found a real bug and filed a task rather than
+  quietly patching the product. Treat those tasks as findings in Step 4, and do not let a red suite
+  from a filed bug be mistaken for a broken run. Its prune proposals (tests worth deleting) come back
+  in its report — surface them to the human; nothing is deleted silently.
 
 ### Step 2: Audits (parallel fan-out)
 Spawn each enabled audit as a **fresh subagent**: they are independent and read-only → launch them
@@ -167,10 +177,10 @@ live — `/setup-production-environment`, which is never auto-run from here.
 
 ## Rules
 
-1. **Conduct, don't duplicate.** Never refactor, test, audit, fix, or ship yourself — invoke the
-   sub-skills, `build-tasks` for fixes, and `cut-release` for the cut.
-2. **Repo steps sequentially and alone; audits in parallel.** `refactor` then `write-tests`, each
-   finished before the next starts; the read-only audits fan out together.
+1. **Conduct, don't duplicate.** Never refactor, test, audit, fix, or ship yourself — spawn the named
+   agents and the audit subagents, invoke `build-tasks` for fixes and `cut-release` for the cut.
+2. **Repo steps sequentially and alone; audits in parallel.** `refactor` then `write-tests`, each in
+   its own agent and finished before the next starts; the read-only audits fan out together.
 3. **Audits never fix and never install.** They file findings. Code is fixed by `build-tasks`; tooling
    by `setup-dev-environment`; production capabilities by `setup-production-environment`.
 4. **One fix round, then a decision.** Re-run only what was addressed, once; whatever is still open is

@@ -30,7 +30,9 @@ promise you make, it is a fact the tests prove: green before, green after.
 ## Inputs and outputs
 
 - **Reads:** the quality bar — the gate config and the codebase's own conventions
-  (**`../_shared/build-pipeline/quality-gate.md`**) and `.dev-skills/project-setup/verification.md` for
+  (**`../_shared/build-pipeline/quality-gate.md`**), `.dev-skills/project-spec/code-style.md` (the
+  committed conventions, when present — divergence from it is a refactoring signal), and
+  `.dev-skills/project-setup/verification.md` for
   the test/coverage commands. The source tree and git history (for the churn and duplication trend).
 - **Writes:** product code, within the scope. Plus `.dev-skills/release/refactor.md` — what was changed,
   the measured signals before and after, the proof of unchanged behaviour, and the bugs filed. Rework

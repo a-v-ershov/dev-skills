@@ -35,7 +35,8 @@ Everything setup produces, with the detail behind each item in
 - **Repo files** — `.gitignore`, the project `CLAUDE.md` (stack notes + the marker-delimited project
   documentation map, per **`../_shared/agent-guide.md`**), `.claude/settings.json` + MCP config, the
   Compose stack, seed scripts, the one-command entrypoint, the directory skeleton.
-- **The quality gate** — zero-tolerance linter/formatter/type-checker configs and **three targets**:
+- **The quality gate** — zero-tolerance linter/formatter/type-checker configs (incl.
+  `code-style.md`'s `## Enforcement` rows) and **three targets**:
   `make check-fast` (static), `make test-scoped SCOPE=…` (the build loop's run), `make check` (static
   + whole suite, the release pipeline's) — plus a pre-commit hook running the **static** one. **No
   test step in that hook and no turn-end Stop/PostToolUse gate hook**
@@ -91,8 +92,8 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent (standalone
   `make dev`, release on `make down`, lease + stale-reclaim) and/or set up per-run isolation; gitignore
   the lock file.
 - **Give the agent symbol-level code intelligence.** For each typed language, recommend the matching
-  **LSP plugin** from the official marketplace (`typescript-lsp`, `pyright-lsp`, `gopls-lsp`,
-  `rust-analyzer-lsp`, …) and exclude generated/build/vendor trees via `permissions.deny`. Config is
+  **LSP plugin** from the official marketplace (`typescript-lsp`, `pyright-lsp`, …) and exclude
+  generated/build/vendor trees via `permissions.deny`. Config is
   repo-local (auto-applied); plugin installs are gated. Recipes: `references/setup-templates.md` §5.
 - **Keep the project `CLAUDE.md` lean and layered** — root for the big picture, a short per-package
   file with *scoped* commands in a monorepo (`references/setup-templates.md` §7).

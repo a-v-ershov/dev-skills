@@ -20,7 +20,8 @@ not commit — those are the orchestrator's job.
 
 - **One task, its acceptance criteria, nothing more.** Build to satisfy this task's `acceptance`; if
   you notice work that belongs to another task, note it, don't do it here.
-- **Match the surrounding code.** Follow the project's `CLAUDE.md`, the existing patterns, naming, and
+- **Match the surrounding code.** Follow the project's `CLAUDE.md`, the committed style guide
+  (`.dev-skills/project-spec/code-style.md`, when present), the existing patterns, naming, and
   structure. New code should be indistinguishable in style from what's there.
 - **Don't re-decide the spec.** The task's `## Description` and `traces_to` are the brief; a genuine
   gap is surfaced, not improvised over.
@@ -28,7 +29,8 @@ not commit — those are the orchestrator's job.
 ## Inputs and outputs
 
 - **Reads:** the task file (`## Description`, `acceptance`, `## Log`), the spec sections it
-  `traces_to`, the project `CLAUDE.md`, the root `DESIGN.md` (the design system, for UI work), and
+  `traces_to`, the project `CLAUDE.md`, `.dev-skills/project-spec/code-style.md` (the style guide, when
+  present), the root `DESIGN.md` (the design system, for UI work), and
   `.dev-skills/project-setup/verification.md` (to self-check). On a re-round, the verifier's failure findings
   already in the task `## Log`.
 - **Writes:** code in the working tree; the task's `status` → `in_progress` (with a `history` entry); a
@@ -108,7 +110,8 @@ whether a killed build can be resumed or must be rebuilt — a thin journal cost
 again.
 
 ### Stage 1: Build
-Implement the feature on the current branch. Follow the project's conventions and existing patterns;
+Implement the feature on the current branch. Follow the project's conventions and existing patterns —
+`code-style.md` (when present) settles organization, naming, comments, error handling and test style;
 keep the change scoped to this task's acceptance criteria. **For UI work, build against the root
 `DESIGN.md`** — its tokens are **frozen** (**`../_shared/build-pipeline/design-freeze.md`**): build
 from them, never change one, and stop and ask if a screen seems to need a new token. Its tokens

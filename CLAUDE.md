@@ -99,7 +99,11 @@ nothing until the user picks numbers. It is never invoked by `release-product` a
   position, and name failure patterns instead of hedging.
 - **Named agents** (`agents/`, auto-discovered) carry the pipelines' subagent roles: `spec-reviewer` and
   `spec-researcher` are self-contained (a plugin agent can't reliably read `_shared/*.md` at runtime);
-  `implementer`/`verifier`/`ui-prototyper` are thin wrappers that `skills:`-preload their procedure skill.
+  `implementer`/`verifier`/`ui-prototyper`/`refactorer`/`test-writer` are thin wrappers that
+  `skills:`-preload their procedure skill. The release pair exists for context isolation: `refactor`
+  and `write-tests` are the two longest autonomous runs in the set, so `release-product` spawns them
+  as agents (the refactorer twice — plan, then execute — around the human's plan approval, which
+  stays in the main loop) instead of burning its own context on them.
 - **`disable-model-invocation: true`** only where an auto-fire would reach **outside the repository**:
   `setup-production-environment` and `cut-release`. Nothing else carries it. The flag is not free —
   **a skill that another skill's procedure is told to invoke cannot have it**, or the hand-off dies on

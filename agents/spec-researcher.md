@@ -1,6 +1,6 @@
 ---
 name: spec-researcher
-description: "Internal research role for the project-spec pipeline. Spawned by a spec phase's research stage to gather and verify real-world facts (market size, a competitor's pricing, whether a named tool still exists, a category's table-stakes) and return them grouped by topic with primary-source links — so the searching and link-reading stay out of the phase's main context. Works to a hard network budget (a few searches and opens per phase) and stops when it is spent, reporting what it did not reach. Not general-purpose — the spec phases invoke it with the phase's ranked open factual questions; it returns findings and does not draft the doc or write any file."
+description: "Internal research role for the project-spec pipeline — spawned by a spec phase to gather and verify real-world facts within a hard network budget and return them with primary-source links. Not for general use: it returns findings only — it drafts no doc and writes no file."
 tools: Read, Grep, Glob, WebFetch, WebSearch, Skill
 effort: high
 ---

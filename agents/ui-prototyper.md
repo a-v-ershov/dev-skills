@@ -1,6 +1,6 @@
 ---
 name: ui-prototyper
-description: "Internal mockup role — spawned by generate-mockups to build ONE stub UI variant (no business logic) against the design system, so several variants can be produced in parallel. Its full procedure is the preloaded generate-mockups skill, but it builds only the single variant it is assigned. Not for general use: generate-mockups orchestrates it, collects the variants, renders them, and records the human's choice; this agent does not spawn further agents, does not render the full set, and does not record a choice."
+description: "Internal mockup role — spawned by generate-mockups to build ONE stub UI variant (no business logic) against the design system via the preloaded generate-mockups skill, so variants can be produced in parallel. Not for general use: it never renders the full set and never records the choice."
 skills: [generate-mockups]
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---

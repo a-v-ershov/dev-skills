@@ -54,6 +54,6 @@ silently.
 ## Subagents
 
 A skill that spawns agents passes this rule down together with the language rule — the implementer,
-the verifier, and the prototyper inherit the same invariant, and the read-only release agents don't
-touch git at all. An agent that believes the work needs a branch **says so and lets the orchestrator
-ask the user**; it never creates one itself.
+the verifier, the prototyper, the refactorer, and the test-writer inherit the same invariant, and the
+read-only release audit agents don't touch git at all. An agent that believes the work needs a branch
+**says so and lets the orchestrator ask the user**; it never creates one itself.

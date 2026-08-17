@@ -12,7 +12,11 @@ idempotency note · already-present?**:
 - **(A) Global installs** — toolchains, Docker, CLIs the stack needs that aren't on PATH. The plan
   shows the exact command. *Gated — never auto-run.*
 - **(B) Repo scaffolding** — everything under "Repo files", "The quality gate" and "Environment
-  access…" in the Outputs above. *Auto-applicable (repo-local).*
+  access…" in the Outputs above. When the spec has `.dev-skills/project-spec/code-style.md`, its
+  `## Enforcement` section is part of the gate config: wire each tool + rule row into the
+  linter/formatter/type-checker configs behind `make check-fast` (one plan item per tool, provenance
+  = the guide), so the style guide's enforceable subset is enforced by the harness, not by prose.
+  *Auto-applicable (repo-local).*
 - **(C) AI tooling** — `.claude/settings.json` (the **permissions** block the loop needs plus a
   `permissions.deny` list excluding generated/build/vendor trees, and **no gate-running Stop /
   PostToolUse hook**), the **code-intelligence LSP plugin(s)**, the stack plugins / MCP servers the

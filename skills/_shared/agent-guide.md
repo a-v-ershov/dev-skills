@@ -57,6 +57,8 @@ Known artifacts (the `.research.md` files are the depth; each has a short `.summ
 - `.dev-skills/project-spec/user-flows.research.md` — the user flows.
 - `.dev-skills/project-spec/design-decisions.research.md` — design direction.
 - `.dev-skills/project-spec/architecture.research.md` (+ `adr/`) — system architecture + decisions.
+- `.dev-skills/project-spec/code-style.md` — the distilled style guide (organization, naming, comments,
+  errors, tests) code is written against; its `code-style.research.md` pair holds the rationale.
 - `.dev-skills/project-spec/dev-architecture.research.md` — inner loop (local run, testing, AI tooling).
 - `.dev-skills/build-plan/board.md` (+ `tasks/*.md`) — the backlog (what to build next).
 - `.dev-skills/project-setup/verification.md` — run / drive / prove commands.
@@ -86,7 +88,8 @@ absorb) any place where the code and the docs disagree; propagate real changes w
 2. The task you're on under `.dev-skills/build-plan/` — its `## Description`, acceptance criteria, `traces_to`.
 3. The spec sections it traces to (the rows below).
 4. `.dev-skills/project-setup/verification.md` — how to run it and prove the change works.
-5. For UI work, the root `DESIGN.md` — the design system (tokens + rules) to build against.
+5. `.dev-skills/project-spec/code-style.md` — the style guide code and tests are written against.
+6. For UI work, the root `DESIGN.md` — the design system (tokens + rules) to build against.
 
 **Map** — Status: `✓` present · `◦` planned
 
@@ -97,6 +100,7 @@ absorb) any place where the code and the docs disagree; propagate real changes w
 | ✓ | `.dev-skills/project-spec/user-flows.research.md` | User flows |
 | ✓ | `.dev-skills/project-spec/design-decisions.research.md` | Design direction |
 | ✓ | `.dev-skills/project-spec/architecture.research.md` (+ `adr/`) | System architecture + decisions |
+| ✓ | `.dev-skills/project-spec/code-style.md` | Style guide — organization, naming, comments, errors, tests |
 | ✓ | `.dev-skills/project-spec/dev-architecture.research.md` | Local run, testing, AI tooling |
 | ◦ | `.dev-skills/build-plan/board.md` (+ `tasks/*.md`) | Backlog — what to build next |
 | ◦ | `.dev-skills/project-setup/verification.md` | Run / drive / prove commands |

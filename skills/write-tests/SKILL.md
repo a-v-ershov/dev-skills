@@ -29,7 +29,9 @@ a **rework task** and the test stays **red**.
 
 - **Reads:** the **user flows and their states** in `.dev-skills/project-spec/user-flows.research.md`
   and the **acceptance criteria** in `.dev-skills/build-plan/tasks/` (what should be covered);
-  `.dev-skills/project-setup/verification.md` (how to run, drive, seed, and prove); the existing tests.
+  `.dev-skills/project-setup/verification.md` (how to run, drive, seed, and prove);
+  `.dev-skills/project-spec/code-style.md` → `## Testing` (the test conventions, when present); the
+  existing tests.
 - **Writes:** test files; `.dev-skills/release/test-gaps.md` (the map + what was closed); rework tasks
   for the bugs found (via `plan-development` amend). **Never product code** — enforced by a write-scope
   hook, not just by this sentence.

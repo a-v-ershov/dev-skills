@@ -45,7 +45,7 @@ stated, with refusals ("never X"); leave a sub-area out entirely if they have no
 
 - **Stack & libraries** *(→ design-architecture)*: <preferred languages, frameworks, libraries,
   datastores; refusals.>
-- **Code style & idioms** *(→ design-dev-architecture / implement-feature via project CLAUDE.md)*:
+- **Code style & idioms** *(→ define-code-style, distilled into code-style.md)*:
   <naming, formatting, patterns, testing style.>
 - **Design taste** *(→ define-design-decisions)*: <design systems / component libraries / aesthetic
   they admire or hate, "like X but Y".>

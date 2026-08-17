@@ -1,6 +1,6 @@
 ---
 name: design-dev-architecture
-description: "Design the development-time architecture — the inner loop that lets an AI agent build the product fast and verify its own work: how to run the whole product locally (Compose topology, prod-parity stand-ins, seed data), how it is tested in an AI-drivable way (test levels, a selectable scoped run, developer/test scripts, an e2e harness an agent can drive), how concurrent access to the one shared local environment is coordinated, and which AI tooling and custom project-local skills to wire for the stack. Use after design-architecture, as the final step of create-project-spec. Writes dev-architecture.research.md (+ adr/*) plus a short human summary."
+description: "Design the development-time architecture — the inner loop that lets an AI agent build the product fast and verify its own work: how to run the whole product locally (Compose topology, prod-parity stand-ins, seed data), how it is tested in an AI-drivable way (test levels, a selectable scoped run, developer/test scripts, an e2e harness an agent can drive), how concurrent access to the one shared local environment is coordinated, and which AI tooling and custom project-local skills to wire for the stack. Use after define-code-style, as the final step of create-project-spec. Writes dev-architecture.research.md (+ adr/*) plus a short human summary."
 ---
 
 # Design Dev Architecture Skill
@@ -103,7 +103,10 @@ Read `architecture.research.md` and `user-flows.research.md` (and `project-brief
 present, for the user's original intent, constraints and preferences as soft priors). From the
 architecture also take the **deployment decision** (platform, runtime, artifact shape — the local loop
 mirrors it), the **analytics decision** (what is measured and by what, so checks don't fire at the real
-counter), and the **design system** (kit + tokens, so the gate can enforce it). List the components and
+counter), and the **design system** (kit + tokens, so the gate can enforce it). Read
+`.dev-skills/project-spec/code-style.md` if present — the settled conventions: its code-organization
+decision shapes the scoped-test selection convention, its `## Enforcement` section is what
+`setup-dev-environment` wires into the gate, and the project `CLAUDE.md` content points at the guide. List the components and
 their concrete technologies, the production services each maps to (object store, managed database,
 queue, BaaS, …), and the flows that must be testable. Capture the dev-environment constraints:
 developer OS targets, which AI coding agents are actually in use, existing team tooling. If

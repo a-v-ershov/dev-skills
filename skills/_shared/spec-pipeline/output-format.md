@@ -110,7 +110,8 @@ after the whole pipeline (especially an autopilot run):
 
 > <date> · Mode: interactive | autopilot
 > Detail (for the AI): project-brief · idea-validation · product-requirements · user-flows ·
-> design-decisions · architecture · dev-architecture (.research.md, under .dev-skills/project-spec/)
+> design-decisions · architecture · code-style · dev-architecture (.research.md, under
+> .dev-skills/project-spec/)
 
 ## Decide — what I need from you
 <Consolidated across all phases: every "Needs human confirm? = yes" fork, one line each, grouped by

@@ -1,6 +1,6 @@
 ---
 name: spec-reviewer
-description: "Internal adversarial reviewer for the project-spec pipeline. Spawned by a spec phase after it drafts its research doc, to check the draft against its inputs and itself and hunt the gaps it left, then return the findings in its final message. Offline by design — it reads the draft and the prior phases' docs, never the web. Not a general-purpose reviewer — the spec phases (gather-context, validate-idea, define-product-requirements, create-user-flows, define-design-decisions, design-architecture, design-dev-architecture) invoke it with a draft path and that phase's specific probes; it writes no file, never edits the draft, and never runs the phase."
+description: "Internal adversarial reviewer for the project-spec pipeline — spawned by a spec phase to check its draft against its inputs, offline (never the web), and return findings. Not for general use: it writes no file, never edits the draft, never runs the phase."
 tools: Read, Grep, Glob
 effort: high
 ---
