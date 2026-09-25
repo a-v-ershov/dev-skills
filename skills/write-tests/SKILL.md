@@ -2,12 +2,6 @@
 name: write-tests
 description: "Map where the product is NOT protected by an automated test, then close the top of that list with honest tests. Use in the release phase (run by release-product, after refactor) or standalone whenever the test net needs checking. It builds the gap map — what should be covered against what is covered, read from the tests' contents rather than their names, with mutation testing to expose a suite that executes lines without catching bugs — ranks it by risk, and writes the top ones at the cheapest level that proves each, keeping them fast and selectable. Red-first: a test is not accepted until it has been seen going red."
 argument-hint: "[<feature / flow / task-id> | empty = whole product]"
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/e2e/*' '*playwright.config.*' '*vitest.config.*' '*jest.config.*' '*pytest.ini' '*conftest.py' '*/tsconfig*.json' '*eslint.config.*' '*.eslintrc*' '*/.dev-skills/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Write Tests Skill
@@ -126,9 +120,11 @@ Run each new test and **see it red on exactly the behaviour it claims to check**
   break the checked behaviour temporarily (flip the condition, corrupt the input, mock the error) for a
   single run, see the red, and **put everything back**.
 
-That temporary break is the **only** touch of product code this skill is allowed, and it must be
-reverted in the same turn — **check the diff, not your memory**. A test accepted green without this
-proof is decoration.
+That temporary break is the **only** touch of product code this skill is allowed, and **only ever
+temporarily** — no hook enforces this scope, the rule does: one minimal break at a time, revert it
+immediately after the red run (`git restore <file>` or undo the exact edit), then **prove the revert
+with `git diff`, not your memory** — product code and manifests must show no change; only test files
+and `.dev-skills/` may change permanently. A test accepted green without this proof is decoration.
 
 ### Stage 6: Triage the red — the product's code stays untouched
 Red means one of two things:

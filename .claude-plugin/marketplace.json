@@ -12,7 +12,7 @@
     {
       "name": "dev-skills",
       "source": "./",
-      "description": "Three coding-workflow pipelines (skills + agents) for Claude Code, from raw idea to cut release: project-spec (create-project-spec), build (build-tasks), and release (release-product) — plus setup-production-environment for going live, commit, and audit-skills (a by-hand retrospective on how the skills themselves behaved). Each skill responds and thinks in whatever language you address it in."
+      "description": "Three coding-workflow pipelines (skills + agents) for Claude Code, from raw idea to cut release: project-spec (create-project-spec), build (build-tasks), and release (release-product) — plus setup-production-environment for going live, commit, generate-mockups, optimize-dev (a periodic hygiene pass: backlog grooming + test-suite cost audit), and audit-skills (a by-hand retrospective on how the skills themselves behaved). Each skill responds and thinks in whatever language you address it in."
     }
   ]
 }

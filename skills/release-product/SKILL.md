@@ -1,6 +1,6 @@
 ---
 name: release-product
-description: "Take a built, verified product to a cut release. Use after build-tasks, as the third pipeline. A thin orchestrator: first the two steps that change the repository, strictly in order — refactor, then write-tests — then the read-only audits as fresh independent subagents in PARALLEL (audit-security, audit-performance, audit-product), then write-readme and manual-test. It ranks findings by severity, files blockers and majors as coarse rework tasks, drives ONE build-tasks fix run and re-runs the affected audits ONCE; anything still open is needs_human, never another loop."
+description: "Take a built, verified product to a cut release. Use after build-tasks, as the third pipeline. A thin orchestrator: first the two steps that change the repository, strictly in order — refactor, then write-tests — then the read-only audits as fresh independent subagents in PARALLEL (audit-security, audit-performance, audit-product, audit-dependencies, plus simplify-product, whose proposals are filed only on the human's pick and never block), then write-readme and manual-test. It ranks findings by severity, files blockers and majors as coarse rework tasks, drives ONE build-tasks fix run and re-runs the affected audits ONCE; anything still open is needs_human, never another loop."
 argument-hint: "[--only <step>] [--skip-ship]"
 ---
 
@@ -16,10 +16,11 @@ The chain:
 ```
 1. refactor            (refactorer agent — alone, first: plan → human approval → execute; everything downstream reads the cleaned tree)
 2. write-tests         (test-writer agent — alone, second: the audits should run against the real net)
-3. audit-security · audit-performance · audit-product   ← fresh agents, IN PARALLEL (read-only)
+3. audit-security · audit-performance · audit-product · audit-dependencies · simplify-product   ← fresh agents, IN PARALLEL (read-only; simplify-product returns proposals, not findings)
 4. write-readme        (the handover document — refreshed against the tree as it now stands)
 5. manual-test         (read-only briefing for the human)
    → collect findings → rank (severity-rubric) → file 🔴/🟡 as rework tasks
+   → present simplify-product's numbered proposals → file ONLY the picked ones as rework
    → ONE build-tasks run → re-run ONLY the affected audits, ONCE
    → still open?  → needs_human, surface it, stop
    → no open 🔴?  → cut-release (version + changelog + notes + tag + PR, always confirmed)
@@ -73,7 +74,7 @@ Read `.dev-skills/release/.release-config.md` for `mode` and the enabled `steps`
 ```
 - [ ] Step 0: Intake — confirm the build is complete; read the spec contracts + .release-config.md (write if absent); detect resume
 - [ ] Step 1: Repo steps, in order and alone — refactorer agent (plan → approval → execute), then test-writer agent
-- [ ] Step 2: Audits — spawn audit-security · audit-performance · audit-product in parallel (fresh agents)
+- [ ] Step 2: Audits — spawn audit-security · audit-performance · audit-product · audit-dependencies · simplify-product in parallel (fresh agents)
 - [ ] Step 3: Handover + briefing — /write-readme, then /manual-test for the human's hands-on pass
 - [ ] Step 4: Triage — rank all findings; file 🔴/🟡 as rework tasks (plan-development amend); ⚪ logged only
 - [ ] Step 5: One fix round — build-tasks fixes the rework → re-run ONLY the affected audits, once → still open = needs_human
@@ -114,7 +115,10 @@ context: each preloads its procedure skill, works in isolation, and hands back a
 ### Step 2: Audits (parallel fan-out)
 Spawn each enabled audit as a **fresh subagent**: they are independent and read-only → launch them
 together. Each reads its contract, probes, proves, ranks, writes `.dev-skills/release/<noun>-audit.md`,
-and returns its verdict (clean / N blockers / N majors). **A sub-skill not yet available in this
+and returns its verdict (clean / N blockers / N majors). **`simplify-product` rides the same fan-out
+but is not an audit**: it writes `.dev-skills/release/simplification-proposals.md` and returns a
+proposal count («N proposals, none blocking») — no severity, nothing filed; you carry its numbered
+proposals to Step 4. **A sub-skill not yet available in this
 collection is a stop condition** regardless of mode: report it and let the user decide whether to skip
 that step or build the skill first.
 
@@ -144,6 +148,12 @@ backlog still exceeds **15 open tasks**, say so and confirm the count with the h
 handing `build-tasks` a wall of one-finding tasks. In interactive, confirm
 before the fix run; before any **destructive** backlog change (cancelling or reopening a `done` task)
 always stop, in both modes.
+
+**Simplification proposals are the human's call, not yours.** Present `simplify-product`'s numbered
+proposals alongside the combined picture and file **only the numbers the human picks** as rework tasks
+(the skill filed nothing itself). In autopilot nothing is filed at all — carry the proposals into the
+release summary and its «What you should do» instead. They carry no severity, never count as 🔴/🟡,
+and never block the cut.
 
 A finding that says production is missing a capability — no hard spend cap, no error tracking, no rate
 limit configured — is **not** a rework task for the code: it goes to `/setup-production-environment`.
@@ -187,11 +197,13 @@ live — `/setup-production-environment`, which is never auto-run from here.
    `needs_human`. No loop, no counter.
 5. **Only a 🔴 blocks the cut.** Majors are filed, not blocking; minors are logged. Severity follows the
    shared rubric, against the contract — not taste.
-6. **The cut always stops for the human**, in both modes, and stops before production.
-7. **Putting the product live is not part of this run** — `setup-production-environment` is invoked by
+6. **Simplification proposals are filed only on the human's explicit pick**, in both modes; they carry
+   no severity and never block the cut. Unpicked proposals go into the summary, not the backlog.
+7. **The cut always stops for the human**, in both modes, and stops before production.
+8. **Putting the product live is not part of this run** — `setup-production-environment` is invoked by
    hand, deliberately.
-8. **Resume, don't restart.** Reuse a clean verdict and in-flight rework; never re-run a settled step or
+9. **Resume, don't restart.** Reuse a clean verdict and in-flight rework; never re-run a settled step or
    rebuild a finished fix without reason.
-9. **release-summary.md is always rolled up** from the step outputs and the cut result; never
+10. **release-summary.md is always rolled up** from the step outputs and the cut result; never
    hand-authored from scratch.
-10. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
+11. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.

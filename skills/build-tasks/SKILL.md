@@ -1,6 +1,6 @@
 ---
 name: build-tasks
-description: "Work through the development plan: take tasks from .dev-skills/build-plan/ one at a time and run each through run-task. The order is deterministic, not a judgement call — the ready task (status todo, all blocked_by done) with the lowest id; no parallel tasks, one working tree. It refuses to start when the spec has moved ahead of the plan and offers plan-development first, skips tasks another session has claimed, and never retries a needs_human task. By default it runs straight through, pausing only for a real reason; one-at-a-time and thinned acceptance are opt-in. Resumable — the backlog is the source of truth. Use after plan-development. It writes no code and duplicates no cycle."
+description: "Work through the development plan: take tasks from .dev-skills/build-plan/ one at a time and run each through run-task, in deterministic order — the ready task with the lowest id, no parallel tasks, one working tree. It refuses to start when the spec has moved ahead of the plan, skips tasks another session has claimed, and never retries a needs_human task. Resumable — the backlog is the source of truth. Use after plan-development. It writes no code and duplicates no cycle."
 argument-hint: "[one-at-a-time | run N | review every N | <task-id> to start from]"
 ---
 

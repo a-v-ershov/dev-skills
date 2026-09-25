@@ -22,6 +22,7 @@ phase wrote it.
 | `audit-security` | the STRIDE-lite threat model + trust boundaries in `.dev-skills/project-spec/architecture.research.md`, plus the production surfaces the deployment decisions imply |
 | `audit-performance` | the quality-attribute scenarios (latency, throughput, cost, scale) in `.dev-skills/project-spec/architecture.research.md` |
 | `audit-product` | the user flows + their acceptance criteria in `.dev-skills/project-spec/user-flows.research.md`, **and** the accessibility decisions in `design-decisions.research.md` (both are proven by driving the same running product) |
+| `audit-dependencies` | the dependency manifests + lockfiles against the ecosystems' advisory databases, and the stack decisions/constraints in `architecture.research.md` — the one fully static audit: it needs no running stack and no env lease |
 
 If the contract doc is missing, the audit says so and proves against sensible defaults for its domain,
 recording the gap — it does **not** invent a contract and pass against it silently.

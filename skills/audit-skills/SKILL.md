@@ -1,6 +1,6 @@
 ---
 name: audit-skills
-description: "Audit the skills, slash commands and subagents that ran in this Claude Code session and propose numbered edits to the files that own each rule. Invoked by hand; never part of the release chain. It reads the session transcript (scan_session.py) plus the live conversation and works out how each target actually behaved: steps got wrong or skipped, gates passed silently, work repeated, questions it should not have asked, needlessly slow calls, invariants of this set broken (one branch, the user's language, write scope, English commit messages), artifacts that do not match their templates. It applies nothing until the caller names numbers, and even then writes only skill, agent and command files."
+description: "Audit the skills, slash commands and subagents that ran in this Claude Code session and propose numbered edits to the files that own each rule. Invoked by hand; never part of the release chain. It reads the session transcript plus the live conversation and works out how each target actually behaved — wrong or skipped steps, silent gates, repeated work, broken invariants of the set. It proposes only: nothing is applied until the caller names numbers, and even then it writes only skill, agent and command files."
 argument-hint: "[<skill or agent name>] [--session <id>]"
 hooks:
   PreToolUse:
@@ -70,7 +70,7 @@ job and the user's call.
 ```
 - [ ] Stage 0: Evidence — run scan_session.py; read the digest alongside the conversation
 - [ ] Stage 1: Sources — read every target's file + the _shared method it inherits; note who owns each file
-- [ ] Stage 2: Lenses — work the rubric's six lenses + the four for this set; every finding carries a fact
+- [ ] Stage 2: Lenses — work the rubric's seven lenses + the four for this set; every finding carries a fact
 - [ ] Stage 3: Artifacts — compare what the run produced against the template it was written from
 - [ ] Stage 4: Proposals — turn each finding into a specific edit to the file that owns the rule
 - [ ] Stage 5: Rank + report (max 8), then STOP — the report is the last message of the turn
@@ -134,9 +134,9 @@ Note who owns each file:
 
 ### Stage 2: Lenses
 
-`Read` `$SKILL_DIR/references/rubric.md` and work through its six lenses — correctness, procedure
-drift, triggering, redundancy, speed, user friction — each with the signals that betray it and the
-evidence that proves it. That file also holds the severity scale and the full report template.
+`Read` `$SKILL_DIR/references/rubric.md` and work through its seven lenses — correctness, procedure
+drift, triggering, redundancy, speed, user friction, simplicity — each with the signals that betray
+it and the evidence that proves it. That file also holds the severity scale and the full report template.
 
 When any target belongs to a skill set with shared methodology and pipelines (this one does), also
 `Read` `$SKILL_DIR/references/dev-skills-lenses.md`: the invariants of the set, artifact fidelity,

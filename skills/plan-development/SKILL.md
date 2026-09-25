@@ -1,6 +1,7 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build phase: it reads the committed feature set, the user flows, the architecture and the dev-architecture, and emits a kanban backlog under .dev-skills/build-plan/ — one markdown file per task plus a derived board.md and a short plan.summary.md. Tasks are coarse on purpose: the backlog holds at most 15 open ones. When the repo already has working code it plans only the gap. Re-run after the spec changes and it amends instead — task deltas, never a regenerate; re-run with 'consolidate' and it merges the open backlog back under the ceiling. Run before build-tasks."
+description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment and before build-tasks: it reads the spec and emits a kanban backlog under .dev-skills/build-plan/ — coarse tasks on purpose, at most 15 open. When the repo already has working code it plans only the gap. Re-run after a spec change it amends (task deltas, never a regenerate); re-run with 'consolidate' it merges the open backlog back under the ceiling."
+argument-hint: "[consolidate]"
 ---
 
 # Plan Development Skill

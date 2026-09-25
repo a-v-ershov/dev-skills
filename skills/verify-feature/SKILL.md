@@ -1,6 +1,6 @@
 ---
 name: verify-feature
-description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so it carries no bias from the implementer. It reads the project's run/drive/prove commands from verification.md and the task's criteria, authors and runs adversarial automated tests for them (committed — the regression net), drives the real running stack and proves observable outcomes, never trusting 'it ran'. Tests go at the cheapest level that proves the criterion, at most one e2e per task. Writes only tests, never the implementation, and writes its findings into the task log as it goes."
+description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by run-task as a separate, fresh agent so it carries no bias from the implementer. It authors and runs adversarial automated tests, drives the real running stack and proves observable outcomes, never trusting 'it ran'. Writes only tests, never the implementation."
 argument-hint: "[task-id]"
 hooks:
   PreToolUse:

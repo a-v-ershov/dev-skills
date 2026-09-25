@@ -1,7 +1,7 @@
 # Release config & modes (shared — release pipeline)
 
 Settings that govern the release phase. `release-product` sets them once; each release skill (`refactor`,
-`write-tests`, `audit-*`, `manual-test`, `cut-release`) reads them and adapts. Every skill is also
+`write-tests`, `audit-*`, `simplify-product`, `manual-test`, `cut-release`) reads them and adapts. Every skill is also
 runnable standalone, so it falls back gracefully when no config exists.
 
 ## The settings
@@ -12,10 +12,11 @@ runnable standalone, so it falls back gracefully when no config exists.
   - `autopilot`: resolve ordinary forks itself and **log each** (in the step's findings doc), running the
     chain back-to-back — **except** the three things that always stop (below).
 - **`steps`** — which of the release chain's steps are enabled. Default: all applicable, in this fixed
-  order: `refactor` → `write-tests` → (`audit-security` · `audit-performance` · `audit-product`, in
-  parallel) → `manual-test`. A step self-skips and records why when it does not apply (e.g. the
-  accessibility part of `audit-product` on a product with no UI, `audit-performance` with no measurable
-  scenario).
+  order: `refactor` → `write-tests` → (`audit-security` · `audit-performance` · `audit-product` ·
+  `audit-dependencies` · `simplify-product`, in parallel) → `manual-test`. A step self-skips and
+  records why when it does
+  not apply (e.g. the accessibility part of `audit-product` on a product with no UI,
+  `audit-performance` with no measurable scenario, `audit-dependencies` with no dependency manifest).
 
 There is **no iteration setting.** Findings get one fix round and one re-run of the affected audits;
 whatever is still open then is `needs_human` (`audit-method.md` → "One round, then a decision").
@@ -26,7 +27,7 @@ whatever is still open then is `needs_human` (`audit-method.md` → "One round, 
 # Release pipeline config
 
 - mode: interactive            # interactive | autopilot
-- steps: refactor, write-tests, security, performance, product, manual-test
+- steps: refactor, write-tests, security, performance, product, dependencies, simplify, manual-test
 ```
 
 ## How a release skill uses it

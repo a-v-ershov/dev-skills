@@ -121,7 +121,7 @@ release. Config in `.dev-skills/release/.release-config.md`.
 The chain has two halves. Steps 1–2 **change the repository**, so they run **sequentially and alone** —
 each inside its own preloading agent (`refactorer`, spawned twice around the human's plan approval,
 then `test-writer`), so the two longest autonomous runs don't fill the conductor's context.
-Steps 3–5 are **read-only**, so (uniquely here) they **fan out in parallel**; steps 6–7 then write the
+Steps 3–7 are **read-only**, so (uniquely here) they **fan out in parallel**; steps 8–9 then write the
 handover document and brief the human. **This is also where the
 whole test suite is run** — `refactor` around its steps, `write-tests` at the end, `cut-release` before
 the cut — because the build loop only ever ran each task's own selection. Findings are **filed as
@@ -135,14 +135,18 @@ tooling is `setup-dev-environment`'s job, production capabilities are `setup-pro
 | 3 | `audit-security` | the STRIDE-lite threat model + the production surfaces (caps, RLS, prod config) → `.dev-skills/release/security-audit.md` |
 | 4 | `audit-performance` | the quality-attribute scenarios → `.dev-skills/release/performance-audit.md` |
 | 5 | `audit-product` | the user flows end-to-end (cross-feature) **and** the WCAG target on the same journeys → `.dev-skills/release/qa-report.md` |
-| 6 | `write-readme` | The handover document — the verified clone→run path, what deploying actually takes today, what the receiver must bring, how to reach a clean state → `README.md` |
-| 7 | `manual-test` | Read-only briefing for the human's hands-on pass — starting with everything accepted as `review: auto` → `.dev-skills/release/manual-test-brief.md` |
+| 6 | `audit-dependencies` | the dependency manifests + lockfiles vs the ecosystems' advisory databases — vulnerabilities ranked by reachability, unmaintained/unused/undeclared packages, lockfile drift → `.dev-skills/release/dependency-audit.md` |
+| 7 | `simplify-product` | the after-build SHRINK — numbered proposals to drop / merge / simplify features, flow steps, speculative code generality and the product's wording (KPI: easier to understand, easier to use); **proposals, not findings** — filed as rework only on the human's pick, never blocking → `.dev-skills/release/simplification-proposals.md` |
+| 8 | `write-readme` | The handover document — the verified clone→run path, what deploying actually takes today, what the receiver must bring, how to reach a clean state → `README.md` |
+| 9 | `manual-test` | Read-only briefing for the human's hands-on pass — starting with everything accepted as `review: auto` → `.dev-skills/release/manual-test-brief.md` |
 | — | `cut-release` | clean tree + no open 🔴 → docs + version bump + changelog + tag/commit/PR (always confirmed; stops before production) |
 
 `release-product` runs the chain, ranks findings by severity, files 🔴/🟡 as `rework` tasks, drives
 **one** `build-tasks` run to fix them and re-runs only the affected audits **once**; anything still open
 then is `needs_human` — there is no iteration counter. When no 🔴 remains it invokes `cut-release`. Only
-a 🔴 blocks the cut; the cut is the one outward-facing step and always confirms.
+a 🔴 blocks the cut; the cut is the one outward-facing step and always confirms. `simplify-product`'s
+proposals sit outside severity entirely: only the ones the human picks become rework tasks, and none
+of them ever block.
 
 **Putting the product live is not part of this run.** `setup-production-environment` is invoked by hand.
 
@@ -169,6 +173,22 @@ lives, so the audits can stay pure audits.
   applied until the caller names numbers, and even then it can write nothing but skill/agent/command
   files (write-scope guard). Not a release audit — it audits the tooling, not the product, and
   `release-product` never invokes it.
+- **`optimize-dev`** — *(by hand, time to time)* the periodic development-hygiene pass: a thin
+  conductor that invokes `groom-backlog` and then `audit-tests`, passes `autopilot` through, and merges
+  the two reports into one; a half whose subject is absent (no backlog / no tests) is skipped with a
+  one-line announcement. `[backlog | tests]` narrows it to one half.
+- **`groom-backlog`** — sizes every open task (S/M/L/XL) and merges small or same-cause `todo` tasks
+  into coherent larger ones per `planning-method.md`'s consolidation rules (only `todo`, nothing lost,
+  blockers recomputed, ≤15 open); merge plan confirmed before writing in both modes unless invoked
+  with `autopilot`. Merges only — never plans, splits, or builds.
+- **`audit-tests`** — measures the suite against the budgets in `verification.md` `## Test budgets`
+  (defaults: routine run ≤30 s with **no** e2e; ≤10 e2e total, one per journey, behind an explicit
+  release-time target; full suite ≤5 min) and takes the cost out: shared fixtures instead of per-test
+  resource creation, test-cost settings for slow-by-design primitives, e2e demoted to the cheapest
+  proving level, run tiers split so the budgets are structural (scripts / Makefile / CI). It also
+  revises the quarantine: every skip/xfail marker needs a live task id, and a marker is lifted only by
+  re-running its test green. Deletion proposed never silent; assertions never weakened; product
+  slowness is filed as rework, not patched. Writes `.dev-skills/optimize/test-audit.md`.
 - **`generate-mockups`** — on demand, generate several stub UI variants (no logic) for a screen and
   render them against the `DESIGN.md` so you can compare and choose; records the chosen one as a
   design-note on the task. It explores arrangement within the settled design system — never alternative systems.
@@ -198,9 +218,11 @@ lives, so the audits can stay pure audits.
   `setup-production-environment` (all committed).
 - **Root `DESIGN.md`** *(UI projects)* — the committed, tool-neutral design system (tokens + rules)
   `setup-dev-environment` writes and `implement-feature` / `generate-mockups` read.
+- `.dev-skills/optimize/` — the periodic hygiene pass's findings (`test-audit.md` from `audit-tests`);
+  committed like the rest.
 - `.dev-skills/release/` — the release phase's findings (`refactor.md`, `test-gaps.md`, the per-audit
-  docs, `manual-test-brief.md`) + `release-summary.md` + `.release-config.md` (committed); the audit
-  trail of why a release was, or wasn't, cut.
+  docs, `simplification-proposals.md`, `manual-test-brief.md`) + `release-summary.md` +
+  `.release-config.md` (committed); the audit trail of why a release was, or wasn't, cut.
 - The project's **root `CLAUDE.md`** carries a marker-delimited *project documentation map* indexing the
   above and the order to read them before changing code; the spec/setup/plan/release skills keep it current.
 

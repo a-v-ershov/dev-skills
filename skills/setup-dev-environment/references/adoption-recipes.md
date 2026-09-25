@@ -4,7 +4,7 @@ When `design-decisions` chose to **adopt an existing UI kit** (rather than go be
 design system — your job is to **codify its public tokens into `DESIGN.md`** so the agent applies the
 kit's identity consistently, then offer 1–2 variations as alternate candidates. Pull token values from
 the kit's **official** docs/specs (cite the source); do not invent values, and do not install the kit
-here (that's `setup-dev-environment`/backlog work — `DESIGN.md` stays tool-neutral).
+in this step (installation happens earlier in this skill's run — `DESIGN.md` stays tool-neutral).
 
 General recipe (every kit):
 1. Map the kit's **color roles** → `colors` (semantic keys: background/surface/primary/accent/error/…).

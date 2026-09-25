@@ -1,6 +1,6 @@
 ---
 name: run-task
-description: "Drive ONE task through the full development cycle: the implementer builds it, a separate fresh verifier independently proves the acceptance criteria, its findings go back for exactly one fix round, the static gate plus this task's scoped test selection must be green (the whole suite is never run here), the human accepts the work or it is auto-accepted, and a checkpoint commit carrying the task id lands. Two entry points: a task id from the backlog, or a free-form request it files itself with origin: adhoc. A small, obvious change can take the quick lane instead. Anything the single fix round leaves open escalates to needs_human. Sequential, single working tree, current branch."
+description: "Drive ONE task through the full development cycle: implement, independent verification by a separate fresh agent, exactly one fix round, the static gate plus this task's scoped tests green (the whole suite is never run here), human or auto acceptance, and a checkpoint commit carrying the task id. Takes a backlog task id or a free-form request it files as origin: adhoc; a small, obvious change can take the quick lane. Anything left open escalates to needs_human. Sequential, single working tree, current branch."
 argument-hint: "[<task-id> | <free-form request>]"
 ---
 

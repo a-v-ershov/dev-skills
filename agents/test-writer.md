@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: "Internal release-pipeline role — spawned once by release-product, after the refactorer, to run the preloaded write-tests skill in an isolated context: map the coverage gaps, close the top ones red-first, file real bugs as rework tasks with their tests left red. Not for general use: it never edits product code (the skill's write-scope hook enforces it) and returns prune proposals instead of deleting tests."
+description: "Internal release-pipeline role — spawned once by release-product, after the refactorer, to run the preloaded write-tests skill in an isolated context: map the coverage gaps, close the top ones red-first, file real bugs as rework tasks with their tests left red. Not for general use: it never changes product code permanently (the skill's red-first proof may break it for a single run, reverted immediately and proven with git diff) and returns prune proposals instead of deleting tests."
 skills: [write-tests]
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch
 ---

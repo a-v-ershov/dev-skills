@@ -1,7 +1,7 @@
 # Closing report format (shared — all three pipelines)
 
-Every skill in this set ends its run with a report to a human who did not watch it work. Two rules
-govern that report, and they exist because both were violated repeatedly in the field.
+Every skill in this set ends its run with a report to a human who did not watch it work. The rules
+below govern that report; each exists because it was violated repeatedly in the field.
 
 ## 1. End with «What you should do»
 
@@ -49,7 +49,24 @@ Time: build 36m · verify 35m39s · fix 9m07s · solve 20m04s · waiting on you 
 - **Report the numbers flat, with no verdict attached.** "Slow" is a judgement the human makes; your
   job is to make the arithmetic checkable.
 
-## 3. Status on demand, not only at the end
+## 3. Simpler to understand beats more complete
+
+The KPI of the whole report, not just its last block: **the human understands the result on one
+read, without a follow-up question.** Completeness lives in the artifact doc; the report is the
+briefing.
+
+- **Lead with the outcome.** The first line answers "what happened / what did you find" — the verdict
+  before the journey. A report that opens with method has buried its result.
+- **Detail that does not change what the human does next goes to the doc, not the report.** The
+  committed findings/summary doc is the record; the report links to it instead of retelling it.
+- **The set's vocabulary appears only where the glossary requires an anchor.** Everywhere else, say
+  what things mean for the reader — same rule the «What you should do» block already follows, applied
+  to the rest of the text.
+
+Why: the reports that triggered rule 1 were not missing information — they were complete, accurate,
+and unreadable. Length spent on what the human cannot act on is what buried the one line they needed.
+
+## 4. Status on demand, not only at the end
 
 A long run must be able to answer "what are you doing right now?" without finishing first. That means
 state is written **before** the expensive step starts, not after it ends — a task marked `in_progress`

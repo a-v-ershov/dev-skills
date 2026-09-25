@@ -1,4 +1,4 @@
-# Audit rubric — six lenses, the severity scale, and the report template
+# Audit rubric — seven lenses, the severity scale, and the report template
 
 Used by `audit-skills` in Stages 2–5. Read it before writing findings. The four extra lenses for a
 pipelined skill set (invariants, artifacts, orchestration, placement) are in
@@ -26,9 +26,9 @@ The right-hand column is where bad findings come from. Every claim needs both a 
 
 ---
 
-## The six lenses
+## The seven lenses
 
-Go through all six for each target. Most sessions yield findings in two or three of them.
+Go through all seven for each target. Most sessions yield findings in two or three of them.
 
 ### 1. Correctness — it did the wrong thing
 
@@ -125,6 +125,26 @@ in one run; a gate that asked for approval of something the config had already s
 
 An interrupt is the strongest signal in the whole digest — the user watched it going wrong and
 stopped it. Always chase one down to what the file let it do.
+
+### 7. Simplicity — its output was harder to use than the work it delivered
+
+The simplification KPI applied to the tooling itself: **the skill's result should be easier to
+understand, and the skill easier to use, than the run before it.** The skill did its job, but the
+human had to work to consume it — or the skill carries machinery no run has ever needed.
+
+**Signals:** the user asking "so what do I do?" / "what did you actually change?" after a report
+that formally has its «What you should do» block; a report longer than the work it describes, or
+that opens with method instead of the outcome; a procedure stage whose output nothing downstream
+reads; an argument or config option no session has ever passed; two sections of the artifact
+carrying the same content in different words.
+
+**Proves it:** the user turn or the artifact section quoted, **plus the shorter form** that would
+have carried the same decision — a simplicity finding you cannot state as "replace this with this
+smaller thing" is taste, not a finding.
+
+Proposals from this lens **remove or merge; they do not add**. A simplicity fix that grows the file
+has failed its own test — prefer deleting the unused option, collapsing the duplicate section,
+tightening the report template.
 
 ---
 

@@ -63,7 +63,8 @@ runs for you. See [`skills/CLAUDE.md`](skills/CLAUDE.md) for the full map.
   **only the task's own tests**, never the whole suite.
 - **Release** (`release-product`) — built product → cut release. Two halves: `refactor` then
   `write-tests` **change the repo, sequentially and alone**; then the read-only audits **fan out in
-  parallel** and `manual-test` briefs the human. **This is where the whole suite (`make check`) runs.**
+  parallel** — `simplify-product` rides along, returning never-blocking simplification proposals the
+  human picks from — and `manual-test` briefs the human. **This is where the whole suite (`make check`) runs.**
   Findings are filed as coarse rework tasks (never fixed in place), one fix round, one re-audit, then
   `cut-release` (gated, stops before production).
 - **Production** (`setup-production-environment`) — a fourth, manually-invoked step, never auto-run:
@@ -73,10 +74,10 @@ runs for you. See [`skills/CLAUDE.md`](skills/CLAUDE.md) for the full map.
   what lets the audits stay pure audits: **an audit never installs or configures anything.**
 
 Skills are **verbs**; their outputs are **nouns**. All artifacts are committed project documentation
-under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
+under `.dev-skills/` (`project-spec/`, `build-plan/`, `project-setup/`, `optimize/`, `release/`) plus the root `DESIGN.md`
 (UI projects). `.dev-skills/build-plan/mockups/` is the only gitignored item.
 
-One skill sits **outside all three**: **`audit-skills`** is a manually-invoked meta-utility that audits
+One skill audits the set itself: **`audit-skills`** is a manually-invoked meta-utility that audits
 the *tooling*, not the product — it reads the session transcript (`scan_session.py`) plus the artifacts a
 run produced and proposes numbered edits to the skill / agent / `_shared` files that ran, applying
 nothing until the user picks numbers. It is never invoked by `release-product` and files no rework tasks.
@@ -105,22 +106,29 @@ nothing until the user picks numbers. It is never invoked by `release-product` a
   as agents (the refactorer twice — plan, then execute — around the human's plan approval, which
   stays in the main loop) instead of burning its own context on them.
 - **`disable-model-invocation: true`** only where an auto-fire would reach **outside the repository**:
-  `setup-production-environment` and `cut-release`. Nothing else carries it. The flag is not free —
+  `setup-production-environment`. Nothing else carries it. The flag is not free —
   **a skill that another skill's procedure is told to invoke cannot have it**, or the hand-off dies on
   `cannot be used with Skill tool`: `run-task` invokes `commit` and `setup-dev-environment`,
-  `build-tasks` invokes `run-task`, `release-product` invokes `build-tasks` and `cut-release`. That last
-  pair is the one live exception — `release-product` must read `cut-release/SKILL.md` and follow it
-  rather than call it. In-repo side effects (a commit, a refactor, a whole build run) are guarded by the
-  user's permission prompts, not by this flag.
+  `build-tasks` invokes `run-task`, `release-product` invokes `build-tasks` and `cut-release` — which is
+  why `cut-release` carries no flag: its own always-confirm gate plus the user's permission prompts
+  guard the outward-facing cut. In-repo side effects (a commit, a refactor, a whole build run) are
+  guarded by the user's permission prompts, not by this flag.
 - **Write-scope guard hooks** (declared in a skill's frontmatter, running `scripts/guard-write-scope.sh`)
-  turn a prose invariant into a harness guarantee: `verify-feature` and `write-tests` write tests +
-  `.dev-skills/` only; `generate-mockups` the scratch mockups tree only; each release `audit-*`
+  turn a prose invariant into a harness guarantee: `verify-feature` writes tests +
+  `.dev-skills/` only; `generate-mockups` the scratch mockups tree only; each release `audit-*` and `simplify-product`
   `.dev-skills/**` + the backlog only; `manual-test` `.dev-skills/**` only; `audit-skills` skill / agent /
-  command / `CLAUDE.md` files only; `write-readme` `README*.md` + `.dev-skills/**` only — never product
-  code, never the version-carrying manifests. The test-authoring roles are additionally allowed the
+  command / `CLAUDE.md` files only; `write-readme` `README*.md` + `.dev-skills/**` only;
+  `groom-backlog` `.dev-skills/**` only — never product
+  code, never the version-carrying manifests. One deliberate exception: `audit-tests` is additionally
+  allowed the **run entry points** (`Makefile`/`justfile`, `package.json` scripts, `pyproject.toml`,
+  CI workflows) on top of the test-authoring surface — splitting the run tiers is its job, and a
+  budget nobody wires into the commands is prose. The test-authoring roles are additionally allowed the
   **test harness's own configuration** (`playwright.config.*`, `vitest`/`jest` config, `pytest.ini`,
   `conftest.py`, `tsconfig*.json`, the eslint config, `e2e/`): a role that may write a test but not
-  register it with the runner has a broken permission, not a smaller one.
+  register it with the runner has a broken permission, not a smaller one. And `write-tests` carries
+  **no guard hook at all** — deliberately: its red-first proof (Stage 5) must temporarily break product
+  code, which no glob list can allow safely; the invariant there is prose — one minimal break, reverted
+  immediately, the revert proven with `git diff`.
   **`allowed-tools` is deliberately unused** — we keep the user's permission prompts intact.
 
 ## Authoring language

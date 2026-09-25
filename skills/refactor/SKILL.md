@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: "Improve the internal structure of the code without changing what the product does. Use in the release phase (run first by release-product, before the audits) or standalone whenever a part of the codebase has become hard to work with. It measures the rot a per-commit gate cannot see across the whole tree (duplication, oversized files, dead code, suppression debt) and turns the top of that list into behaviour-preserving transformations, one at a time with the full gate after each. Tests are the safety net: it refuses to work on a red suite, and a step that turns a test red is reverted rather than the test adjusted. It adds no features and fixes no bugs. Writes .dev-skills/release/refactor.md."
+description: "Improve the internal structure of the code without changing what the product does. Use in the release phase (run first by release-product, before the audits) or standalone when part of the codebase has become hard to work with. It measures the whole-tree rot a per-commit gate cannot see, then applies behaviour-preserving transformations one at a time with the full gate after each; it refuses to work on a red suite. It adds no features and fixes no bugs. Writes .dev-skills/release/refactor.md."
 argument-hint: "[<path> | <concern in words> | empty = whole project, hot spots first]"
 ---
 

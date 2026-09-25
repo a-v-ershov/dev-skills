@@ -3,7 +3,8 @@
 Two shapes: the per-step findings doc (`.dev-skills/release/<noun>-audit.md` from each `audit-*`, and the
 same shape for `refactor.md`, `test-gaps.md`, `manual-test-brief.md`) and the combined release summary
 (`.dev-skills/release/release-summary.md`, built by `release-product`). Fill in; delete the italic
-guidance.
+guidance. (`simplify-product`'s `simplification-proposals.md` is the one exception — proposals, not
+findings; its shape is defined in that skill.)
 
 ## Per-step findings doc — `.dev-skills/release/<noun>-audit.md`
 
@@ -54,6 +55,9 @@ Built by `release-product` at the end of a run — decisions-first, for the huma
 
 ## Filed for rework
 - <count> tasks across <steps> — see .dev-skills/build-plan/board.md
+
+## Simplification proposals (never blocking)
+- <N> proposed · <K> picked → tasks · <N−K> waiting for your call — see simplification-proposals.md
 
 ## Steps run
 | step | verdict | blockers | majors | doc |

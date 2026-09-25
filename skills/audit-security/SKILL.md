@@ -1,6 +1,6 @@
 ---
 name: audit-security
-description: "Prove with evidence whether the running system upholds the spec's STRIDE-lite threat model and trust boundaries: secrets in code and git history, authn/authz on every protected path, injection, the lethal trifecta, insecure data handling, dependency exposure, row-level security, rate limits on paid endpoints,. Use in the release phase (run by release-product) or standalone. Read-only: it probes, reproduces and ranks, but never edits code and never configures a provider — code holes become rework tasks, a production gap is reported as setup-production-environment's. Never prints a secret's value. Writes .dev-skills/release/security-audit.md."
+description: "Prove with evidence whether the running system upholds the spec's STRIDE-lite threat model and trust boundaries: secrets in code and git history, authn/authz on every protected path, injection, the lethal trifecta, insecure data handling, dependency exposure, row-level security, rate limits on paid endpoints. Use in the release phase (run by release-product) or standalone. Read-only: it probes, reproduces and ranks, but never edits code and never configures a provider — code holes become rework tasks, a production gap is reported as setup-production-environment's. Never prints a secret's value. Writes .dev-skills/release/security-audit.md."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
@@ -77,7 +77,7 @@ or trust boundary where you can.
   (2) exposure to untrusted content, and (3) the ability to communicate externally**. All three in one
   unsupervised path is a 🔴 (data-exfiltration by prompt injection, no code exploit needed). Apply the
   **Rule of Two**: an unsupervised path may hold at most two; all three needs a human in the loop.
-- **Insecure data handling** — PII at rest/in transit (TLS, encryption), secrets in logs, weak/again
+- **Insecure data handling** — PII at rest/in transit (TLS, encryption), secrets in logs, weak or
   home-rolled crypto, overly broad DB access, tokens with no expiry.
 - **Supply chain** — known-vuln dependencies (`npm audit` / `pip-audit` / `cargo audit` etc.), unpinned
   or typosquatted packages, dangerous post-install scripts. Prove with the advisory id + the path.

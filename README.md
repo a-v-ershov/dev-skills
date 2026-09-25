@@ -100,8 +100,10 @@ your briefing. Nothing here fixes product code in place, and **no audit installs
 | 3 | `audit-security` | the STRIDE-lite threat model — secrets, authz, injection, the lethal trifecta, row-level security, spend caps, production config |
 | 4 | `audit-performance` | the quality-attribute scenarios — measured p95, throughput, N+1, cost |
 | 5 | `audit-product` | the user flows end-to-end and cross-feature, **plus** the WCAG target on the same journeys |
-| 6 | `write-readme` | The handover README — clone → running dev environment from that file alone; every command verified against the repo, unknowns written as unknown |
-| 7 | `manual-test` | The briefing for your hands-on pass — starting with everything accepted as `review: auto`, which no human has ever opened |
+| 6 | `audit-dependencies` | the dependency manifests vs the ecosystems' advisory databases — vulnerabilities ranked by reachability, unmaintained/unused packages, lockfile drift |
+| 7 | `simplify-product` | the after-build shrink — numbered proposals to drop, merge or simplify features, flow steps, speculative code generality and the product's wording; **you pick the numbers** — nothing is filed on its own, and nothing here ever blocks the cut |
+| 8 | `write-readme` | The handover README — clone → running dev environment from that file alone; every command verified against the repo, unknowns written as unknown |
+| 9 | `manual-test` | The briefing for your hands-on pass — starting with everything accepted as `review: auto`, which no human has ever opened |
 | — | `cut-release` | clean tree + no open 🔴 → docs, version, changelog, tag, commit, PR (always confirmed; **stops before production**) |
 
 A blocker becomes a rework task, fixed by **one** `build-tasks` run, then **re-audited once to confirm
@@ -158,13 +160,13 @@ has it installed (a restart applies the update):
 /plugin update dev-skills@dev-skills
 ```
 
-Or turn on auto-update once: `/plugin` → **Marketplaces** → `dev-skills` → **Enable auto-update**.
+Or turn on auto-update once: `/plugin` → **Marketplaces** → `skills` → **Enable auto-update**.
 
 ---
 
 ## Skill reference
 
-All 28 skills, grouped by pipeline. Orchestrators are listed first in each group; every sub-skill
+All 33 skills, grouped by pipeline. Orchestrators are listed first in each group; every sub-skill
 also runs on its own.
 
 ### Spec — idea → buildable spec
@@ -202,6 +204,8 @@ also runs on its own.
 | `audit-security` | Security engineer | Proves the STRIDE-lite threat model on the running system | `security-audit.md` |
 | `audit-performance` | Performance engineer | Measures the system against the quality-attribute scenarios | `performance-audit.md` |
 | `audit-product` | QA lead | Drives the user flows end-to-end across features, and the same journeys keyboard-only against the WCAG target | `qa-report.md` |
+| `audit-dependencies` | Supply-chain auditor | Queries the ecosystems' own audit tools and ranks advisories by real reachability; flags unmaintained, unused, and undeclared packages and lockfile drift — never upgrades anything itself | `dependency-audit.md` |
+| `simplify-product` | Simplifier | Asks what the product would be better without — features, flow steps, speculative generality, wording — and returns numbered proposals; files only what you pick, never blocks | `simplification-proposals.md` |
 | `refactor` | Staff engineer | Cleans structure without changing behaviour; measures rot, dead code, suppression debt | `refactor.md` |
 | `write-tests` | Test engineer | Maps coverage gaps and closes them red-first; a real bug is filed, never patched | tests + `test-gaps.md` |
 | `write-readme` | Handover writer | Writes or refreshes the README so a newcomer can clone and run the project from it alone; every command verified against the repo, unknowns stay unknown | `README.md` |
@@ -219,6 +223,9 @@ also runs on its own.
 | Skill | Role | What it does | Writes |
 |-------|------|--------------|--------|
 | `commit` | Git helper | Splits session changes into well-structured commits (English messages) | commits |
+| `optimize-dev` | Maintenance conductor | *(by hand, time to time)* Runs the periodic hygiene pass: grooms the backlog, then audits the test suite; one merged report | the hygiene pass |
+| `groom-backlog` | Backlog groomer | Sizes every open task and merges small or same-cause ones into coherent larger tasks, back under the 15-open ceiling; nothing is lost, the merge plan is confirmed first | a consolidated backlog |
+| `audit-tests` | Suite economist | Measures the tests against their budgets — routine run ≤ 30 s with no e2e, ≤ 10 e2e behind an explicit release-time target — then optimizes fixtures, prunes duplicates, splits the run tiers, and revises the skip/xfail quarantine; assertions are never weakened | faster tests + `test-audit.md` |
 | `audit-skills` | Skill auditor | *(by hand)* Audits how the skills and agents that ran in this session actually behaved — wrong or skipped steps, repeated work, broken invariants, artifacts that miss their template — and proposes numbered edits to their files; applies nothing until you pick numbers | proposals (edits to skill files on your pick) |
 
 Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,

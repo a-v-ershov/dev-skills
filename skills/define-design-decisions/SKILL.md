@@ -1,6 +1,6 @@
 ---
 name: define-design-decisions
-description: "Decide the design direction that shapes scope and architecture: design system or none, WHICH UI kit to adopt (on component coverage against the key screens, platform fit and ubiquity), the icon set and theming approach, the inventory of key screens, responsive behaviour, target platforms, media-heaviness, offline expectations and the accessibility target — without pixel layouts, colours, components or mockups, which are implementation. Use after create-user-flows and before design-architecture, because these decisions feed its quality-attribute scenarios. Writes a source-cited design-decisions.research.md plus a short human summary. The bridge from the product layer to the technical one."
+description: "Decide the design direction that shapes scope and architecture: design system or none, WHICH UI kit to adopt, the icon set and theming approach, the key-screen inventory, responsive behaviour, target platforms, offline expectations and the accessibility target — without pixel layouts, colours or mockups, which are implementation. Use after create-user-flows and before design-architecture. Writes a source-cited design-decisions.research.md plus a short human summary."
 ---
 
 # Define Design Decisions Skill

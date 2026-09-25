@@ -1,6 +1,5 @@
 ---
 name: cut-release
-disable-model-invocation: true
 description: "Cut a release in one gated step: check the preconditions (clean tree, no open blocker from the audits), refresh the human-facing docs and the handover README, propose the version bump (semver — proposed and confirmed, never decided silently), update the changelog from the work since the last release, then commit, tag and open the PR through the commit skill. Use as the final step of the release phase, run by release-product once the audits are clean, or standalone. Always confirms before acting in both modes, and STOPS before any production deploy — putting the product live is setup-production-environment's job. Never edits product code."
 argument-hint: "[--version <x.y.z>] [--no-pr]"
 ---

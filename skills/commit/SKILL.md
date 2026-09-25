@@ -1,6 +1,6 @@
 ---
 name: commit
-description: "Commit the current uncommitted changes: read the diff, group files by logic rather than path (a definition change split from its ripple of usage updates), write conventional-commit messages in English — with the [T###] backlog task id where one applies — and commit on the current branch, never branching, pushing, merging, amending or adding AI-attribution trailers. By default only the files this session touched are committed. Invoked by run-task for checkpoint commits and by cut-release for the release commit; otherwise use ONLY on the user's explicit request to commit — finishing a task or a review is not such a request. /commit [--dry-run] [--single] [--all] [--message <msg>]"
+description: "Commit the current uncommitted changes: read the diff, group files by logic rather than path, write conventional-commit messages in English — with the [T###] backlog task id where one applies — and commit on the current branch, never branching, pushing, merging, amending or adding AI-attribution trailers. By default only the files this session touched are committed. Invoked by run-task and cut-release; otherwise use ONLY on the user's explicit request to commit — finishing a task or a review is not such a request."
 argument-hint: "[--dry-run] [--single] [--all] [--message <msg>]"
 ---
 
