@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "dev-skills",
   "displayName": "Dev Skills",
-  "version": "1.8.0",
+  "version": "1.10.0",
   "description": "Coding-workflow skills + agents for Claude Code: three pipelines from raw idea to cut release, plus a manual production step. project-spec (gather-context -> validate-idea -> define-product-requirements -> create-user-flows -> define-design-decisions -> design-architecture -> define-code-style -> design-dev-architecture, conducted by create-project-spec) writes the buildable spec; build (setup-dev-environment -> plan-development -> run-task per task, conducted by build-tasks) turns it into working software; release (refactor -> write-tests -> audit-security/performance/product/dependencies + simplify-product in parallel -> write-readme -> manual-test -> cut-release, conducted by release-product) cleans, proves, documents, and ships it — simplify-product returning numbered never-blocking simplification proposals the user picks from; setup-production-environment then sets up the live environment by hand — platform, database, config, spend caps, analytics — and deploys. Plus standalone utilities: commit, generate-mockups, optimize-dev (a periodic hygiene pass conducting groom-backlog then audit-tests), and audit-skills — a by-hand retrospective that reads the session transcript and works out how the skills and agents that ran actually behaved, then proposes numbered edits to their own files. Bundled agents (spec-reviewer, spec-researcher, implementer, verifier, ui-prototyper, refactorer, test-writer) carry the pipelines' subagent roles. Each skill responds and thinks in whatever language you address it in.",
   "author": {
     "name": "a-v-ershov",
