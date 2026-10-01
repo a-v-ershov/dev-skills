@@ -160,7 +160,7 @@ has it installed (a restart applies the update):
 /plugin update dev-skills@dev-skills
 ```
 
-Or turn on auto-update once: `/plugin` → **Marketplaces** → `skills` → **Enable auto-update**.
+Or turn on auto-update once: `/plugin` → **Marketplaces** → `dev-skills` → **Enable auto-update**.
 
 ---
 

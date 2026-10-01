@@ -168,7 +168,7 @@ end-to-end — исключение, а не норма. Весь набор п�
 /plugin update dev-skills@dev-skills
 ```
 
-Или включите автообновление один раз: `/plugin` → **Marketplaces** → `skills` →
+Или включите автообновление один раз: `/plugin` → **Marketplaces** → `dev-skills` →
 **Enable auto-update**.
 
 ---
