@@ -226,7 +226,7 @@ also runs on its own.
 | `optimize-dev` | Maintenance conductor | *(by hand, time to time)* Runs the periodic hygiene pass: grooms the backlog, then audits the test suite; one merged report | the hygiene pass |
 | `groom-backlog` | Backlog groomer | Sizes every open task and merges small or same-cause ones into coherent larger tasks, back under the 15-open ceiling; nothing is lost, the merge plan is confirmed first | a consolidated backlog |
 | `audit-tests` | Suite economist | Measures the tests against their budgets — routine run ≤ 30 s with no e2e, ≤ 10 e2e behind an explicit release-time target — then optimizes fixtures, prunes duplicates, splits the run tiers, and revises the skip/xfail quarantine; assertions are never weakened | faster tests + `test-audit.md` |
-| `audit-skills` | Skill auditor | *(by hand)* Audits how the skills and agents that ran in this session actually behaved — wrong or skipped steps, repeated work, broken invariants, artifacts that miss their template — and proposes numbered edits to their files; applies nothing until you pick numbers | proposals (edits to skill files on your pick) |
+| `audit-skills` | Skill auditor | *(by hand)* Audits how the skills and agents actually behaved across every recorded session that ran them (or one session, or a date window) — wrong or skipped steps, repeated work, broken invariants, artifacts that miss their template — and proposes numbered edits to their files; applies nothing until you pick numbers | proposals (edits to skill files on your pick) |
 
 Each `*.research.md` ships with a paired `*.summary.md`; spec docs live under `.dev-skills/project-spec/`,
 the release phase's findings under `.dev-skills/release/`, setup records under

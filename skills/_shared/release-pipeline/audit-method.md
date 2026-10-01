@@ -1,21 +1,19 @@
 # Audit method (shared — release pipeline)
 
 How a system-level quality attribute is proven at the release boundary. An **audit** is the release
-phase's counterpart to the build phase's `verify-feature`: where `verify-feature` proves one task's
-**acceptance criteria**, an audit proves an **emergent, cross-cutting property of the whole system**
-(security, performance, end-to-end product behavior) — the kind no single task could prove. Each
-`audit-*` skill runs this same machine and references this file rather than restating it.
+counterpart to `verify-feature`: that proves one task's **acceptance criteria**; an audit proves an
+**emergent, cross-cutting property of the whole system** (security, performance, end-to-end product
+behavior). Each `audit-*` skill runs this machine and references this file.
 
-The release chain has two halves, and only the second one is audits: `refactor` and `write-tests` change
-the repository and run first, sequentially and alone; the audits change nothing and run in parallel
-afterwards. This file governs the audits.
+The release chain has two halves: `refactor` and `write-tests` change the repository and run first,
+sequentially and alone; then the audits, which change nothing, run in parallel. This file governs
+the audits.
 
 ## Why a separate, fresh, independent agent
 
 `release-product` spawns each audit as a **fresh top-level subagent** with no memory of who wrote the
-code. That independence is the point — an auditor that did not build the system does not assume it
-works, and starts from the **contract, not the implementation**. The contract already exists: the spec
-phase wrote it.
+code, so it doesn't assume the system works and starts from the **contract, not the
+implementation** — the one the spec phase wrote:
 
 | Audit | Contract it proves against (from the spec) |
 |-------|--------------------------------------------|
@@ -24,91 +22,86 @@ phase wrote it.
 | `audit-product` | the user flows + their acceptance criteria in `.dev-skills/project-spec/user-flows.research.md`, **and** the accessibility decisions in `design-decisions.research.md` (both are proven by driving the same running product) |
 | `audit-dependencies` | the dependency manifests + lockfiles against the ecosystems' advisory databases, and the stack decisions/constraints in `architecture.research.md` — the one fully static audit: it needs no running stack and no env lease |
 
-If the contract doc is missing, the audit says so and proves against sensible defaults for its domain,
-recording the gap — it does **not** invent a contract and pass against it silently.
+Contract doc missing → say so, prove against sensible defaults for the domain and record the gap;
+**never** invent a contract and pass against it silently.
 
 ## Read-only: findings, never fixes — and never setup
 
-An audit **reads** the built system and **writes only two things**: its findings doc and rework tasks in
+An audit **reads** the system and **writes only two things**: its findings doc and rework tasks in
 the backlog. Two hard limits:
 
-- **It never edits the product's code.** Fixing is a separate `build-tasks` run on the tasks it files.
-  This is the same writer/reviewer split that keeps `verify-feature` honest: the side whose job is to
-  find failure does not also get to declare it fixed.
-- **It never installs or configures anything.** Not an analyzer it wishes it had, not an error tracker,
-  not a spending cap, not a missing environment variable. Local tooling belongs to
-  `setup-dev-environment`; anything on the production side belongs to `setup-production-environment`. A
-  capability that does not exist is **recorded as a finding**, with which skill owns the fix — an audit
-  that quietly sets up what it needs is no longer auditing the system the user has.
+- **It never edits the product's code.** Fixing is a separate `build-tasks` run on the tasks it files
+  (the writer/reviewer split that keeps `verify-feature` honest).
+- **It never installs or configures anything** — no analyzer, error tracker, spending cap or missing
+  environment variable. Local tooling belongs to `setup-dev-environment`, the production side to
+  `setup-production-environment`; a missing capability is **recorded as a finding** naming the
+  owning skill.
 
-(An audit may *run* read-only analysis tools that are already installed, take measurements, drive the
-app, or write a throwaway probe script — but it does not change the product or its environment to make a
-finding go away.)
+It may *run* already-installed read-only tools, take measurements, drive the app or write a
+throwaway probe script — never change the product or its environment to make a finding go away.
 
 ## The loop (read contract → probe → prove → rank → file)
 
-For each item in its contract the audit produces evidence, then ranks it:
+Per contract item:
 
-0. **Read the contract** — the scenario / threat / decision / flow this audit must hold the system to
-   (table above). Read the system the way the audit's domain needs (a static read, the dependency
-   graph, the running stack).
-1. **Probe** — exercise the property: run the analyzer, measure the number, drive the flow, reproduce
-   the attack. Static audits read; **dynamic audits (performance, product) bring the stack up through
-   the coordinated entrypoint** (env lock / per-run isolation — `../build-pipeline/env-access.md`) so
-   audits running in parallel don't collide on one running stack.
+0. **Read the contract** — the scenario / threat / decision / flow (table above) — and the system as
+   the domain needs (a static read, the dependency graph, the running stack).
+1. **Probe** — run the analyzer, measure the number, drive the flow, reproduce the attack. Static
+   audits read; **dynamic audits (performance, product) bring the stack up through the coordinated
+   entrypoint** (env lock / per-run isolation — `../build-pipeline/env-access.md`) so parallel audits
+   don't collide on one running stack.
 2. **Prove** — capture a **real, observable outcome**: a measured p95, a secret at `file:line`, a
    reproduced 500, a failing axe rule with its node. **"Looks fine" / "no obvious issue" is not a
    verdict** — a pass is proven and a fail is proven.
-3. **Rank** — assign severity per `severity-rubric.md` (🔴 blocker / 🟡 major / ⚪ minor) against the
-   contract, not against taste. Save evidence under `.dev-skills/release/artifacts/`.
+3. **Rank** — severity per `severity-rubric.md` (🔴 blocker / 🟡 major / ⚪ minor) against the
+   contract, not taste. Save evidence under `.dev-skills/release/artifacts/`.
 
 ## Filing rework (how a finding becomes a fix)
 
 The audit does not fix; it **files**:
 
-- **🔴 blocker / 🟡 major** → file a **rework task** into the backlog via `plan-development`'s amend
-  mode (`type: rework`, tagged with the audit + finding id, the evidence link, and the contract item it
-  restores). `build-tasks` later fixes it, and the audit **re-runs once** afterwards to confirm (the
-  orchestrator drives that single round).
-- **⚪ minor** → recorded in the findings doc only; no task.
+- **🔴 blocker / 🟡 major** → a **rework task** via `plan-development`'s amend mode (`type: rework`,
+  tagged with the audit + finding id, the evidence link and the contract item it restores).
+  `build-tasks` fixes it; the audit **re-runs once** afterwards (the orchestrator drives that round).
+- **⚪ minor** → findings doc only; no task.
+- **A missing production capability** (no hard spend cap, no error tracking, no rate limit, a variable
+  unset in the target environment) → a finding **owned by `setup-production-environment`**, not filed
+  against the code.
 
 **Group findings into coarse tasks — one task per coherent fix, not one per finding.** The backlog is
 one board with **one ceiling of 15 open tasks**, shared with the build phase
-(**`../build-pipeline/planning-method.md`**, "This applies to everyone who files a task"). Findings in
-the same surface, or with the same cause, or that one agent would close in one sitting, are **one**
-task; every finding still becomes an entry in its `acceptance` with its own evidence link, so nothing
-is lost and each is verified separately. Keep a 🔴 in its own task so it can be fixed and re-audited on
-its own, split when a single sitting genuinely can't hold the work — and if the honest grouping still
-overflows the ceiling, say so and confirm the count instead of filing past it silently. Ten tasks that
-each say "fix finding S-07" is a report re-typed as a backlog; it hides which three actually block the
-cut.
+(**`../build-pipeline/planning-method.md`**, "This applies to everyone who files a task"):
 
-The findings doc keeps the **full, ungrouped list** — grouping is how the work is scheduled, not how
-it is recorded. Each finding's row names the task it was filed under.
-- **A missing production capability** (no hard spend cap, no error tracking, no rate limit configured,
-  a variable unset in the target environment) → recorded as a finding **owned by
-  `setup-production-environment`**, not filed against the code. Nobody fixes a billing limit in a pull
-  request.
+- Findings in the same surface, with the same cause, or that one agent would close in one sitting are
+  **one** task; each finding becomes its own `acceptance` entry with its evidence link, verified
+  separately.
+- Keep a 🔴 in its own task so it can be fixed and re-audited alone; split when one sitting can't
+  hold the work.
+- If the honest grouping still overflows the ceiling, say so and confirm the count — never file past
+  it silently.
+
+The findings doc keeps the **full, ungrouped list** (grouping schedules the work, it doesn't record
+it); each finding's row names the task it was filed under.
 
 ## One round, then a decision (no loop)
 
-After the fix run, the affected audits re-run **once**. Whatever is still open then becomes a
-`needs_human` escalation — there is no iteration counter and no second round. A finding that survives a
-targeted fix and a re-audit is a signal about the product, not something more rounds will resolve; the
-same reasoning bounds the build loop (`../build-pipeline/verification-method.md`).
+After the fix run, the affected audits re-run **once**. Whatever is still open becomes a
+`needs_human` escalation — no iteration counter, no second round; a finding that survives a targeted
+fix and a re-audit is a signal about the product. Same bound as the build loop
+(`../build-pipeline/verification-method.md`).
 
 ## Recording — the findings doc
 
-Write `.dev-skills/release/<noun>-audit.md` (template: `report-template.md`): the verdict (clean / N
-blockers / N majors), a findings table (id · severity · what · evidence · contract item · filed task),
-what was checked, what was **skipped and why** (a silent cap reads as "all clear" when it isn't), and a
-`## Sources` section for any world-claim the audit leaned on. This doc is committed project
-documentation — the audit trail of *why the release was, or wasn't, cut*.
+Write `.dev-skills/release/<noun>-audit.md` (template: `report-template.md`): verdict (clean / N
+blockers / N majors), a findings table (id · severity · what · evidence · contract item · filed
+task), what was checked, what was **skipped and why** (a silent cap reads as "all clear"), and a
+`## Sources` section for any world-claim. Committed — the audit trail of *why the release was, or
+wasn't, cut*.
 
 ## What an audit is NOT
 
 - Not the builder grading its own work — a separate, fresh agent.
 - Not a code fix — it files tasks; `build-tasks` fixes them.
-- Not a setup step — it installs and configures nothing; a missing capability is a finding.
+- Not a setup step — a missing capability is a finding.
 - Not "ran the tool, no crash" — the contract item's proven outcome is the verdict.
 - Not a gap-hunt for its own sake — flag only what the contract demands (`severity-rubric.md`).

@@ -1,7 +1,7 @@
 ---
 name: audit-skills
-description: "Audit the skills, slash commands and subagents that ran in this Claude Code session and propose numbered edits to the files that own each rule. Invoked by hand; never part of the release chain. It reads the session transcript plus the live conversation and works out how each target actually behaved — wrong or skipped steps, silent gates, repeated work, broken invariants of the set. It proposes only: nothing is applied until the caller names numbers, and even then it writes only skill, agent and command files."
-argument-hint: "[<skill or agent name>] [--session <id>]"
+description: "Audit how this plugin's skills, slash commands and subagents behaved across every recorded Claude Code session that ran them (default), one session, or a date window — transcripts via scan_session.py, plus artifacts — and propose numbered edits to the files that own each rule. Proposes only; nothing is applied until the caller names numbers. By hand; never in the release chain."
+argument-hint: "[<skill or agent name>] [--session <id> | --current] [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--days N]"
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
@@ -12,63 +12,50 @@ hooks:
 
 # Audit Skills Skill
 
-A standalone meta-utility. It looks back at the session you are in, works out how the **skills, slash
-commands and subagents** that ran in it actually behaved, and proposes concrete edits to their source
-files.
+Works out how the **skills, slash commands and subagents** of this set behaved across the recorded
+sessions that ran them, and proposes concrete edits to their source files.
 
 ```
-session transcript + live conversation + the artifacts produced → per-target findings → numbered proposals → STOP → apply only what was picked
+every session that ran the plugin → cross-session digest → drill into the sessions behind the strongest signals
+  (+ artifacts) → per-target findings → numbered proposals → STOP → apply only what was picked
 ```
 
-This is **not** a release audit. `audit-security` / `audit-performance` / `audit-product` audit the
-*product* against its spec and are run by `release-product`; this one audits the *tooling* — the
-skills themselves — and is only ever invoked by hand. It never files rework tasks and never writes
-into `.dev-skills/`.
+Unlike `audit-security` / `audit-performance` / `audit-product` (the *product*, for `release-product`),
+this audits the *tooling*, by hand only; it files no rework tasks and never writes into `.dev-skills/`.
 
 ## The one hard rule — propose, never apply
 
-**This skill does not edit anything on its own initiative.** Not the skill it just audited, not a
-"tiny obvious typo", not "while I'm in there". It reads, it reports, it ends the turn. Edits happen
-only in a later turn, and only for the proposals the caller explicitly picked (**Stage 6**).
-
-It is also read-only about the session itself: it never re-runs a skill "to check", never repeats a
-subagent, and never touches the repository it is auditing. A write-scope guard backs this up — the
-only files it can ever write are skill, agent, command and `CLAUDE.md` files; product code and the
-version-carrying manifests are out of reach.
+**Edit nothing on your own initiative** — not even a "tiny obvious typo". Read, report, end the turn;
+edits come in a later turn, only for the proposals the caller picked (**Stage 6**). Never re-run a
+skill "to check", repeat a subagent or touch the audited repository.
 
 ## Inputs and outputs
 
-- **Reads:** the session transcript via `scan_session.py`; the conversation you can still see; the
-  **source file of every target** (`SKILL.md`, `agents/*.md`, and the `_shared/*.md` method it
-  inherits its procedure from); the **artifacts the run produced** (`.dev-skills/**`, `DESIGN.md`,
-  backlog tasks) against the template they were written from.
-- **Writes:** nothing, until the caller picks proposals — then `Edit`s to the skill / agent /
-  command / `CLAUDE.md` files those proposals named. Never product code, never `.dev-skills/**`,
-  never `plugin.json` / `marketplace.json`.
-- **`$ARGUMENTS`:** `<skill or agent name>` — audit only that target (e.g. `run-task`,
-  `dev-skills:verify-feature`, `implementer`); substring match is fine, default is every skill and
-  agent that ran. `--session <id>` — audit a previous session (ids: `scan_session.py --list`).
+- **Reads:** the transcripts under `~/.claude/projects/` (`scan_session.py`), the visible
+  conversation when the audited session is this one, every target's source (`SKILL.md`,
+  `agents/*.md`, its `_shared/*.md` method), the artifacts the runs produced (`.dev-skills/**`,
+  `DESIGN.md`, backlog tasks) in the projects the digest names.
+- **Writes:** nothing until the caller picks — then `Edit`s to skill / agent / command / `CLAUDE.md`
+  files only (the write-scope guard enforces it). Never product code, `.dev-skills/**`,
+  `plugin.json` / `marketplace.json`.
+- **`$ARGUMENTS`** (scope; default — **every session on disk that ran a `dev-skills:` skill**):
+  `<skill or agent name>` — only that target (`run-task`, `dev-skills:verify-feature`, `implementer`;
+  substring match) · `--session <id>` — one session (full id or the short id the digest prints) ·
+  `--current` — this session only · `--since` / `--until YYYY-MM-DD`, `--days N` — a window. Sessions
+  and ids: `scan_session.py --list` (takes the same window flags).
 
 ## Language & git
 
-Respond and reason in the user's language — the report, the findings and the
-questions all go in that language. Never translate code, identifiers, file paths, commands, skill or
-agent names, or text you quote verbatim from a skill file.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
-
-Applying proposals is not a reason to branch, and this skill never commits — that is `/commit`'s
-job and the user's call.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands, paths, skill or agent names, or text quoted from a skill file.
+Commit messages are always English. **One branch — the current one** (normally `main`): never branch,
+switch or open a worktree unless the user explicitly asked in this session —
+**`../_shared/git-workflow.md`**.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Stage 0: Evidence — run scan_session.py; read the digest alongside the conversation
+- [ ] Stage 0: Evidence — run scan_session.py (all sessions, or the scope given); drill into the sessions behind the strongest signals
 - [ ] Stage 1: Sources — read every target's file + the _shared method it inherits; note who owns each file
 - [ ] Stage 2: Lenses — work the rubric's seven lenses + the four for this set; every finding carries a fact
 - [ ] Stage 3: Artifacts — compare what the run produced against the template it was written from
@@ -79,146 +66,111 @@ job and the user's call.
 
 ### Stage 0: Evidence
 
-Resolve the script directory once and reuse it:
-
 ```
 SKILL_DIR="${CLAUDE_PLUGIN_ROOT:-.claude}/skills/audit-skills"
 [ -f "$SKILL_DIR/scan_session.py" ] || SKILL_DIR=".claude/skills/audit-skills"
-python3 "$SKILL_DIR/scan_session.py"            # add --session <id> if one was given
+python3 "$SKILL_DIR/scan_session.py"            # pass the scope flags the caller gave, unchanged
 ```
 
-The digest gives you what the conversation can't: which skills were loaded and **from which file on
-disk**, per-run wall time and tool mix, subagent cost per run *and per role*, the slowest calls,
-repeated calls, every file written, the invariant tripwires, every error and denial, and the user's
-own turns verbatim.
+1. **Cross-session digest (default).** It finds every session where a `dev-skills:` skill actually
+   ran — the model's `Skill` call or a typed `/dev-skills:<skill>` — and prints a map: one row per
+   session (with the plugin version it loaded), per-skill aggregates, subagent cost by role,
+   tripwires and errors with how many sessions show them, and the user turns inside skill runs (⚑ =
+   interrupt or correction-shaped). It tells you *where to look*, not what went wrong.
+2. **Drill down.** Pick the **≤4 sessions** behind the strongest signals — ⚑ turns, a skill with many
+   user turns or errors inside its runs, a recurring tripwire or error, an expensive role — and run
+   `scan_session.py --session <short id>` on each for the full digest (tool mix, slow and repeated
+   calls, files written, every user turn, subagent transcripts). The user turns say *what it was
+   for*; read around every signal before calling it a finding.
+3. **Coverage.** The digest header names the oldest transcript on disk — Claude Code deletes them
+   after `cleanupPeriodDays` (30 days by default). Say in the report what period you covered; raising
+   the setting is the user's call — mention it, never change it.
 
-You have **two sources and they answer different questions**:
-
-| Source | Answers |
-|---|---|
-| The digest (transcript) | *What happened* — including turns already compacted out of your context |
-| The conversation you can still see | *What it was for* — intent, what the user actually wanted, whether the result was any good |
-
-Read both. A finding built on only one of them is usually wrong: the digest alone can't tell a slow
-call from a correctly patient one, and the conversation alone hides everything before a compaction.
-
-If the script fails (no transcript, unreadable file), say so plainly in one line and audit from the
-conversation you can see — do not silently pretend you had the full picture.
+`--session` / `--current` skip step 1 (one session; with `--current` the live conversation is
+evidence too). No session in scope → say so and stop. Script fails → say so in one line, audit from
+the conversation.
 
 ### Stage 1: Sources
 
-For each skill in the digest's **Skills loaded** table, `Read` its source file. A row marked
-`⚠︎ found by search` was located by guessing — open it and confirm the `name:` in its frontmatter
-matches before you say a single word about it.
+`Read` every skill in the digest's **Skills loaded** table (a row marked `⚠︎ found by search` was
+guessed — confirm its frontmatter `name:` first). For subagents read the definition (`agents/<type>.md`
+in the plugin, `.claude/agents/`, `~/.claude/agents/`); most are **thin wrappers** preloading a
+procedure skill — read that too, the defect usually lives there — then the `_shared/*.md` method it
+points at. For an expensive or repeated role open one subagent transcript
+(`<session>/subagents/agent-<id>.jsonl`): the main one shows cost, not what it did.
 
-For subagents, read the agent definition (`agents/<type>.md` in the plugin, `.claude/agents/`, or
-`~/.claude/agents/`). In this set most agents are **thin wrappers** that preload a procedure skill —
-so read that skill too, and expect the defect to live there rather than in the wrapper. Then read
-the `_shared/*.md` method the skill points at: when a rule is stated once in `_shared/` and copied
-into three skills, the copy is not where you fix it.
+**Version check.** Older sessions may have run an older skill — the digest's `plugin` column says
+which (a version, or `local checkout`). Before a finding becomes a proposal, confirm the **current**
+file still carries its cause; already fixed → drop it.
 
-For an expensive or repeated agent role, open one subagent transcript
-(`<session>/subagents/agent-<id>.jsonl`) — the main transcript shows what an agent cost, not what it
-did.
-
-**You may not write a finding about a file you have not read.** No exceptions — a finding is a claim
-about specific wording in a specific file.
-
-Note who owns each file:
-
-| Location | Editable? |
-|---|---|
-| A repo checkout (`~/code/<repo>/skills/…`), `~/.claude/skills/`, `<project>/.claude/skills/` | Yes |
-| `~/.claude/plugins/cache/…` | **No** — the next `/plugin update` discards the edit. Report it as upstream feedback, and if the same skill also lives in a repo the user maintains, point the proposal at the repo |
-| Claude Code built-ins with no file on disk | No — report as behaviour to work around, not as an edit |
+Ownership: a repo checkout (`~/code/<repo>/skills/…`), `~/.claude/skills/`,
+`<project>/.claude/skills/` → editable. `~/.claude/plugins/cache/…` → **no** (the next
+`/plugin update` discards it): upstream feedback, or point the proposal at the user's repo if the skill
+lives there too. Claude Code built-ins with no file → behaviour to work around.
 
 ### Stage 2: Lenses
 
-`Read` `$SKILL_DIR/references/rubric.md` and work through its seven lenses — correctness, procedure
-drift, triggering, redundancy, speed, user friction, simplicity — each with the signals that betray
-it and the evidence that proves it. That file also holds the severity scale and the full report template.
-
-When any target belongs to a skill set with shared methodology and pipelines (this one does), also
-`Read` `$SKILL_DIR/references/dev-skills-lenses.md`: the invariants of the set, artifact fidelity,
-orchestration and hand-off, and where the fix belongs.
-
-Every finding needs a **fact from the evidence** attached: a timestamp, a user quote, a call count,
-a duration. "This could be clearer" is not a finding.
+`Read` `$SKILL_DIR/references/rubric.md` — seven lenses (correctness, procedure drift, triggering,
+redundancy, speed, user friction, simplicity), the severity scale, the report template. For a set with
+shared methodology (this one), also `Read` `$SKILL_DIR/references/dev-skills-lenses.md`: invariants of
+the set, artifact fidelity, orchestration and hand-off, where the fix belongs. Every finding carries a
+**fact from the evidence** — session short id + timestamp, user quote, call count, duration — and
+**how many sessions show it**; "this could be clearer" is not a finding.
 
 ### Stage 3: Artifacts
 
-A skill in this set is judged by what it produced, not only by how it ran. For each target that
-writes a document, open the artifact **and** the template it was written from
-(`skills/<name>/references/*-template.md`, `_shared/build-pipeline/backlog-format.md`,
-`_shared/release-pipeline/report-template.md`) and compare them: missing sections, an empty
-`## Sources`, an unfilled `## Forks / Decisions log`, tasks with no acceptance criteria or an empty
-`traces_to`, a status the run never updated. A section the template requires and the output lacks is
-a defect in the skill's wording — usually the section is described in prose but never appears in the
-skill's own checklist. Details: `references/dev-skills-lenses.md`.
-
-Skip this stage cleanly when the session produced no artifacts, and say so — don't invent a gap.
+Compare each written document with its template (`skills/<name>/references/*-template.md`,
+`_shared/build-pipeline/backlog-format.md`, `_shared/release-pipeline/report-template.md`): missing
+sections, an empty `## Sources`, an unfilled `## Forks / Decisions log`, tasks without acceptance
+criteria or with an empty `traces_to`, a status never updated. A missing required section is a defect
+in the skill's wording — usually described in prose but absent from its checklist
+(`references/dev-skills-lenses.md`). No artifacts → skip and say so.
 
 ### Stage 4: Proposals
 
-A proposal is a **specific edit to a specific file**, not advice. For each one:
+A proposal is a **specific edit to a specific file**, not advice:
+- the file and section that *owns* the rule — `_shared/*.md` when shared, the `SKILL.md` for the
+  skill's own, the agent for the wrapper's;
+- the current line (quoted) and what it becomes;
+- what it would have changed in this session, one sentence;
+- the cost — every added line is re-read on every run: flag a net addition, prefer tightening over
+  appending, move detail into `references/` when a body is at its budget.
 
-- the file and the section/heading inside it — and it must be the file that *owns* the rule
-  (`_shared/*.md` when the behaviour is shared, the `SKILL.md` when it is that skill's own, the
-  agent when it is the wrapper's);
-- the line or rule as it stands now (quoted) and what it becomes;
-- what it would have changed in this session, in one sentence;
-- the cost: every line added is context re-read on every future run — say when a proposal is a net
-  addition, and prefer tightening or replacing existing wording over appending to it. If a skill's
-  body is already at its budget, propose moving detail into `references/` rather than growing it.
-
-Drop anything you can't express as an edit — unless it's a genuine constraint of the harness or of
-the model, in which case keep it and label it **no file change — note only**.
+Drop anything not expressible as an edit, except a genuine harness or model constraint — label it
+**no file change — note only**.
 
 ### Stage 5: Rank + report, then stop
 
-Order by severity (🔴 blocker → 🟡 major → ⚪ minor, defined for skills in `rubric.md`), and within a
-severity by how cheap the fix is. Number the proposals in a single sequence across all targets, so
-the caller can answer with numbers. Cap the report at the **8 strongest proposals** — a long list is
-a list nobody acts on. Say how many you dropped.
-
-The report is the **final text message of the turn**. No tool call after it, no work started, no
-"and I've already fixed #3". Some UIs (e.g. the VSCode extension) render neither text printed before
-a tool call nor `AskUserQuestion` previews — so the report has to be plain chat text that ends the
-turn. Full template with a worked example: `references/rubric.md`.
-
-If nothing is worth proposing, say exactly that and stop. A clean session is a valid result — do not
-manufacture findings to fill the report.
+Open with the scope covered (window, sessions, projects). Order by severity (🔴 blocker → 🟡 major →
+⚪ minor, per `rubric.md`), then by how many sessions show it, then by cheapness of fix; one
+number sequence across all targets; cap at the **8 strongest** and say how many you dropped. The
+report is the **final plain-text message of the turn** — no tool call after it, nothing "already
+fixed" (some UIs render neither text before a tool call nor `AskUserQuestion` previews). Template:
+`references/rubric.md`. Nothing worth proposing → say so and stop; don't manufacture findings.
 
 ### Stage 6: Apply, only when told to
 
-Triggered by the caller naming numbers (`1, 4`), `all` / `все`, or describing a change. Then:
+Triggered by numbers (`1, 4`), `all` / `все`, or a described change:
 
-1. Apply **only** the picked proposals, as `Edit`s to the files named in them.
-2. Keep the edits minimal — change the wording the proposal quoted, nothing adjacent.
-3. When the rule is duplicated by design (the `## Language` and `## Git workflow` sections every
-   skill carries), fix `_shared/` **and** the copies that drifted — a half-applied invariant is worse
-   than the original defect. Say which files you touched.
-4. **Do not touch the plugin's `version`** (`plugin.json` / `marketplace.json` — the user's to bump,
-   see `CLAUDE.md`), do not commit, do not push.
-5. Report per proposal: file, what changed, one line each. Say plainly if one turned out not to be
-   applicable once you had the file open — don't improvise a different edit in its place.
+1. Apply **only** the picked proposals, as `Edit`s to the files they name — the quoted wording, nothing
+   adjacent.
+2. A rule duplicated by design (the `## Language` and `## Git workflow` sections every skill carries):
+   fix `_shared/` **and** the drifted copies; say which files you touched.
+3. **Never touch the plugin's `version`** (`plugin.json` / `marketplace.json` — the user's, see
+   `CLAUDE.md`); never commit (`/commit`'s job, the user's call), never push.
+4. Report per proposal: file, what changed, one line. Not applicable once the file is open → say so;
+   don't improvise a different edit.
 
 ## Rules
 
-1. **Never edit a skill unasked** — Stage 6 runs only after an explicit pick. This is the skill's
-   whole point.
-2. **Never propose a change to a file you did not read**, and never quote a rule you did not see in
-   it.
-3. **Fix the rule where it lives** — `_shared/` for shared methodology, the `SKILL.md` for that
-   skill's own procedure, the agent for the wrapper. Never paste a shared rule into a skill because
-   it was easier to find there.
-4. **Don't legislate for one incident.** One misstep can be noise; say so and propose the rule only
-   if the evidence shows the failure mode repeating, or if the single occurrence was expensive.
-5. **Don't rewrite a skill wholesale.** If a target is beyond repair by edits, say that in one line
-   and stop — a rewrite is a separate decision the user makes.
-6. **Don't audit what didn't run.** Skills absent from the digest get no findings, however tempting.
-   A tripwire is a signal, not a verdict — read the conversation around it first.
-7. **The digest can contain sensitive fragments** (commands, paths, prompts) and stays in the
-   conversation — never write it to a file, never send it anywhere. `scan_session.py` itself is
-   stdlib-only and read-only.
-8. **Self-audit is fair game.** If `audit-skills` itself ran badly, propose fixes to this file too.
+1. **Never edit a skill unasked** — Stage 6 runs only after an explicit pick.
+2. **Never write a finding about, or quote a rule from, a file you did not read.**
+3. **Fix the rule where it lives** (Stage 4) — never paste a shared rule into a skill.
+4. **Don't legislate for one incident** — a failure repeating across sessions, or one expensive
+   occurrence; say how many sessions show it.
+5. **Don't rewrite a skill wholesale** — a target beyond repair by edits gets one line saying so.
+6. **Don't audit what didn't run** in the scope. A tripwire is a signal, not a verdict — read around it
+   first; a finding the current file already fixes is dropped.
+7. **The digests can hold sensitive fragments** from every project — never write them to a file or
+   send them anywhere. `scan_session.py` is stdlib-only and read-only; never edit Claude Code settings.
+8. **Self-audit is fair game** — if `audit-skills` ran badly, propose fixes to this file too.

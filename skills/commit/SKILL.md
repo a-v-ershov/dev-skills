@@ -1,384 +1,136 @@
 ---
 name: commit
-description: "Commit the current uncommitted changes: read the diff, group files by logic rather than path, write conventional-commit messages in English — with the [T###] backlog task id where one applies — and commit on the current branch, never branching, pushing, merging, amending or adding AI-attribution trailers. By default only the files this session touched are committed. Invoked by run-task and cut-release; otherwise use ONLY on the user's explicit request to commit — finishing a task or a review is not such a request."
+description: "Commit the session's uncommitted changes: group files by logic, write English conventional-commit messages with the [T###] task id where one applies, commit on the current branch — never branch, push, merge, amend or add AI-attribution trailers. Invoked by run-task and cut-release; otherwise only on the user's explicit request — finishing a task or review is not one."
 argument-hint: "[--dry-run] [--single] [--all] [--message <msg>]"
 ---
 
 # Commit Changes Skill
 
-Analyze uncommitted changes, group them intelligently by logic (not just paths), and create well-structured commits.
+Analyze uncommitted changes, group them by logic (not just path), and create well-structured commits.
 
-## Language
+## Language & git
 
-Respond and reason in the user's language — write user-facing text (the
-commit plan, the execution summary, questions, error messages) in that language and think in it
-too.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands or paths. **Commit messages are ALWAYS English** — the user's
+language shapes only the report, never the text written into git. **One branch — the current one**
+(normally `main`): never branch, switch or open a worktree unless the user explicitly asked in this
+session — **`../_shared/git-workflow.md`**.
 
-**Critical exception — commit messages are ALWAYS in English**, regardless of the user's
-language. The user's language affects only the report shown to the user, never the text written
-into git. Likewise, never translate code, identifiers, file paths, or commands.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-## Git workflow / safety
-
-- **One branch — the current one, normally `main`.** Commit onto the branch the session is already
-  on. Never create a branch, never switch to another branch, never open a worktree on your own
-  initiative — not per feature, not "to keep `main` clean", not for a large changeset. Branching is
-  the user's decision about how their repository is organized; it is never a side effect of running
-  this skill. **The single exception:** the user explicitly asked for a separate branch in this
-  session; then use the name they gave (or propose one and confirm it), create it from the current
-  branch, and say which branch the commits landed on. Being asked to commit is not being asked to
-  branch — and neither is a large or risky change: the answer to "this could break things" is a
-  clean commit, not a branch nobody asked for. Full rule: **`../_shared/git-workflow.md`**.
-- **Already on a non-default branch?** That's the user's choice — stay there. Don't switch to
-  `main`, don't offer to merge or rebase.
-- **Never push** unless the user explicitly asks.
-- **Never merge, rebase, or reset** — a commit is the only history-changing operation you perform.
-- **Never use `--amend`** — always create a new commit.
-- **Never add co-author or attribution trailers.** Do not append `Co-Authored-By:` lines,
-  "Generated with Claude" / "🤖 Generated with..." footers, or any text crediting an AI model
-  or tool. Commit messages contain only the change description.
+Safety:
+- Asked for a branch explicitly → use the name given (or propose and confirm one), create it from
+  the current branch, say where the commits landed. Being asked to commit is not being asked to
+  branch, and neither is a large or risky change — the answer to "this could break things" is a
+  clean commit.
+- Already on a non-default branch → stay there; never switch to `main`, never offer to merge or rebase.
+- **Never push** unless explicitly asked. **Never merge, rebase or reset** — a commit is the only
+  history-changing operation. **Never `--amend`** — always a new commit.
+- **Never add attribution trailers** — no `Co-Authored-By:`, no "Generated with Claude" / "🤖
+  Generated with..." footer, no AI credit. The message holds only `<type>: <description>` and an
+  optional body.
 
 ## Backlog task reference
 
-If the change relates to a build-backlog task (one of `.dev-skills/build-plan/tasks/T###-*.md`), include the
-task id and what was done in the commit message — the id as a `[T###]` tag in the subject line. This
-makes each commit traceable to the task it advances. `run-task` checkpoint commits always pass
-the id of the task they finalize.
-
-- **Relates to a task:** `<type>: <description> [T012]`. Put what was done in the body if the subject
-  doesn't capture it.
-- **Not backlog-related** (tooling, docs, a one-off fix that maps to no task): omit the id — never
-  invent one.
-- Determine the id from the `run-task` invocation that triggered the commit, or from the task
-  whose files the change implements; if a change clearly maps to no task, treat it as not-backlog-related.
+A change that advances a backlog task (`.dev-skills/build-plan/tasks/T###-*.md`) carries the id as a
+`[T###]` tag in the subject — `<type>: <description> [T012]` — with what was done in the body if the
+subject doesn't capture it. `run-task` checkpoint commits always pass the id. Otherwise take it from
+the task whose files the change implements; a change that maps to no task (tooling, docs, a one-off
+fix) gets no id — never invent one.
 
 ## Input
 
-Arguments provided via `$ARGUMENTS`:
-- **--dry-run**: Preview commits without executing
-- **--single**: Force all changes into a single commit
-- **--all**: Commit all uncommitted changes, not just session changes
-- **--message <msg>**: Use specific commit message (for single commit)
-
-Examples:
-- `/commit` - Auto-analyze and commit (split if needed)
-- `/commit --dry-run` - Preview what would be committed
-- `/commit --single` - Force single commit
-- `/commit --message "feat: Add user auth"` - Use specific message
+`$ARGUMENTS`: **--dry-run** preview without executing · **--single** force one commit · **--all**
+commit all uncommitted changes, not just the session's · **--message <msg>** use this message (single
+commit). E.g. `/commit`, `/commit --dry-run`, `/commit --single`,
+`/commit --message "feat: Add user auth"`.
 
 ## Procedure
 
 ### Step 0: Filter to Session-Only Changes
-
-By default, ONLY commit files that were changed during this session. Do NOT commit pre-existing uncommitted changes.
-
-**How to determine session changes:**
-1. The conversation context includes a `gitStatus` snapshot taken at session start. Parse the list of dirty files from it.
-2. Run `git status --porcelain` now to get the current dirty files.
-3. **Session-changed files** = current dirty files MINUS files that were already dirty at session start.
-4. If no session-changed files exist, report "No session changes to commit." and stop.
-
-**Override:** If the user explicitly asks to commit all changes (e.g., `/commit --all`), skip this filter and commit everything.
+By default commit **only files changed in this session**, never pre-existing uncommitted changes:
+dirty files in the `gitStatus` snapshot taken at session start vs `git status --porcelain` now —
+session-changed = current dirty MINUS dirty at start. None → report "No session changes to commit."
+and stop. `/commit --all` (or an explicit request to commit everything) skips the filter.
 
 ### Step 1: Gather Change Information
-
 ```bash
-# Get all changed files (then filter to session-only as per Step 0)
-git status --porcelain
-
-# Get recent commits for style reference
-git log --oneline -10 --format='%s'
-
-# Get diff ONLY for session-changed files (pass file paths explicitly)
-git diff HEAD -- <session-changed-file1> <session-changed-file2> ...
+git status --porcelain                                   # then filter per Step 0
+git log --oneline -10 --format='%s'                      # style reference
+git diff HEAD -- <session-changed-file1> <session-changed-file2> ...   # ONLY session files
 ```
 
 ### Step 2: Analyze Change Relationships
-
-**Key insight**: Distinguish between core changes and ripple effects.
-
-**Core changes** (commit separately):
-- New component/hook/type definitions
-- Interface/type signature changes
-- New feature logic
-- Bug fixes
-
-**Ripple changes** (group together):
-- Import statement updates after component rename
-- Type annotation updates across files
-- Props updates after interface change
-
-**Detection patterns**:
-- If one file modifies a component/hook/type definition AND many files have small changes referencing that symbol -> split into core + ripple
-- Look for: same identifier appearing across many file diffs, import changes, type updates
+Separate **core changes** (new component/hook/type definitions, interface or signature changes, new
+feature logic, bug fixes — commit separately) from **ripple changes** (import updates after a rename,
+type-annotation and props updates across files — group together). Signal: one file changes a
+definition AND many files have small changes referencing that symbol → split into core + ripple.
 
 ### Step 3: Grouping Strategy (Priority Order)
+**A. Ripple patterns first** — e.g. `Button.tsx` changes its props interface + 20 files update the
+usage → commit 1 "refactor: Add variant prop to Button component" (the definition + changed types),
+commit 2 "refactor: Update Button usages for new variant prop" (the 20 files).
 
-**A. Detect ripple patterns first:**
-```
-Example: Button.tsx changes Button props interface
-         + 20 files updating Button usage
-
-Commit 1: "refactor: Add variant prop to Button component"
-  - components/ui/Button.tsx (the definition)
-  - types/components.ts (if types changed)
-
-Commit 2: "refactor: Update Button usages for new variant prop"
-  - All 20 files with usage updates
-```
-
-**B. Group by logical feature:**
-- Related module files: `types/*.ts` + `components/*.tsx` + `hooks/*.ts`
-- API + component: `app/api/*/route.ts` + `components/*`
-- Hook + usage: `hooks/use*.ts` + components using it
+**B. Logical feature** — `types/*.ts` + `components/*.tsx` + `hooks/*.ts`; `app/api/*/route.ts` +
+`components/*`; `hooks/use*.ts` + the components using it.
 
 **C. Path-based fallback:**
+
 | Path Pattern | Category |
-|--------------|----------|
+|---|---|
 | `components/**` | Components |
 | `app/**` | Pages/Routes |
-| `lib/**` | Utilities |
+| `lib/**`, `utils/**` | Utilities |
 | `hooks/**` | Hooks |
 | `types/**` | Types |
-| `utils/**` | Utilities |
 | `styles/**` | Styles |
 | `public/**` | Assets |
 
 ### Step 4: Decide Split Strategy
-
-**Single commit** when:
-- <=3 files changed, OR
-- All changes clearly related (same feature), OR
-- `--single` flag provided, OR
-- `--message` flag provided
-
-**Multi-commit** when:
-- Ripple pattern detected (definition + many usages)
-- Multiple unrelated features mixed
-- Large refactoring spanning many modules
+**Single commit** when ≤3 files, or all changes clearly one feature, or `--single` / `--message`
+given. **Multi-commit** when a ripple pattern is detected, unrelated features are mixed, or a
+refactoring spans many modules.
 
 ### Step 5: Generate Commit Messages
-
-Commit messages are **always written in English** (see Language).
-
-Do NOT include any co-author or attribution trailers (no `Co-Authored-By:`, no "Generated with
-Claude" footer, no AI/model credit). The message holds only `<type>: <description>` and an
-optional body.
-
-**Format:**
+Always English, no attribution trailers (see above):
 ```
 <type>: <Short description (imperative, <70 chars)> [<task-id> if backlog-related]
 
 <Optional body explaining why / what was done>
-
 ```
-
-**Types:**
-- `feat:` - New functionality
-- `fix:` - Bug fixes
-- `refactor:` - Code restructuring
-- `chore:` - Maintenance, tooling
-- `docs:` - Documentation
-- `test:` - Test changes
-- `style:` - Styling changes (CSS, formatting)
+Types: `feat:` new functionality · `fix:` bug fix · `refactor:` restructuring · `chore:` maintenance,
+tooling · `docs:` documentation · `test:` tests · `style:` styling (CSS, formatting).
 
 ### Step 6: Execute Commits
-
-For each commit group:
-
-1. Stage specific files (NEVER use `git add .` or `git add -A`):
+Per group: stage specific files (**never** `git add .` / `git add -A`), commit with a HEREDOC, verify
+with `git log -1 --oneline`:
 ```bash
 git add path/to/file1.tsx path/to/file2.ts
-```
-
-2. Create commit with HEREDOC:
-```bash
 git commit -m "$(cat <<'EOF'
 feat: Add authentication service
 
 Implement OAuth2 flow with refresh token support.
-
 EOF
 )"
-```
-
-3. Verify success:
-```bash
-git log -1 --oneline
 ```
 
 ## Output Format
 
-All user-facing text below is rendered in the user's language. The commit messages embedded in it
-stay in English.
+User-facing text in the user's language; the embedded commit messages stay English.
 
-### Dry Run
-
-```markdown
-## Commit Plan (Dry Run)
-
-**Files changed**: 25
-**Proposed commits**: 2
-
-### Commit 1: Core Change
-**Type**: refactor
-**Files** (2):
-- components/ui/Button.tsx
-- types/components.ts
-
-**Message**:
-> refactor: Add size prop to Button component
-
----
-
-### Commit 2: Usage Updates
-**Type**: refactor
-**Files** (23):
-- components/header/NavButton.tsx
-- components/forms/SubmitButton.tsx
-- ... (21 more files)
-
-**Message**:
-> refactor: Update Button usages with size prop
-
----
-
-Run `/commit` to execute.
-```
-
-### Execution
-
-```markdown
-## Commits Created
-
-### Commit 1/2
-$ git add components/ui/Button.tsx types/components.ts
-$ git commit -m "refactor: Add size prop..."
-[main abc1234] refactor: Add size prop to Button component
- 2 files changed, 25 insertions(+), 8 deletions(-)
-
-### Commit 2/2
-$ git add components/header/NavButton.tsx ...
-$ git commit -m "refactor: Update Button usages..."
-[main def5678] refactor: Update Button usages with size prop
- 23 files changed, 46 insertions(+), 46 deletions(-)
-
----
-
-**Summary**: Created 2 commits
-def5678 refactor: Update Button usages with size prop
-abc1234 refactor: Add size prop to Button component
-```
+- **Dry run** — `## Commit Plan (Dry Run)`: files changed · proposed commits; per commit its type,
+  file list (long lists truncated: "... (21 more files)") and the message quoted; close with
+  "Run `/commit` to execute."
+- **Execution** — `## Commits Created`: per commit the `git add` / `git commit` lines and git's own
+  `[main abc1234] …` / "N files changed" output; then **Summary**: "Created N commits" + one
+  `hash subject` line each, newest first.
 
 ## Error Handling
 
 | Scenario | Action |
-|----------|--------|
-| No changes | Report "No changes to commit" and exit |
-| Pre-commit hook fails | Show error, offer to fix, create NEW commit (never amend) |
-| Merge conflicts | Report files with conflicts, ask user to resolve |
+|---|---|
+| No changes | "No uncommitted changes found." and exit |
+| Pre-commit hook fails | Show the hook output, identify the fix, ask "Pre-commit hook failed. Fix and retry?"; on yes fix and create a NEW commit (never amend) |
+| Merge conflicts | Report the conflicted files, ask the user to resolve |
 
-### Hook Failure Recovery
-
-If commit fails due to pre-commit hooks:
-1. Show the hook output
-2. Identify what needs fixing
-3. Ask: "Pre-commit hook failed. Fix and retry?"
-4. If yes, fix issues and create NEW commit (never use --amend)
-
-## Edge Cases
-
-- **No changes**: "No uncommitted changes found."
-- **Only untracked files**: Treat as new additions, stage normally
-- **Single file**: Skip splitting, create one commit
-- **Very large changeset (50+ files)**: Summarize first, ask to proceed
-- **Mixed staged/unstaged**: Analyze ALL changes together
-- **node_modules or .next changes**: Skip these directories, warn if staged
-
-## Full Example Session
-
-### Example 1: Ripple Pattern Detection
-
-```
-User: /commit
-
-Claude: Analyzing uncommitted changes...
-
-$ git status --porcelain
-M  components/ui/Card.tsx
-M  types/ui.ts
-M  components/dashboard/StatsCard.tsx
-M  components/dashboard/UserCard.tsx
-M  components/products/ProductCard.tsx
-M  app/page.tsx
-... (15 more files)
-
-Analyzing diffs...
-
-Detected ripple pattern:
-- Card.tsx: Changed Card component props (added `elevated` prop)
-- types/ui.ts: Added CardProps type update
-- 15 other files: Updating Card usage
-
-Splitting into 2 commits:
-
-### Commit 1/2: Core Change
-$ git add components/ui/Card.tsx types/ui.ts
-$ git commit -m "$(cat <<'EOF'
-feat: Add elevated prop to Card component
-
-Add visual elevation option with shadow effects.
-
-EOF
-)"
-[main a1b2c3d] feat: Add elevated prop to Card component
- 2 files changed, 18 insertions(+), 4 deletions(-)
-
-### Commit 2/2: Usage Updates
-$ git add components/dashboard/StatsCard.tsx components/dashboard/UserCard.tsx ...
-$ git commit -m "$(cat <<'EOF'
-refactor: Update Card usages with elevated prop
-
-EOF
-)"
-[main d4e5f6g] refactor: Update Card usages with elevated prop
- 15 files changed, 30 insertions(+), 15 deletions(-)
-
----
-
-**Summary**: Created 2 commits
-d4e5f6g refactor: Update Card usages with elevated prop
-a1b2c3d feat: Add elevated prop to Card component
-```
-
-### Example 2: Single Commit (Small Change)
-
-```
-User: /commit
-
-Claude: Analyzing uncommitted changes...
-
-$ git status --porcelain
-M  components/forms/LoginForm.tsx
-
-Found 1 changed file. Creating single commit...
-
-$ git add components/forms/LoginForm.tsx
-$ git commit -m "$(cat <<'EOF'
-fix: Handle empty email validation gracefully
-
-Add check for empty string before email format validation.
-
-EOF
-)"
-[main x1y2z3a] fix: Handle empty email validation gracefully
- 1 file changed, 5 insertions(+), 2 deletions(-)
-
----
-
-**Summary**: Created 1 commit
-x1y2z3a fix: Handle empty email validation gracefully
-```
+Edge cases: only untracked files → stage as new additions · single file → one commit, no splitting ·
+50+ files → summarize first, ask to proceed · mixed staged/unstaged → analyze all together ·
+`node_modules` / `.next` changes → skip, warn if staged.

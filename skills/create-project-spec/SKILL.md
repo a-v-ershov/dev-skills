@@ -1,19 +1,16 @@
 ---
 name: create-project-spec
-description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project or a major new initiative and you want the full guided flow rather than running each step by hand. Orchestrates gather-context, validate-idea, define-product-requirements, create-user-flows, define-design-decisions, design-architecture, define-code-style and design-dev-architecture — each phase researching real-world facts within a fixed budget, running an adversarial review whose findings it applies in place, and emitting a research doc plus a short human summary. Works on an empty repo or one that already has code."
+description: "Take a raw idea to a buildable project spec by running gather-context, validate-idea, define-product-requirements, create-user-flows, define-design-decisions, design-architecture, define-code-style and design-dev-architecture in order. Use to start a new project or major initiative with the full guided flow; works on an empty repo or existing code."
 argument-hint: "[--from <step>]"
 ---
 
 # Create Project Spec Skill (orchestrator)
 
-You are the conductor of the project-documentation pipeline. You do not do the work of each
-phase yourself — you invoke the focused sub-skill for each step (via the Skill tool), let it run
-its own internal pipeline (research → draft → adversarial review → merge → dual output), and move
-on according to the chosen mode.
+You conduct the project-documentation pipeline: invoke each phase's sub-skill via the Skill tool, let
+it run its own pipeline, and advance per the chosen mode.
 
-The pipeline produces, in order — **two** files per phase (the reviewer writes none: it returns its
-findings and the phase applies them in place; the architecture phases add ADRs, and step 7 adds the
-distilled `code-style.md` guide the build agents follow):
+Each phase researches and reviews itself and writes **two** files (the review never becomes one); the
+architecture phases add ADRs, step 7 the distilled `code-style.md` guide the build agents follow:
 
 | Step | Sub-skill | Detailed doc | Human summary |
 |------|-----------|--------------|---------------|
@@ -26,44 +23,36 @@ distilled `code-style.md` guide the build agents follow):
 | 7 | `define-code-style` | `code-style.research.md` (+ the distilled `code-style.md` guide) | `code-style.summary.md` |
 | 8 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
 
-All under `.dev-skills/project-spec/`. Step 1 (`gather-context`) interviews the user to turn their short
-brief into a rich discovery brief that every later phase reads as settled intent. Each phase
-researches and reviews itself — there is no separate review step to offer, and the review never
-becomes a file.
+All under `.dev-skills/project-spec/`. There is no separate review step.
 
-**If the repo already has code,** nothing about the pipeline changes: each phase reads what it needs
-from the code at its own intake, tells the user what it found, and confirms instead of re-asking —
-differences the user wants become a `## Divergences (code vs intended)` section in that phase's doc.
-There is no separate mode, no extra phase, and no setting for it. Method:
-**`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
+**If the repo already has code,** nothing changes: each phase reads the code at its own intake, says
+what it found, and confirms instead of re-asking — wanted differences become a
+`## Divergences (code vs intended)` section in that phase's doc. You pass no flag and add no mode,
+phase or setting. Method: **`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo
+already has code".
 
 ## Language & git
 
-Respond and reason in the user's language. Each sub-skill follows the same
-rule on its own, so the whole pipeline speaks the user's language consistently.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands or paths. Commit messages are always English. **One branch —
+the current one** (normally `main`): never branch, switch or open a worktree unless the user
+explicitly asked in this session — **`../_shared/git-workflow.md`**. Each sub-skill follows the same
+rules on its own.
 
 ## Two setup choices (ask once, up front)
 
 Before step 1, settle two settings and persist them to `.dev-skills/project-spec/.spec-config.md` so
-every sub-skill inherits them. Use one `AskUserQuestion` (defaults pre-selected). Full rules:
-**`../_shared/spec-pipeline/pipeline-config.md`**.
+every sub-skill inherits them — one `AskUserQuestion`, defaults pre-selected
+(**`../_shared/spec-pipeline/pipeline-config.md`**).
 
-1. **`mode`** — `interactive` (default): pause at each fork and at each phase's hard gate for your
-   approval. `autopilot`: the AI resolves every fork itself, logging each choice in the doc's
-   Forks / Decisions log, and runs phases back-to-back without stopping (still does research +
-   review + dual output for every phase).
-2. **`final_summary`** — `true` (default): at the end, build one combined human-readable
-   `.dev-skills/project-spec/summary.md`. `false`: skip it.
+1. **`mode`** — `interactive` (default): pause at each fork and each phase's hard gate for approval.
+   `autopilot`: the AI resolves every fork itself, logs each choice in the doc's Forks / Decisions
+   log, and runs phases back-to-back.
+2. **`final_summary`** — `true` (default): build one combined `.dev-skills/project-spec/summary.md` at
+   the end. `false`: skip it.
 
 Write the file (create `.dev-skills/project-spec/` if needed — everything there is committed project
-documentation; the pipeline writes no transient files, so the directory needs no `.gitignore`):
+documentation; nothing transient, so no `.gitignore`):
 
 ```
 # Spec pipeline config
@@ -88,68 +77,57 @@ documentation; the pipeline writes no transient files, so the directory needs no
 ```
 
 ### Step 0: Detect progress, settle settings
-List `.dev-skills/project-spec/`. If artifacts already exist, tell the user and propose resuming from the
-first missing step; honor an explicit `--from <step>`. Never silently redo a completed step — ask
-before overwriting.
+List `.dev-skills/project-spec/`. If artifacts exist, say so and propose resuming from the first
+missing step; honor an explicit `--from <step>`; ask before overwriting a completed step. Settle the
+two settings and write `.spec-config.md` (reuse an existing one unless the user changes a setting).
 
-Then settle the two settings and write `.spec-config.md` (above). If it already exists, reuse it
-unless the user asks to change a setting.
-
-Then **seed the project documentation map** in the project's root `CLAUDE.md` — the marker-delimited
-block that orients any coding agent to where the spec/backlog/setup docs live and the order to read
-them. At this point most artifacts are still *planned*; render them as such. Spec, format, and marker
-discipline (idempotent, non-destructive): **`../_shared/agent-guide.md`**. This is orchestrator
-housekeeping (like writing `.spec-config.md` / `summary.md`), not a phase — keep it to the shared
-block and never touch content outside the markers.
+Then **seed the project documentation map** in the root `CLAUDE.md` — the marker-delimited block
+telling any coding agent where the spec/backlog/setup docs live and the reading order; render
+not-yet-written artifacts as *planned*. Spec and marker discipline (idempotent, non-destructive):
+**`../_shared/agent-guide.md`**. Housekeeping, not a phase — never touch content outside the markers.
 
 ### Steps 1–8: Run each sub-skill, then advance
-For each step in order (step 1 is `gather-context` — the discovery interview that produces the
-project brief; steps 2–8 are the phases that read it):
+In order. Step 1 (`gather-context`) interviews the user into a discovery brief that steps 2–8 read as
+settled intent. `validate-idea` may **self-skip** on an existing product with no new bets — allow and
+record it (it is not the unavailable-skill stop below).
 
-**If the repo already has code,** each phase handles it on its own — reading the code at its intake,
-reporting what it found, and confirming rather than re-asking. You pass no flag and add no step. One
-thing to honor: `validate-idea` may **self-skip** when the product already exists and there are no new
-bets to test — allow the skip and record it; it is not the unavailable-skill stop condition below.
-
-1. **Announce** the step and the sub-skill you are about to invoke.
-2. **Invoke the sub-skill** via the Skill tool. It reads `.spec-config.md`, runs its internal
-   pipeline to completion (elicit, budgeted research, draft, review → the reviewer returns findings,
-   fix → applies them in place, and the dual output: detailed `*.research.md` + human
-   `*.summary.md`), and stops at its own gate per the mode.
+1. **Announce** the step and its sub-skill.
+2. **Invoke the sub-skill** via the Skill tool. It reads `.spec-config.md`, runs its pipeline to
+   completion (elicit, research, draft, review, fix, dual output `*.research.md` + `*.summary.md`) and
+   stops at its own gate per the mode.
 3. **Advance by mode:**
    - **interactive — Hard gate.** Present the two artifact paths and STOP for explicit approval:
      > "Step N (<sub-skill>) finished → <noun>.research.md (detail), <noun>.summary.md (for you).
      > Approve to continue to step N+1, or tell me what to change."
-     Do NOT auto-advance. On change requests, loop back into that step's sub-skill.
-   - **autopilot — Auto-advance.** Do not stop. Note in your running progress which must-answer
-     forks the phase surfaced (from its `*.summary.md`), and continue to the next step.
+     Never auto-advance; on change requests, loop back into that step's sub-skill.
+   - **autopilot — Auto-advance.** Do not stop. Note in your running progress the must-answer forks
+     the phase surfaced (from its `*.summary.md`) and continue.
 
-A sub-skill not yet available in this collection is a stop condition regardless of mode: report it
-and let the user decide whether to skip the step or build the skill first.
+A sub-skill not available in this collection stops the run in either mode: report it and let the user
+decide whether to skip the step or build the skill first.
 
 ### Done: final summary + handoff
 When the last available step completes:
 
-1. **If `final_summary: true`,** build `.dev-skills/project-spec/summary.md` — one human-readable
-   document combining each phase's `*.summary.md` essence + a consolidated list of every
-   still-open fork (every `Needs human confirm? = yes`) across all phases + consolidated open
-   risks. Do not re-derive — concatenate and roll up. Format:
+1. **If `final_summary: true`,** build `.dev-skills/project-spec/summary.md`: each phase's
+   `*.summary.md` essence + every still-open fork (every `Needs human confirm? = yes`) + consolidated
+   open risks. Concatenate and roll up, don't re-derive. Format:
    **`../_shared/spec-pipeline/output-format.md`** (section 4).
 2. **Refresh the project documentation map** in the root `CLAUDE.md` — re-render the marker block so
-   the now-real `.dev-skills/project-spec/` artifacts (and `summary.md`) show as present. Spec + marker
-   discipline: **`../_shared/agent-guide.md`** (idempotent — replace the block in place).
+   the now-real `.dev-skills/project-spec/` artifacts (and `summary.md`) show as present
+   (**`../_shared/agent-guide.md`**, idempotent — replace the block in place).
 3. **Summarize the documentation set** (paths + one-line status each) and hand off: the project is
    ready for implementation. In autopilot, point the user at `summary.md` first and list the
    must-answer forks they still own.
 
 ## Rules
 
-1. **Conduct, don't duplicate.** Never re-implement a phase's questions, research, review, or
-   template — invoke its sub-skill. Each phase owns its own research + review.
-2. **Respect the mode.** interactive: one approval per step, never chain two without it.
-   autopilot: never stop for forks/gates, but every phase still researches, reviews, and writes
-   its two files, and every auto-resolved fork is logged.
-3. **Resume, don't restart.** Reuse existing artifacts; only redo a step on explicit request.
-4. **Settings are set once and shared.** Write `.spec-config.md` before step 1 so standalone and
-   orchestrated runs behave identically.
-5. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
+1. **Conduct, don't duplicate.** Never re-implement a phase's questions, research, review or template —
+   invoke its sub-skill.
+2. **Respect the mode.** interactive: one approval per step, never chain two without it. autopilot:
+   never stop for forks/gates, but every phase still researches, reviews, writes its two files and logs
+   every auto-resolved fork.
+3. **Resume, don't restart.** Reuse existing artifacts; redo a step only on explicit request.
+4. **Settings are set once and shared** via `.spec-config.md`, so standalone and orchestrated runs
+   behave identically.
+5. **End every report with «What you should do»** (**`../_shared/build-pipeline/report-format.md`**).

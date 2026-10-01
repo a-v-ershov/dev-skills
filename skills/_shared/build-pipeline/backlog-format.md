@@ -1,10 +1,8 @@
 # Backlog format & lifecycle (shared — build pipeline)
 
-The build pipeline tracks work as a **kanban backlog**: one markdown file per task, status in the
-file's frontmatter, dependencies expressed as blockers. The dependency graph is implicit — a task's
-`blocked_by` list *is* the set of edges; nothing materializes a separate graph. This file is the
-contract every build skill (`plan-development`, `build-tasks`, `implement-feature`,
-`verify-feature`, `run-task`, `build-tasks`) reads and writes against.
+A **kanban backlog**: one markdown file per task, status in its frontmatter; a task's `blocked_by` list
+*is* the dependency graph. The contract every build skill (`plan-development`, `build-tasks`,
+`implement-feature`, `verify-feature`, `run-task`) reads and writes against.
 
 ## Where it lives
 
@@ -21,19 +19,17 @@ contract every build skill (`plan-development`, `build-tasks`, `implement-featur
                               # later run rewrites it (verification-method.md).
 ```
 
-`.dev-skills/build-plan/` is committed project documentation (like `.dev-skills/project-spec/`). Each skill creates
-the directory if absent.
+`.dev-skills/build-plan/` is committed project documentation (like `.dev-skills/project-spec/`); each
+skill creates it if absent.
 
 ## One file per task — `tasks/<id>-<slug>.md`
 
-The single-file-per-task layout is deliberate: a task's status changes only edit *that* task's own
-file, so there is no shared file to contend on. IDs are `T###`, assigned in creation order and never
-reused.
+A status change edits only that task's file — nothing shared to contend on. IDs are `T###`, in
+creation order, never reused.
 
 **The board holds at most 15 open tasks, and every skill that files one respects that** —
-`plan-development`, the release audits, `refactor`, `write-tests`, and `run-task`'s adhoc entry point
-alike. Tasks are deliberately coarse; the grain rule and what to do at the ceiling live in
-`planning-method.md`.
+`plan-development`, the release audits, `refactor`, `write-tests`, `run-task`'s adhoc entry point
+(grain and the ceiling: `planning-method.md`).
 
 ```yaml
 ---
@@ -70,14 +66,13 @@ history:                      # status transitions: time + actor + optional note
 
 ## Description (for AI)
 
-<The full, detailed task description for the executor agent: what to build, where it fits, the
-relevant spec sections, constraints, and any design notes. This is the AI-facing brief — as long as
-it needs to be. The frontmatter `summary` is the one-line human view; this is the depth.>
+<The full brief for the executor agent: what to build, where it fits, relevant spec sections,
+constraints, design notes — as long as it needs to be. `summary` is the one-line human view.>
 
 ## Log
 
-<Append-only, newest last. The implementer and the (separate) verifier write findings here — what
-was done, what was found, evidence links. The verifier's findings accumulate as a batch each round.>
+<Append-only, newest last. Implementer and verifier write findings here — what was done, what was
+found, evidence links. The verifier's findings land as a batch each round.>
 
 - 2026-06-18T12:31Z [implement-feature] Search endpoint + header UI done; happy path self-verified.
 - 2026-06-18T12:45Z [verify-feature] FAIL: empty query → 500 (expected 400). artifacts/T012-empty.png
@@ -87,61 +82,46 @@ was done, what was found, evidence links. The verifier's findings accumulate as 
 
 ### Field rules
 
-- **`type`** — `setup` (an environment/scaffolding task, run by `setup-dev-environment`), `feature`
-  (a product feature, run by `implement-feature` then `verify-feature`), `verify` (an optional
-  cross-cutting check, e.g. an end-to-end pass over several features, or — in an existing project —
-  proving a pre-existing/adopted feature against its acceptance criteria), `rework` (a fix to
-  already-built code — filed by a release-phase finding (an `audit-*`, or a bug `refactor` /
-  `write-tests` found and deliberately did not fix), a `plan-development` reopen, or
-  `plan-development` delta mode reconciling a brownfield codebase against the target spec; `traces_to`
-  points at the audit finding / changed spec section / as-is map finding; **dispatched exactly like
-  `feature`**: `implement-feature` then `verify-feature`). Like every other task it is **coarse** —
-  one task per coherent fix, with each grouped finding kept as its own `acceptance` entry, never one
-  task per finding (`planning-method.md`).
-- **`summary`** — one line, plain language, no jargon; this is what the board shows a human.
+- **`type`** — `setup` (environment/scaffolding, run by `setup-dev-environment`); `feature` (run by
+  `implement-feature` then `verify-feature`); `verify` (optional cross-cutting check — an end-to-end
+  pass over several features, or proving a pre-existing feature against its criteria); `rework` (a fix
+  to built code, **dispatched exactly like `feature`** — filed by a release finding (an `audit-*`, or a
+  bug `refactor` / `write-tests` found and did not fix), a `plan-development` reopen, or delta mode on
+  a brownfield codebase; `traces_to` points at the finding / changed spec section / as-is map
+  finding). Every task is **coarse** — one per coherent fix, each finding its own `acceptance` entry
+  (`planning-method.md`).
+- **`summary`** — one plain-language line, no jargon; the board shows it.
 - **`status`** — see the lifecycle below.
-- **`created`** — ISO-8601 UTC, written once. Get the time at runtime (`date -u +%Y-%m-%dT%H:%M:%SZ`).
-- **`blocked_by`** — the only ordering constraint. A task with no dependencies has `[]`.
-- **`traces_to`** — provenance into the spec (research-doc section anchors). No orphan tasks: every
-  `feature` task traces to a product-requirements feature and/or a user-flow. This is also what
-  `plan-development` amend mode uses to find which tasks a changed spec section affects.
-- **`origin`** — `spec` (planned by `plan-development` from the spec — the normal case) or `adhoc`
-  (raised directly by the user during a build run, e.g. "the card doesn't show the date"). An `adhoc`
-  task has no `traces_to` until the spec catches up.
+- **`created`** — ISO-8601 UTC, written once; get the time at runtime (`date -u +%Y-%m-%dT%H:%M:%SZ`).
+- **`blocked_by`** — the only ordering constraint; `[]` when none.
+- **`traces_to`** — spec section anchors. No orphans: every `feature` task traces to a
+  product-requirements feature and/or a user-flow. Amend mode uses it to find affected tasks.
+- **`origin`** — `spec` (planned by `plan-development`) or `adhoc` (raised by the user during a build
+  run, e.g. "the card doesn't show the date"); an `adhoc` task has no `traces_to` until the spec
+  catches up.
 - **`spec_sync`** — `none` when the task changes nothing the spec describes; **`pending`** the moment
-  the work changes observable product behavior that the spec doesn't yet reflect; `done` once the spec
-  edit lands. A task sitting at `pending` means the next plan would be built from a stale picture —
-  the board surfaces those.
-- **`review`** — `pending` until the work is accepted; then `human` (a person looked at it) or `auto`
-  (nothing a human could check by hand — the diff is tests and internal logic, all criteria proven by
-  the verifier). Never set `auto` to skip an awkward conversation.
-- **`acceptance`** — the behavioral, testable criteria (Given/When/Then or EARS) copied/derived from
-  the feature's acceptance criteria in `product-requirements.research.md` (and the flow's criteria in
-  `user-flows.research.md`). The definition of done the verifier proves against.
+  the work changes observable behavior the spec doesn't reflect; `done` once the spec edit lands. The
+  board surfaces `pending` tasks (the next plan would start stale).
+- **`review`** — `pending` until accepted; then `human` (a person looked at it) or `auto` (nothing
+  hand-checkable — tests and internal logic, all criteria proven by the verifier). Never set `auto` to
+  skip an awkward conversation.
+- **`acceptance`** — behavioral, testable criteria (Given/When/Then or EARS) derived from
+  `product-requirements.research.md` (and `user-flows.research.md`); what the verifier proves against.
 - **`timings`** — wall-clock **seconds** per stage, written once by `run-task` when the task leaves
-  (`done` *or* `needs_human`); the whole block is absent until then, and a stage that didn't run has
-  no key. It is honest wall-clock, **not** compute time: waiting on a permission prompt and on the
-  human's acceptance answer is inside it, so `total` is normally larger than the stages added up and
-  the remainder is mostly the human. Read it to see where a task's time went — never as a benchmark
-  of a model or a target to optimize. One ratio is worth watching across tasks rather than within
-  one: **`verify` against `build`**. Proving a feature should cost a fraction of building it, so a
-  `verify` that keeps landing near or above its `build` says the two roles are covering the same
-  ground — the verifier re-authoring what the implementer already wrote — and that is a finding about
-  `implement-feature`, `verify-feature` and `verification-method.md`, not about the task in front of
-  you.
-- **`claim`** — who is working on this task **right now**, present only while `in_progress`. Written
-  by `run-task` **before** it spawns anything, re-stamped (`stage`, `heartbeat`) at every stage
-  boundary, and removed when the task leaves `in_progress`. It does two jobs:
-  - **It answers "what are you doing?" without interrupting the run** — `stage` + `since` is the live
-    status a human (or the board) can read at any moment, instead of a board that shows nothing in
-    progress while an agent has been running for fifty minutes.
-  - **It keeps two sessions off the same task.** The user runs more than one session on one repository;
-    a task whose `claim.heartbeat` is **fresher than 30 minutes** belongs to that holder, and another
-    run skips it and says who holds it. Older than that, the holder is presumed dead (agents get
-    killed) and the task may be reclaimed — announce the reclaim, never do it silently. This is the
-    task-level twin of the environment lease in `env-access.md`, and it is deliberately advisory:
-    it prevents collisions, it does not lock a human out.
-- **`history`** — append-only transition log; each entry `{ at, to, by, note? }`. Never rewrite past
+  (`done` *or* `needs_human`); absent until then; a stage that didn't run has no key. Prompts and the
+  human's acceptance answer are inside it, so `total` normally exceeds the stages summed — the
+  remainder is mostly the human. Never a model benchmark or a target. Across tasks, a `verify` near or
+  above its `build` (proving should cost a fraction of building) means the verifier re-authors the
+  implementer's work — a finding about `implement-feature`, `verify-feature` and
+  `verification-method.md`, not about the task.
+- **`claim`** — who is on this task **right now**; present only while `in_progress`. Written by
+  `run-task` **before** it spawns anything, re-stamped (`stage`, `heartbeat`) at every stage boundary,
+  removed when the task leaves `in_progress`. `stage` + `since` is the live status. A
+  `claim.heartbeat` **fresher than 30 minutes** → another run skips the task and says who holds it;
+  older → the holder is presumed dead and the task may be reclaimed — announced, never silently.
+  Advisory, the task-level twin of the env lease (`env-access.md`): it prevents collisions, never locks
+  a human out.
+- **`history`** — append-only transition log, entries `{ at, to, by, note? }`. Never rewrite past
   entries.
 
 ## Status lifecycle
@@ -154,37 +134,32 @@ todo ──> in_progress ──> done
 ```
 
 - **`todo`** — created, not started.
-- **`in_progress`** — an executor has claimed it. **`run-task` sets this, and writes `claim`, BEFORE
-  it spawns the implementer** — not after the agent returns. State written after the expensive step is
-  state nobody can read while the expensive step is running, which is exactly when someone asks.
-- **`done`** — built, verified, accepted (`review: human` or `auto`), and committed.
-- **`needs_human`** — escalated: the one fix round didn't close a critical criterion, the quality gate
-  stayed red, or a blocker couldn't be resolved autonomously. The task's `## Log` holds the findings
-  the human needs. Surfaced prominently on the board.
-- **`cancelled`** — terminal; the work is no longer wanted (e.g. a feature removed from the spec).
-  A `done` task whose feature changed is **not** cancelled — it is reopened as a rework task (see
-  `propagation-method.md`).
+- **`in_progress`** — claimed. **`run-task` sets this, and writes `claim`, BEFORE it spawns the
+  implementer**, so the state is readable while the expensive step runs.
+- **`done`** — built, verified, accepted (`review: human` or `auto`), committed.
+- **`needs_human`** — escalated: the fix round didn't close a critical criterion, the gate stayed red,
+  or a blocker couldn't be resolved; the `## Log` holds what the human needs. Shown first on the board.
+- **`cancelled`** — terminal; no longer wanted (a feature removed from the spec). A `done` task whose
+  feature changed is **not** cancelled — it is reopened as rework (`propagation-method.md`).
 
 `needs_human` and `cancelled` are not "fresh" work: the orchestrator never picks them.
 
 ## `ready` and the dependency graph
 
-The graph is implicit in `blocked_by`. Derived on demand, never stored:
+Derived on demand from `blocked_by`, never stored:
 
 - **`ready(T)`** ⟺ `T.status == todo` **AND** every id in `T.blocked_by` is a task with `status: done`.
-- A `todo` task with an unfinished (or `cancelled`/`needs_human`) blocker is **blocked** — not ready.
-  (`blocked` is a derived display state, not a stored status.)
-- **Pick one at a time:** the orchestrator selects a single `ready` task per iteration. When several
-  are ready, tie-break deterministically by lowest `id` (declaration order) so runs are reproducible.
+- A `todo` task with an unfinished (or `cancelled`/`needs_human`) blocker is **blocked** (`blocked` is a
+  derived display state, not a stored status).
+- **Pick one at a time:** one `ready` task per iteration; tie-break by lowest `id` for reproducibility.
 
-There is no parallelism: tasks are built one after another on a single working tree (see
-`build-tasks`). Blockers are the only thing that serialize beyond that.
+No parallelism: tasks are built one after another on a single working tree (see `build-tasks`).
 
 ## `board.md` — the derived human view
 
-Plain markdown a human opens directly (IDE preview / GitHub render / `glow`). It is **regenerated**
-from the task files by `plan-development` and `run-task` — never hand-edited. Group by status,
-list `id` · `summary`, and put any `needs_human` tasks first as a prominent group. Shape:
+Plain markdown a human opens directly (IDE preview / GitHub render / `glow`). **Regenerated** from the
+task files by `plan-development` and `run-task` — never hand-edited. Group by status, list `id` ·
+`summary`, `needs_human` first. Shape:
 
 ```markdown
 # Build board
@@ -216,17 +191,13 @@ list `id` · `summary`, and put any `needs_human` tasks first as a prominent gro
 - (none)
 ```
 
-The **first two lines answer the two questions a human actually asks** — *how far along is this?* and
-*what are you doing right now?* Both were asked repeatedly in the field, mid-run, because neither had
-an answer anywhere. The percentage counts `done` against every task that is not `cancelled`. The
-**Now** line is read straight from the `claim` block of whichever task is `in_progress` (there is at
-most one per session); with no claim it reads `Now: idle`. Regenerate the header at every stage
-boundary, not only when a task finishes — a header that only moves once per hour is not a status.
+The header answers *how far along?* and *what are you doing right now?* The percentage counts `done`
+against every task not `cancelled`. **Now** comes from the `claim` of the `in_progress` task (at most
+one per session); with none it reads `Now: idle`. Regenerate the header at every stage boundary, not
+only when a task finishes.
 
-The **Reconciled with spec** line is the anchor `build-tasks` checks before a run: it records the
-commit the backlog was last planned against, so `git log <sha>..HEAD -- .dev-skills/project-spec/`
-answers "has the spec moved ahead of the plan?" in one command. `plan-development` writes it; nothing
-else touches it.
+**Reconciled with spec** is the anchor `build-tasks` checks before a run: the commit the backlog was
+last planned against, so `git log <sha>..HEAD -- .dev-skills/project-spec/` answers "has the spec moved
+ahead of the plan?". Only `plan-development` writes it.
 
-Keep the board light: it is a dashboard, not the source of truth. The task files are the truth; the
-board is derived from them every time.
+The board is a dashboard; the task files are the source of truth.

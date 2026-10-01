@@ -1,52 +1,36 @@
 ---
 name: build-tasks
-description: "Work through the development plan: take tasks from .dev-skills/build-plan/ one at a time and run each through run-task, in deterministic order — the ready task with the lowest id, no parallel tasks, one working tree. It refuses to start when the spec has moved ahead of the plan, skips tasks another session has claimed, and never retries a needs_human task. Resumable — the backlog is the source of truth. Use after plan-development. It writes no code and duplicates no cycle."
+description: "Work through the development plan: run tasks from .dev-skills/build-plan/ through run-task one at a time, lowest-id ready task first, at most 8 per run. Refuses to start when the spec moved ahead of the plan, skips tasks another session claimed, never retries needs_human. Resumable; writes no code. Use after plan-development."
 argument-hint: "[one-at-a-time | run N | review every N | <task-id> to start from]"
 ---
 
 # Build Tasks Skill (work through the plan)
 
 You work through the backlog: pick the next task, hand it to **`run-task`**, record the outcome,
-continue. You choose *which* task, never *how* it is built — the cycle lives in `run-task` and is not
-repeated here. Work is **sequential** on a single working tree on the current branch. The backlog is
-the source of truth, so a killed run resumes without losing anything.
-
-```
-check the plan isn't stale → compute ready set → lowest id → /run-task → regen board → next (max 8)
-```
+continue. You choose *which* task, never *how* it is built. The backlog is the source of truth, so a
+killed run resumes without losing anything.
 
 ## Language & git
 
-Respond and reason in the user's language. Never translate code, identifiers,
-commands, or file paths.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
-
-Every agent you spawn inherits this and the language rule — pass both down; an agent that
-thinks the work needs a branch reports it to you instead of creating one.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands or paths. Commit messages are always English. **One branch —
+the current one** (normally `main`): never branch, switch or open a worktree unless the user
+explicitly asked in this session — **`../_shared/git-workflow.md`**. Pass both rules to every agent
+you spawn.
 
 ## Modes
 
-Read `.dev-skills/build-plan/.build-config.md` for `mode` (write it if absent, default
-**interactive**). Full rules: **`../_shared/build-pipeline/build-config.md`**. Backlog schema,
-`ready`, and the board: **`../_shared/build-pipeline/backlog-format.md`**.
+Read `mode` from `.dev-skills/build-plan/.build-config.md` (write it if absent, default
+**interactive**; **`../_shared/build-pipeline/build-config.md`**). Backlog schema, `ready` and the
+board: **`../_shared/build-pipeline/backlog-format.md`**.
 
-- **Straight through (default).** Between tasks you do not stop and do not ask permission. The only
-  real reasons to pause: a task where the human has something to check by hand (`run-task` handles
-  that), a `needs_human` escalation, a red gate, or the per-run limit.
+- **Straight through (default)** — never stop or ask permission between tasks. The only pauses: a
+  hand-check (`run-task` handles it), `needs_human`, a red gate, the per-run limit.
 - **One at a time** (opt-in, argument `one-at-a-time`) — confirm before each task.
-- **Acceptance every N** (opt-in, argument `review every N`; suggest N=5) — **only the human turns
-  this on**, never you. Manual acceptance then happens on every Nth task and always on the run's last
-  task; the rest are passed to `run-task` with "acceptance deferred, manual review at TXX". Nothing
-  else softens: the verifier, the fix round, the green gate, and the `needs_human` stop are unchanged.
-  At the next manual acceptance, show the batch — one line per auto-accepted task since the last one
-  (what was built + what proved it) — so the human can spot and undo something wrong. The mode lasts
-  for this run only.
+- **Acceptance every N** (opt-in, argument `review every N`; suggest N=5; this run only) — **only the
+  human turns it on.** Manual acceptance on every Nth task and always on the run's last (loop step 6);
+  the rest go to `run-task` with "acceptance deferred, manual review at TXX". The verifier, the fix
+  round, the green gate and the `needs_human` stop are unchanged.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
@@ -57,69 +41,48 @@ Read `.dev-skills/build-plan/.build-config.md` for `mode` (write it if absent, d
 ```
 
 ### Step 0: Intake
-- **No `.dev-skills/build-plan/tasks/`** → stop: there is nothing to run. Offer `/plan-development`
-  first. A single task from a sentence, with no plan at all, is `/run-task "<request>"`.
-- **Has the spec moved ahead of the plan?** Read the *Reconciled with spec* anchor in the header of
-  `.dev-skills/build-plan/board.md` and check whether the spec changed since:
-  `git log <anchor-commit>..HEAD -- .dev-skills/project-spec/`. If it did, **stop** and offer
-  `/plan-development` to reconcile first — otherwise the run will confidently build what the user has
-  already dropped. If the human says "go anyway", agree, but name which spec files diverged.
-- **Interrupted run.** A task left `in_progress` is not restarted blindly: show its `## Log` and offer
-  to continue it through `run-task` (which re-verifies before committing). Finished tasks are never
-  rebuilt.
-- **Also reclaim a stale env lock** left by a killed run
+- **No `.dev-skills/build-plan/tasks/`** → stop; offer `/plan-development`. A single task from a
+  sentence, with no plan, is `/run-task "<request>"`.
+- **Spec moved ahead of the plan?** Take the *Reconciled with spec* anchor from the header of
+  `.dev-skills/build-plan/board.md`; run `git log <anchor-commit>..HEAD -- .dev-skills/project-spec/`.
+  Changed → **stop** and offer `/plan-development` first; on "go anyway", name the diverged spec files.
+- **Interrupted run** — a task left `in_progress`: show its `## Log`, offer to continue it through
+  `run-task` (it re-verifies before committing). Reclaim a stale env lock left by a killed run
   (**`../_shared/build-pipeline/env-access.md`**).
-- **Is another session working here?** List the tasks whose `claim.heartbeat` is fresher than 30
-  minutes and say so in one line — those are skipped, not waited for. The user does run two sessions on
-  one repository, and a run that quietly re-does another's task is worse than one that stops
-  (**`../_shared/build-pipeline/backlog-format.md`** → `claim`). If a "study only, don't write" mode is
-  asked for, read the tasks and plan them, and change no file until the other session's claim clears.
-- **Does the scoped test target exist?** Confirm the `make test-scoped` equivalent named in
-  `verification.md` is there and really selects. Missing or fake → say it once, now: every hand-off
-  will otherwise pay for the whole suite, and `/setup-dev-environment` is the fix. Then proceed — the
-  run is not blocked on it (**`../_shared/build-pipeline/quality-gate.md`**).
-- An argument that is a task id → start from that task (its blockers must still be `done`).
+- **Another session here?** Name, in one line, the tasks whose `claim.heartbeat` is fresher than 30
+  minutes — skipped, not waited for (**`backlog-format.md`** → `claim`). In a "study only, don't write"
+  mode, read and plan but change no file until the claim clears.
+- **Scoped test target?** Confirm the `make test-scoped` equivalent named in `verification.md` exists
+  and really selects. Missing or fake → say it once (every hand-off otherwise pays for the whole suite;
+  `/setup-dev-environment` is the fix) and proceed (**`../_shared/build-pipeline/quality-gate.md`**).
+- A task-id argument → start from that task (its blockers must still be `done`).
 
 ### The loop
 Repeat while ready tasks remain:
 
-1. **Compute the ready set** — `todo` tasks whose `blocked_by` are all `done`. Empty → go to Done.
-   If the **open** count (todo + in_progress + needs_human) is over **15**, say so once and offer
-   `/plan-development consolidate` before continuing — the ceiling is the backlog's, not just the
-   planner's, and it is what keeps tasks coarse (**`../_shared/build-pipeline/planning-method.md`**).
-   The human decides; the run is not blocked on it.
-2. **Take one** — the **lowest `id`** among them, so two runs produce the same order. Announce it in
-   one line and continue without asking; wait for confirmation only in one-at-a-time mode.
-3. **Run it through `/run-task`** (via the Skill tool) — the whole cycle, no steps skipped and no
-   logic of your own; a green gate is mandatory in autopilot too — the **static gate plus that task's
-   scoped test selection**, never the whole suite
-   (**`../_shared/build-pipeline/quality-gate.md`**). In *acceptance every N* mode, tell
-   it whether this task's acceptance is deferred and where the manual one lands.
-4. **A task that went `needs_human`** → don't take it again; show it to the human and move to the next
-   ready task. One stuck task must not stop the whole plan.
-5. **Regenerate `.dev-skills/build-plan/board.md`** from the task files — the progress header
-   (done/total, %, and the **Now** line) included. `run-task` already refreshes it at each stage
-   boundary; here you refresh the totals.
-6. **Acceptance, when the human asked for it.** In *acceptance every N* mode, if this was the **Nth**
-   task of the run — or the run's **last** one — do the manual acceptance now, before taking anything
-   else: show the batch (one line per auto-accepted task since the previous acceptance: what was built
-   + what proved it) and **wait**. Skipping this silently turns the mode the human switched on into a
-   promise nobody kept.
-7. **Next task — unless you hit the limit.** Count the tasks handled this run (including escalated
-   ones): at **8**, stop even if ready tasks remain, and go to Done. An argument `run N` lowers the
-   limit to N.
+1. **Ready set** — `todo` tasks whose `blocked_by` are all `done`. Empty → Done. **Open** count (todo +
+   in_progress + needs_human) over **15** → say so once and offer `/plan-development consolidate`
+   (**`../_shared/build-pipeline/planning-method.md`**); the human decides, the run goes on.
+2. **Take the lowest `id`**; announce it in one line and continue (confirm first only in one-at-a-time).
+3. **Run it through `/run-task`** (Skill tool) — the whole cycle, no logic of your own; the green gate
+   (static + that task's scoped tests, never the whole suite) is mandatory in autopilot too. In
+   *acceptance every N*, tell it whether this task's acceptance is deferred and where the manual one
+   lands.
+4. **`needs_human`** → show it to the human and move to the next ready task.
+5. **Regenerate `.dev-skills/build-plan/board.md`** — progress header included (done/total, %, the
+   **Now** line); `run-task` refreshes it per stage, you refresh the totals.
+6. **Acceptance, when due** — in *acceptance every N*, on the run's **Nth** or **last** task, before
+   taking anything else: show the batch (one line per auto-accepted task since the last acceptance:
+   what was built + what proved it, so the human can undo something wrong) and **wait**.
+7. **Next — unless at the limit.** Count tasks handled this run (escalated included): at **8**, stop
+   even with ready tasks left and go to Done. `run N` lowers the limit to N.
 
 ### Done: report
-Report as a table: how many tasks finished this run · which went `needs_human` (the human's action
-list, one line each on where it got stuck) · which remain blocked and by what · and which tasks sit at
-**`spec_sync: pending`** — done, but not yet reflected in the spec. Point at
-`.dev-skills/build-plan/board.md` for the detail.
-
-Give each task a **time** column from its `timings.total`, and one line under the table splitting the
-run into build / verify / fix / solve **plus the time spent waiting on you**, so the parts reconcile
-with the total. Report the numbers flat, with no verdict attached
-(**`../_shared/build-pipeline/backlog-format.md`**). End the report with the **«What you should do»**
-block — imperative, one line per item, no pipeline jargon
+A table: tasks finished this run · which went `needs_human` (one line each on where it got stuck) ·
+which remain blocked and by what · which sit at **`spec_sync: pending`** (done, not yet in the spec);
+point at `board.md` for detail. A **time** column per task from its `timings.total`, and one line under
+the table splitting the run into build / verify / fix / solve **plus waiting on you**, reconciling with
+the total — numbers flat, no verdict. End with the **«What you should do»** block
 (**`../_shared/build-pipeline/report-format.md`**).
 
 **Stopped at the limit with ready tasks left** — ask the human to compact and re-run:
@@ -129,32 +92,21 @@ block — imperative, one line per item, no pipeline jargon
 > start) and call `/build-tasks` again: the plan, statuses, and logs live in `.dev-skills/build-plan/`,
 > so the run picks up at the next task and nothing is lost.
 
-You cannot compact the context yourself — the human runs that command. Your job here is to stop in
-time and say so.
-
-If no ready tasks remain but unfinished ones do, explain why (they wait on `needs_human` tasks). If
-everything is `done`, say so plainly and point at the release phase (`/release-product`) — and add one
-line saying that **the whole test suite has not been run yet**: the build loop only ever ran each
-task's own selection, and the full run happens in the release pipeline
-(**`../_shared/build-pipeline/quality-gate.md`**). Say it as a fact about where the suite gets run, not
-as a warning to act on now.
+No ready tasks but unfinished ones → explain (they wait on `needs_human`). Everything `done` → say so,
+point at `/release-product`, and add one line, as a fact rather than a warning: **the whole test suite
+has not been run yet** — the loop ran each task's own selection; the full run is the release pipeline's.
 
 ## Rules
 
-1. **Don't duplicate the cycle.** All per-task work is `/run-task`'s. You choose the next task and
-   keep the books.
-2. **One task at a time, one working tree.** No parallel tasks, no worktrees, no new branch.
-3. **The plan sets the order** — ready tasks, lowest id. Never reshuffle "by importance".
+1. **Don't duplicate the cycle** — per-task work is `/run-task`'s; you pick the task and keep the books.
+2. **One task at a time, one working tree** — no parallel tasks, no worktrees, no new branch.
+3. **The plan sets the order** — ready tasks, lowest id; never reshuffle "by importance".
 4. **A task with unmet blockers is never taken.**
 5. **`needs_human` is never retried automatically** and is always surfaced, in both modes.
-6. **Don't stop between tasks and don't ask permission**; only the human slows it down, by choosing
-   one-at-a-time.
-7. **Acceptance every N is the human's switch**, never yours. Every Nth task and the run's last task
-   are always manual, with the batch of auto-accepted ones shown. A failure, a red gate, or
-   `needs_human` stops the run in any mode.
-8. **At most 8 tasks per run.** At the limit, stop and ask for `/compact` — you don't compact anything
-   yourself.
-9. **A spec that moved past the plan means `/plan-development` first.** Running a plan that disagrees
-   with the spec is confidently building the wrong thing.
+6. **Only the human slows the run** — by choosing one-at-a-time.
+7. **Acceptance every N is the human's switch**, never yours. A failure, a red gate or `needs_human`
+   stops the run in any mode.
+8. **At most 8 tasks per run**; at the limit, stop and ask for `/compact` — you cannot compact yourself.
+9. **A spec that moved past the plan means `/plan-development` first.**
 10. **Finished work is never rebuilt**; an interrupted run continues rather than restarts.
 11. **The board is regenerated** from the task files after every task, never hand-edited.

@@ -1,9 +1,9 @@
 # Severity rubric (shared — release pipeline)
 
 How a release step ranks a finding, and what blocks the release. Every `audit-*` skill ranks against
-this rubric — against the **contract** (the spec's scenarios / threat model / decisions / flows), never
-against taste; `refactor` and `write-tests` use it for what they find and do not fix. Defined once here;
-the release skills and `release-product` reference it.
+the **contract** (the spec's scenarios / threat model / decisions / flows), never against taste;
+`refactor` and `write-tests` use it for what they find and do not fix. `release-product` and the
+release skills reference it.
 
 ## The three levels
 
@@ -21,41 +21,38 @@ the release skills and `release-product` reference it.
 
 ## What blocks the release
 
-- **Any open 🔴 blocks.** It must be fixed (the single `build-tasks` rework run) and the audit re-run
-  clean, or explicitly waived by the human with the waiver logged in the findings doc. A 🔴 still open
-  after that one round is a `needs_human` escalation, not another loop.
+- **Any open 🔴 blocks.** Fixed (the single `build-tasks` rework run) and re-audited clean, or
+  explicitly waived by the human with the waiver logged in the findings doc. A 🔴 still open after
+  that one round is a `needs_human` escalation, not another loop.
 - **A missing production capability is not ranked here at all.** No spend cap, no error tracking, an
-  unset variable in the target environment — that is a finding owned by `setup-production-environment`,
-  reported as such rather than filed as a rework task against the code.
-- **🟡 majors are filed, not blocking.** They become rework tasks; `release-product` surfaces the count,
-  but a release may be cut with open majors at the human's call (logged).
+  unset variable in the target environment — a finding owned by `setup-production-environment`, not
+  a rework task against the code.
+- **🟡 majors are filed, not blocking.** `release-product` surfaces the count; a release may be cut
+  with open majors at the human's call (logged).
 - **⚪ minors never block.**
 
 **Severity ranks findings; it does not count tasks.** Majors that share a surface or a cause are filed
-as **one** coarse rework task carrying each as its own acceptance entry, and each 🔴 keeps its own task
-— the backlog's grain rule (`../build-pipeline/planning-method.md`) applies to release findings like to
-everything else. Ten one-finding tasks make three blockers hard to see.
+as **one** coarse rework task carrying each as its own acceptance entry; each 🔴 keeps its own task —
+the backlog's grain rule (`../build-pipeline/planning-method.md`) applies to release findings too.
 
 ## One thing severity never buys: an edit to a frozen design decision
 
 A finding against a value under `## Frozen decisions` in `DESIGN.md` — a colour, a contrast ratio, a
-type scale, spacing, motion — is ranked like any other finding and then filed **as an owner decision**,
-never as a rework task and never fixed in place. Rank it 🔴 if the rubric says 🔴; the rank describes
-the impact, it does not grant permission. Full rule:
-**`../build-pipeline/design-freeze.md`**.
+type scale, spacing, motion — is ranked like any other and then filed **as an owner decision**, never
+as a rework task and never fixed in place. Rank it 🔴 if the rubric says 🔴 — the rank describes the
+impact, it does not grant permission. Full rule: **`../build-pipeline/design-freeze.md`**.
 
 ## Guard against over-engineering (anti-sycophancy, in reverse)
 
-A reviewer asked to find problems will always find some — that is the documented failure mode. The
-rubric is the guard:
+A reviewer asked to find problems will always find some. The rubric is the guard:
 
-- **Flag against the contract, not against an ideal.** "A stricter CSP would be nicer" is not a finding
-  unless a threat in the model demands it. "Could be faster" is not a finding unless a scenario sets a
-  budget it misses.
+- **Flag against the contract, not against an ideal.** "A stricter CSP would be nicer" is not a
+  finding unless a threat in the model demands it; "could be faster" is not one unless a scenario
+  sets a budget it misses.
 - **No finding without proof.** Severity follows evidence (a measured number, a reproduced exploit, a
   failing rule), not a hunch. An unproven worry is a note to investigate, not a 🔴.
-- **Speculative hardening is ⚪ at most.** Defense-in-depth ideas with no threat behind them do not block
-  a release and do not become tasks unless the human asks.
+- **Speculative hardening is ⚪ at most.** Defense-in-depth ideas with no threat behind them do not
+  block and do not become tasks unless the human asks.
 
-The throughput failure mode of an audit is not "too lenient" — it is a wall of 🟡/⚪ noise that buries
-the one 🔴 that mattered. Rank ruthlessly.
+The failure mode is not "too lenient" — it is a wall of 🟡/⚪ noise that buries the one 🔴 that
+mattered. Rank ruthlessly.

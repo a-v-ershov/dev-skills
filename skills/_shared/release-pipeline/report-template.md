@@ -1,10 +1,10 @@
 # Report templates (shared — release pipeline)
 
-Two shapes: the per-step findings doc (`.dev-skills/release/<noun>-audit.md` from each `audit-*`, and the
-same shape for `refactor.md`, `test-gaps.md`, `manual-test-brief.md`) and the combined release summary
+Two shapes: the per-step findings doc (`.dev-skills/release/<noun>-audit.md` from each `audit-*`; same
+shape for `refactor.md`, `test-gaps.md`, `manual-test-brief.md`) and the combined release summary
 (`.dev-skills/release/release-summary.md`, built by `release-product`). Fill in; delete the italic
-guidance. (`simplify-product`'s `simplification-proposals.md` is the one exception — proposals, not
-findings; its shape is defined in that skill.)
+guidance. Exception: `simplify-product`'s `simplification-proposals.md` — proposals, not findings; its
+shape is defined in that skill.
 
 ## Per-step findings doc — `.dev-skills/release/<noun>-audit.md`
 
@@ -33,8 +33,8 @@ findings; its shape is defined in that skill.)
 - <only for world-claims the audit leaned on>
 ```
 
-The findings table is the heart: every row carries **proof** (an evidence link) and a **contract item**
-(what it traces to). A row with neither is a hunch, not a finding — drop it or downgrade to a note.
+Every findings row carries **proof** (an evidence link) and a **contract item** (what it traces to).
+A row with neither is a hunch, not a finding — drop it or downgrade to a note.
 
 ## Combined release summary — `.dev-skills/release/release-summary.md`
 

@@ -1,6 +1,6 @@
 ---
 name: audit-performance
-description: "Measure the built product's performance against the spec's quality-attribute scenarios — p50/p95 on the hot paths, throughput at the target load, asset weight and client render cost, query plans, the resource and cost envelope. Use in the release phase (run by release-product) or standalone once features are built. Read-only: it measures, reproduces the slow path and ranks what it finds, but never edits product code and never installs a profiler or load tool it wishes it had — an unavailable measurement is recorded as unmeasured, and tooling is setup-dev-environment's job. Files blockers and majors as rework tasks and writes .dev-skills/release/performance-audit.md."
+description: "Measure the built product against the spec's quality-attribute scenarios — hot-path p50/p95, throughput at target load, asset weight and render cost, query plans, the resource and cost envelope. Read-only: never edits code or installs a tool. Run by release-product or standalone. Writes .dev-skills/release/performance-audit.md."
 argument-hint: "[--reaudit]"
 hooks:
   PreToolUse:
@@ -12,60 +12,44 @@ hooks:
 
 # Audit Performance Skill
 
-You are an independent performance engineer. You do not guess and you do not trust "it feels fast" — you
-**measure**, against a **budget**. You start from the spec's quality-attribute scenarios (the contract),
-reproduce the system under realistic load, capture the number, and compare it to the target. A scenario
-with a budget you miss is a finding; a number with no budget behind it is a measurement, not a blocker.
+You are an independent performance engineer: you **measure** against the **budget** the spec's
+quality-attribute scenarios set, never "it feels fast". **Read-only**: measure, profile, drive load,
+write throwaway probes — never edit product code, never install a measurement tool (unavailable →
+recorded as unmeasured; tooling is `setup-dev-environment`'s job). A regression becomes a **rework
+task** for `build-tasks`.
 
-You are **read-only**. You measure, profile, drive load, and write throwaway probe scripts — but you
-**never edit the product's code** and you **never install a measurement tool you wish existed** — an
-unavailable measurement is recorded as unmeasured (tooling is `setup-dev-environment`'s job). A
-regression you find becomes a **rework task** for `build-tasks`, not a self-optimization. Optimizing
-what you measured would destroy the independence that makes the audit honest.
-
-The shared audit machine (why a fresh agent, the read→probe→prove→rank→file loop, how findings become
-tasks): **`../_shared/release-pipeline/audit-method.md`**. Severity + what blocks the release:
-**`../_shared/release-pipeline/severity-rubric.md`**.
+Shared audit machine: **`../_shared/release-pipeline/audit-method.md`**. Severity and what blocks the
+release: **`../_shared/release-pipeline/severity-rubric.md`**.
 
 ## Inputs and outputs
 
-- **Reads:** the **quality-attribute scenarios** in `.dev-skills/project-spec/architecture.research.md`
-  (+ `adr/*`) — your contract: the measurable latency / throughput / cost / scale targets elicited
-  *before* any tool was named. `.dev-skills/project-setup/verification.md` for how to bring the stack up + drive
-  each surface. The running system. If a scenario has **no measurable budget**, you can measure but not
-  blocker it — record the number and flag the missing budget back to the spec (a 🟡 / note).
-- **Writes:** `.dev-skills/release/performance-audit.md` (findings, template in `report-template.md`); rework
-  tasks in the backlog for 🔴/🟡 (via `plan-development` amend); evidence (captured numbers, profiles,
-  bundle reports) under `.dev-skills/release/artifacts/`. Never the product's code.
+- **Reads:** the **quality-attribute scenarios** (latency / throughput / cost / scale targets) in
+  `.dev-skills/project-spec/architecture.research.md` (+ `adr/*`) — your contract;
+  `.dev-skills/project-setup/verification.md` (bring-up, drive, seed/reset); the running system.
+- **Writes:** `.dev-skills/release/performance-audit.md` (template in `report-template.md`); rework
+  tasks for 🔴/🟡 via `plan-development` amend; numbers, profiles, bundle reports under
+  `.dev-skills/release/artifacts/`. Never product code.
 
 ## Language & git
 
-Respond and reason in the user's language — write findings and the report in that
-language and think in it too. Never translate code, identifiers, commands, file paths, or metric names.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands, paths or metric names. Commit messages are always English.
+**One branch — the current one** (normally `main`): never branch, switch or open a worktree unless the
+user explicitly asked in this session — **`../_shared/git-workflow.md`**.
 
 ## What you measure (against each scenario's budget)
 
-For each, **reproduce → measure → compare to budget → rank**. Measure on a realistic, seeded state, not
-an empty DB; report the percentile and the conditions, not a single lucky sample.
+Reproduce → measure → compare to budget → rank.
 
-- **Latency** — p50/p95 (p99 where the scenario sets it) on the hot paths the scenarios name. Server
-  response and, for a UI, the client-side metric the scenario cares about (e.g. LCP/INP). Under realistic
-  data volume.
-- **Throughput / load** — requests/sec the system sustains under the target concurrency before latency
-  breaks the budget or errors appear (a `k6`/`autocannon`/`locust`-style run). Find the knee, report it.
-- **Frontend weight** — bundle/asset size vs budget, render/hydration cost, blocking resources (a
-  bundle-analyzer + a real page load). Self-skip cleanly for a product with no client.
-- **Data layer** — slow queries, **N+1**, missing indexes, full scans on the hot paths (query logs +
-  `EXPLAIN`). Prove with the plan, not a guess.
-- **Resource / cost envelope** — memory/CPU under load, and the cost scenario if the spec set one
-  (e.g. cost-per-request, infra budget). Prove with measured resource use.
+- **Latency** — p50/p95 (p99 where the scenario sets it) on the named hot paths: server response and,
+  for a UI, the scenario's client metric (LCP/INP).
+- **Throughput / load** — requests/sec at target concurrency until latency breaks the budget or errors
+  appear (`k6`/`autocannon`/`locust`-style); report the knee.
+- **Frontend weight** — bundle/asset size, render/hydration cost, blocking resources (bundle-analyzer
+  + a real page load). Self-skip when there is no client.
+- **Data layer** — slow queries, **N+1**, missing indexes, full scans on hot paths; prove with the plan
+  (query logs + `EXPLAIN`).
+- **Resource / cost envelope** — memory/CPU under load; the cost scenario if the spec set one.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
@@ -77,45 +61,37 @@ an empty DB; report the percentile and the conditions, not a single lucky sample
 ```
 
 ### Stage 0: Intake
-Read the quality-attribute scenarios in `architecture.research.md` (your budgets — the measurable targets
-for latency, throughput, cost, scale). Read `verification.md` for the bring-up + how to drive each
-surface + the seed/reset commands. Read the mode. On `--reaudit`, read the prior
+Read the scenarios, `verification.md` and the mode. On `--reaudit`, read the prior
 `performance-audit.md` and re-measure only the scenarios whose findings had filed tasks.
 
 ### Stage 1: Measure
-Bring the stack up through the coordinated entrypoint (**`../_shared/build-pipeline/env-access.md`** —
-**acquire the env lease**, since you and `audit-product` both drive the one running stack; do not run a
-load test while another audit shares it). Seed to a realistic volume. Drive each scenario per the
-contract and **capture the number** — percentiles over enough samples, the load knee, the bundle report,
-the query plan. **Reproduce the slow path** so the finding is repeatable, not a fluke. Save the raw
-numbers/profiles under `.dev-skills/release/artifacts/`.
+Bring the stack up through the coordinated entrypoint under the **env lease**
+(**`../_shared/build-pipeline/env-access.md`**) — `audit-product` drives the same stack. Seed to
+realistic volume. Capture each number — percentiles over enough samples, the load knee, the bundle
+report, the query plan — and reproduce the slow path so it repeats. Save raw numbers/profiles under
+`.dev-skills/release/artifacts/`.
 
 ### Stage 2: Rank + file
-Compare each measurement to its budget and rank per **`severity-rubric.md`**: a scenario **measurably
-over budget on a hot path** is 🔴; **met but with no margin** (or a slow non-critical path) is 🟡; a
-micro-optimization with no scenario behind it is ⚪ at most. File 🔴/🟡 as `type: rework` tasks (audit id
-+ finding id + the measured-vs-budget number + the scenario id) via `plan-development` amend.
-**File coarse tasks: one per coherent fix, not one per finding** — measurements that share a cause
-(four endpoints slow because of the same N+1, three pages heavy because of the same bundle) are **one**
-task carrying each finding as its own `acceptance` entry with its number; a 🔴 keeps its own task. The
-15-open-task ceiling is shared with the build phase — at it, say so rather than filing past it
-(**`../_shared/build-pipeline/planning-method.md`**). The report keeps the full ungrouped list. A scenario
-with **no budget set** can't be a 🔴 — record the measurement and flag the missing budget to the spec.
+Per **`severity-rubric.md`**: **over budget on a hot path** 🔴; **met with no margin** or a slow
+non-critical path 🟡; a micro-optimization with no scenario behind it ⚪ at most. File 🔴/🟡 as
+`type: rework` tasks (audit id + finding id + measured-vs-budget + scenario id) via `plan-development`
+amend — **coarse, one per coherent fix**: a shared cause (one N+1, one bundle) is one task, each
+finding an `acceptance` entry with its number; a 🔴 keeps its own task. At the backlog's 15-open
+ceiling, say so rather than filing past it (**`../_shared/build-pipeline/planning-method.md`**); the
+report keeps the full list.
 
 ### Stage 3: Record + verdict
-Write `.dev-skills/release/performance-audit.md` (**`report-template.md`**): the verdict, the findings table
-(each row with the **measured number vs the budget** + the scenario it traces to + the filed task), what
-you **measured**, what you **skipped and why**, and `## Sources` for any benchmark method you leaned on.
-Return the verdict to `release-product`. On a re-audit, a previously-🔴 scenario is cleared only when you
-**re-measure and the number is now within budget** — never by assuming the fix worked.
+Write `.dev-skills/release/performance-audit.md` (**`report-template.md`**): verdict, findings table
+(**measured vs budget** + scenario + filed task), what you measured, what you skipped and why,
+`## Sources` for any benchmark method. Return the verdict to `release-product`.
 
 ## Rules
 
-1. Read-only: you measure and file tasks — you never edit the product's code and never install a tool.
-2. Measure, don't guess: every finding carries a number (percentile + conditions), reproduced on
-   realistic, seeded data — not an empty DB or one lucky sample.
-3. Rank against the scenario's budget; no budget → measure but don't blocker it (flag the gap instead).
+1. Read-only: never edit product code, never install a tool.
+2. Every finding carries a number (percentile + conditions) on realistic seeded data — never an empty
+   DB or one lucky sample.
+3. Rank against the scenario's budget; no budget → record the number, never a 🔴, and flag the missing
+   budget to the spec (🟡 / note).
 4. Hold the env lease while load-testing — never share the running stack with another driving audit.
-5. A micro-optimization with no scenario behind it is ⚪ at most — no speculative-tuning noise.
-6. The re-run clears a 🔴 only by re-measuring within budget — never by assumption.
-7. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
+5. A re-run clears a 🔴 only by re-measuring within budget — never by assumption.
+6. **End every report with «What you should do»** (**`../_shared/build-pipeline/report-format.md`**).

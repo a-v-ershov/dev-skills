@@ -1,22 +1,18 @@
 # Output format (shared — spec pipeline)
 
-Every phase keeps **two** documents: a detailed AI-facing **research** doc and a maximally
-compressed, decisions-first **human report** (`<artifact>.summary.md`). The reviewer writes no file
-at all — it returns its findings and the phase applies them to the research doc in place (see
-`review-method.md`).
-
-So per phase: **two files, both kept** — `<artifact>.research.md` and `<artifact>.summary.md`.
+Per phase: **two files, both kept** — a detailed AI-facing `<artifact>.research.md` and a compressed,
+decisions-first human report `<artifact>.summary.md`. The reviewer writes no file; the phase applies
+its findings to the research doc in place (see `review-method.md`).
 
 ## 1. Detailed research doc — `<artifact>.research.md`
 
 The phase's detailed artifact (e.g. `idea-validation.research.md`). The persona's template defines
-the body; the research/review wrapper adds two sections to every one:
+the body; the research/review wrapper adds two sections:
 
 ### `## Sources`
 
-A numbered list of every source consulted, each with a title and a link. Reference them inline in
-the body as `[S1]`, `[S2]`, … next to the fact they support. "No reliable data" findings are
-listed here too, marked as such.
+Every source consulted, numbered, title + link, cited inline as `[S1]`, `[S2]`, … next to the fact.
+"No reliable data" findings are listed too, marked as such.
 
 ```
 ## Sources
@@ -27,10 +23,9 @@ listed here too, marked as such.
 
 ### `## Forks / Decisions log`
 
-Every decision point the phase hit — **whoever resolved it**. This is non-negotiable in both
-modes: in autopilot it is how the AI's choices stay auditable; in interactive it records what the
-human chose. It is also where the fix stage records the review findings it applied — the review's
-only lasting trace, since the reviewer writes no file.
+Every decision point the phase hit, **whoever resolved it** — non-negotiable in both modes (autopilot:
+keeps the AI's choices auditable; interactive: records the human's choice). The fix stage also logs
+the review findings it applied here — the review's only lasting trace.
 
 ```
 ## Forks / Decisions log
@@ -40,13 +35,13 @@ only lasting trace, since the reviewer writes no file.
 ```
 
 - **By** = `AI` (autopilot, or AI-proposed) or `human` (interactive answer).
-- **Needs human confirm?** = `yes` for anything the AI decided at medium/low confidence, or any
-  fork with material downside if wrong. These are what the human summary surfaces.
+- **Needs human confirm?** = `yes` for anything the AI decided at medium/low confidence, or any fork
+  with material downside if wrong. The human summary surfaces these.
 
 ### `## Divergences (code vs intended)` — only when the repo already has code
 
-When the phase found existing code and the intent differs from it, the doc carries one extra section
-— a plain list, no special vocabulary and no extra columns anywhere else:
+When existing code differs from the intent, one extra section — a plain list, no special vocabulary,
+no extra columns elsewhere:
 
 ```
 ## Divergences (code vs intended)
@@ -56,15 +51,13 @@ When the phase found existing code and the intent differs from it, the doc carri
 ```
 
 `plan-development` reads exactly this to decide what work exists. In an empty repo the section is
-absent — don't write a placeholder.
+absent — no placeholder.
 
 
 ## 2. Human report — `<artifact>.summary.md`
 
-The **only** artifact written for the human — everything detailed lives in `.research.md`, which is
-for the AI / next phases. It is **maximally compressed and decisions-first**: the human opens it and
-immediately sees what they must answer, then the risks, then a few key facts — nothing else. No
-tables, no citations, no jargon, no process narration. Target: well under half a page.
+The **only** artifact for the human; all detail stays in `.research.md`. **Maximally compressed and
+decisions-first** — no tables, citations, jargon or process narration; well under half a page.
 
 Three sections, in this fixed order (see `summary-template.md`):
 
@@ -84,26 +77,22 @@ Three sections, in this fixed order (see `summary-template.md`):
 - <≤5 plain-language bullets: the essence. The rigor stays in the research doc.>
 ```
 
-**Decide** comes first on purpose — it is the only part that needs the human's action, so if they
-read nothing else they can still act. **Risks** are the unresolved things the review couldn't close.
-**Key facts** is the compressed essence (the domain model, glossary, acceptance criteria, schemas
-stay in the research doc — name at most a few concepts here). Because the review is never a file,
-anything from it that matters to the human lands here (Risks) or in the research doc's Forks /
+**Decide** first — the only part needing the human's action. **Key facts** names at most a few
+concepts; the domain model, glossary, acceptance criteria and schemas stay in the research doc.
+Anything from the review that matters to the human lands in Risks or in the research doc's Forks /
 Decisions log + Open questions.
 
 ## 3. There is no third file
 
-The reviewer returns its findings in its final message (format: `review-format.md`); the phase's fix
-stage applies them to `<artifact>.research.md` and logs them in the Forks / Decisions log. Nothing
-transient is written, so nothing has to be deleted or gitignored, and an aborted run can never leave
-a stray artifact behind. Everything under `.dev-skills/project-spec/` is committed project
-documentation.
+The reviewer returns its findings in its final message (format: `review-format.md`); the fix stage
+applies them to `<artifact>.research.md` and logs them in the Forks / Decisions log. Nothing
+transient is written, so nothing needs deleting or gitignoring. Everything under
+`.dev-skills/project-spec/` is committed project documentation.
 
 ## 4. Final combined summary — `.dev-skills/project-spec/summary.md` (orchestrator only)
 
-Built by `create-project-spec` at the end of a run when `final_summary: true`. Same rule as the
-per-phase report: **decisions-first, maximally compressed**. One short document the human reads
-after the whole pipeline (especially an autopilot run):
+Built by `create-project-spec` at the end of a run when `final_summary: true`. **Decisions-first,
+maximally compressed** — one short document the human reads after the whole pipeline:
 
 ```
 # <Product> — spec report
@@ -125,12 +114,10 @@ phase. This is the action list. If none: "Nothing outstanding.">
 lives in each .research.md.>
 ```
 
-It re-derives nothing — it rolls up the per-phase reports' **Decide** + **Risks** and adds a 2–4
-bullet gist. Decisions come first so the human's action list is the first thing they see.
+It re-derives nothing — it rolls up the per-phase **Decide** + **Risks** and adds a 2–4 bullet gist.
 
 ## Every phase closes with «What you should do»
 
-Whatever else a phase reports, its **last block** is the numbered, imperative list of what the human
-has to do — one line each, in their language, with no vocabulary from this skill set in it. Nothing is
-a legitimate answer, written as one line. The full rule, including how to report timings so they add
-up: **`../build-pipeline/report-format.md`**.
+A phase's **last block**: the numbered, imperative list of what the human has to do — one line each,
+in their language, free of this skill set's vocabulary; "nothing" is a valid one-line answer. Full
+rule, including timings: **`../build-pipeline/report-format.md`**.

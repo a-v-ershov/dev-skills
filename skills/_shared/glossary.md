@@ -1,52 +1,44 @@
 # Glossary — how the workflow vocabulary is rendered in the user's language
 
-Shared by every skill and agent in this set. The cardinal rule (`skills/CLAUDE.md`) says: respond in
-the language the user addressed you in. This file says **which words to translate and which to keep**,
-so the same concept doesn't come out as three different words across a pipeline.
+Shared by every skill and agent in this set. The cardinal rule (`skills/CLAUDE.md`): respond in the
+language the user addressed you in. This file says **which words to translate and which to keep**, so
+one concept doesn't come out as three different words across a pipeline.
 
-The table below is written for **Russian**, the case where a careless rendering hurts most
-(transliterated verbs like *«отскаффолжен»*, *«зафайлить»*, *«элиситация»* read as broken speech).
-For any other language the principle is the same: translate the workflow prose, keep the technical
-names.
+The table is for **Russian**, where careless rendering hurts most (*«отскаффолжен»*, *«зафайлить»*,
+*«элиситация»* read as broken speech). Any other language: translate the workflow prose, keep the
+technical names.
 
 ## Never translated, in any language
 
-Code, identifiers, file and directory paths, commands, flags, env vars, API and product names — and,
-critically, **the structural anchors of this skill set**: document section headings from the
-`references/*.md` templates (`## Sources`, `## Forks / Decisions log`, `## Acceptance criteria`),
-task fields and their values (`type: rework`, `status: done`, `review: auto`), config keys
-(`mode: interactive`, `mode: autopilot`), skill and agent names. Skills locate these by exact string;
-translating one breaks the pipeline. Prose *about* an anchor follows the user's language — the anchor
-itself stays verbatim.
+Code, identifiers, file and directory paths, commands, flags, env vars, API and product names — and
+**the structural anchors of this skill set**: document section headings from the `references/*.md`
+templates (`## Sources`, `## Forks / Decisions log`, `## Acceptance criteria`), task fields and their
+values (`type: rework`, `status: done`, `review: auto`), config keys (`mode: interactive`,
+`mode: autopilot`), skill and agent names. Skills locate these by exact string; translating one breaks
+the pipeline. Prose *about* an anchor follows the user's language — the anchor itself stays verbatim.
 
-This governs **new** names too: identifiers you author — variables, functions, classes, fixtures,
-parameters, test-function names — are written in **Latin script**, whatever language the conversation
-is in. The user's language belongs in comments, docstrings and human-visible strings, never in a name.
+**New** names too: identifiers you author — variables, functions, classes, fixtures, parameters,
+test-function names — are **Latin script**, whatever language the conversation is in. The user's
+language belongs in comments, docstrings and human-visible strings, never in a name.
 
-**Anything a tool turns into a path is a name, not prose.** That includes the title string of a test
-(`test('...')`, `it('...')`, `describe('...')`), snapshot names, fixture and artefact filenames, and
-task-file slugs — all **Latin script, whatever language the conversation is in**. This is not
-pedantry: Playwright and most runners derive an output directory from the test title, so a Russian
-title becomes a Cyrillic path under `test-results/`, which then has to be quoted, matched and read
-back by shell commands — and that combination has already produced both `ENAMETOOLONG` failures and a
-run whose own evidence the agent could not open. A test title also has to stay stable across the
-project's lifetime; a translated one silently changes identity the moment someone answers in another
-language.
+**Anything a tool turns into a path is a name, not prose**: the title string of a test (`test('...')`,
+`it('...')`, `describe('...')`), snapshot names, fixture and artefact filenames, task-file slugs — all
+**Latin script**. Playwright and most runners derive a directory under `test-results/` from the title,
+so a Russian title becomes a Cyrillic path shell commands must quote and match (`ENAMETOOLONG`,
+unreadable evidence). A title must also stay stable across the project's lifetime.
 
-Write the criterion the test proves in a **comment or docstring above it** in the user's language if
-that helps a person read it; keep the title itself a stable Latin identifier
-(`test('criterion 3: an empty project shows no count')`). Do not mix the two conventions inside one
-suite — half-Russian, half-English test titles in the same directory is the state this rule exists to
-prevent.
+Put the criterion the test proves in a **comment or docstring above it** in the user's language; keep
+the title a stable Latin identifier (`test('criterion 3: an empty project shows no count')`). Do not
+mix the two conventions inside one suite.
 
 ## Kept in Latin script (Russian output)
 
 `fork` · `commit` · `backlog` · `mockup` · `deploy` · `checklist` · `baseline` · `harness` ·
 `onboarding` · `sanity check`
 
-Write them in Latin script, **uninflected**, and let a Russian carrier word take the grammar:
-«отметь fork в журнале», «два fork без ответа», «зафиксируй одним commit», «добавь в backlog»,
-«пройди по checklist», «запусти deploy», «замерь baseline».
+Latin script, **uninflected**, with a Russian carrier word taking the grammar: «отметь fork в
+журнале», «два fork без ответа», «зафиксируй одним commit», «добавь в backlog», «пройди по
+checklist», «запусти deploy», «замерь baseline».
 
 **No hybrid verbs** — never «закоммитить», «задеплоить», «отскаффолдить», «зафайлить», «драйвить»,
 «прувить». Use a Russian verb plus the term: «сделать commit», «выполнить deploy», «завести задачу».
@@ -103,5 +95,5 @@ Write them in Latin script, **uninflected**, and let a Russian carrier word take
 ## When a term isn't listed
 
 Prefer the Russian word if a natural one exists; keep the English term only when the Russian
-equivalent would be ambiguous or unheard-of in the trade. Whatever you choose, **stay consistent for
-the whole run** — one concept, one word.
+equivalent would be ambiguous or unheard-of in the trade. **Stay consistent for the whole run** — one
+concept, one word.

@@ -1,7 +1,7 @@
 # Closing report format (shared — all three pipelines)
 
-Every skill in this set ends its run with a report to a human who did not watch it work. The rules
-below govern that report; each exists because it was violated repeatedly in the field.
+Every skill in this set ends its run with a report to a human who did not watch it work. These rules
+govern that report.
 
 ## 1. End with «What you should do»
 
@@ -16,23 +16,18 @@ imperative, one line each. Nothing else goes in it.
 3. Nothing else. The rest is done and proven.
 ```
 
-Rules for the block:
+It answers the commonest question after a long run — *"so what do I actually need to do?"* Rules:
 
 - **Imperative, addressed to the human.** "Open X and check Y", not "the upload flow remains
   unverified".
 - **One line per item, no jargon from this skill set.** Not `needs_human`, not `spec_sync`, not
   `review: auto`, not "the gate is red" — say what those *mean for them*: "one task is stuck and needs
   your decision", "the spec now disagrees with what was built".
-- **Only what actually requires a person.** If nothing does, the block is one line: "Nothing — this is
-  finished." An empty block is a good outcome, not a failure to fill it in.
+- **Only what actually requires a person.** If nothing does, one line: "Nothing — this is finished."
+  That is a good outcome, not a failure to fill the block.
 - **Say what happens if they do nothing**, where that matters ("until you decide, every `make reset`
   breaks the Disk connection the same way").
 - **In the user's language**, like the rest of the report (`glossary.md`).
-
-Why: measured in the field, the single most common user turn after a long run was some form of *"so
-what do I actually need to do?"* — after reports that were accurate, complete, and unreadable.
-"Гард здесь не формальность. не понял? нужно ли что-то править?" is what a correct report that skipped
-this block produces.
 
 ## 2. Timings must add up, or say why they don't
 
@@ -42,34 +37,27 @@ When a report gives stage timings, it also gives the number that reconciles them
 Time: build 36m · verify 35m39s · fix 9m07s · solve 20m04s · waiting on you 58m39s · total 2h39m29s
 ```
 
-- **Wall-clock, always** — these are honest elapsed times, and they include every stretch spent waiting
-  on a permission prompt, an `AskUserQuestion`, or the human being away.
-- **The waiting is its own line item.** A report whose parts sum to 1h40m under a 2h39m total invites
-  exactly one question, and it is a fair one. Name the gap instead of leaving it to be found.
-- **Report the numbers flat, with no verdict attached.** "Slow" is a judgement the human makes; your
-  job is to make the arithmetic checkable.
+- **Wall-clock, always** — including every wait on a permission prompt, an `AskUserQuestion`, or an
+  absent human.
+- **The waiting is its own line item** — name the gap instead of leaving parts that don't sum to the
+  total.
+- **Report the numbers flat, no verdict.** "Slow" is the human's judgement; make the arithmetic
+  checkable.
 
 ## 3. Simpler to understand beats more complete
 
-The KPI of the whole report, not just its last block: **the human understands the result on one
-read, without a follow-up question.** Completeness lives in the artifact doc; the report is the
-briefing.
+The KPI of the whole report: **the human understands the result on one read, without a follow-up
+question.** Completeness lives in the artifact doc; the report is the briefing.
 
 - **Lead with the outcome.** The first line answers "what happened / what did you find" — the verdict
-  before the journey. A report that opens with method has buried its result.
-- **Detail that does not change what the human does next goes to the doc, not the report.** The
-  committed findings/summary doc is the record; the report links to it instead of retelling it.
-- **The set's vocabulary appears only where the glossary requires an anchor.** Everywhere else, say
-  what things mean for the reader — same rule the «What you should do» block already follows, applied
-  to the rest of the text.
-
-Why: the reports that triggered rule 1 were not missing information — they were complete, accurate,
-and unreadable. Length spent on what the human cannot act on is what buried the one line they needed.
+  before the journey, not the method.
+- **Detail that does not change what the human does next goes to the doc**; the report links to the
+  committed findings/summary doc instead of retelling it.
+- **The set's vocabulary only where the glossary requires an anchor.** Elsewhere, say what things mean
+  for the reader — the «What you should do» rule applied to the whole text.
 
 ## 4. Status on demand, not only at the end
 
-A long run must be able to answer "what are you doing right now?" without finishing first. That means
-state is written **before** the expensive step starts, not after it ends — a task marked `in_progress`
-before its agent is spawned, a progress line regenerated as the run advances
-(`backlog-format.md`). A board that says nothing is in progress while an agent has been
-running for fifty minutes is a bug in the bookkeeping, not in the human's patience.
+A long run must answer "what are you doing right now?" without finishing first: write state **before**
+the expensive step starts, not after it ends — a task marked `in_progress` before its agent is spawned,
+a progress line regenerated as the run advances (`backlog-format.md`).

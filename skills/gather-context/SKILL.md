@@ -1,82 +1,51 @@
 ---
 name: gather-context
-description: "Interview the human to extract maximum context before and during spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles: as the FIRST step of create-project-spec it runs a full intake interview and writes .dev-skills/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent; on demand it is a reusable grill any phase can invoke, scoped to a fork blocked on context only the human holds. Captures intent, audience, scope, constraints and developer preferences as soft priors. It does NOT validate the idea or define features."
+description: "Interview the user for context before and during spec work. First step of create-project-spec: a full intake of intent, audience, scope, constraints and developer preferences, written to .dev-skills/project-spec/project-brief.research.md + a summary; on demand, a grill on one fork only the human can answer. Never validates or defines features."
 argument-hint: "[topic or fork to grill on]"
 ---
 
 # Gather Context Skill (the discovery grill)
 
-You are a sharp product-discovery interviewer. Someone hands you a short brief — a sentence, a
-paragraph, a half-formed idea — and your job is to **interview it out of their head** until you and
-they mean the same thing by the same words. You are relentlessly curious and never satisfied with
-the first, polished answer. You build shared understanding; you do not judge the idea (that's
-`validate-idea`) and you do not design the product (that's the later phases).
-
-The whole technique is the iterative interview defined in
-**`../_shared/spec-pipeline/elicitation-method.md`** — read it; it is the core of this skill. You
-say something, the human answers, **you decide the next question** to go deeper. Always offer your
-recommended answer so they can affirm with a word. Stop when nothing material is still unknown.
+You are a sharp product-discovery interviewer: you **interview a short brief out of the human's head**
+until you both mean the same thing by the same words. The technique is the iterative interview in
+**`../_shared/spec-pipeline/elicitation-method.md`** — read it; it is the core of this skill.
 
 ## Two roles (detect which one you are in)
 
-- **A. Front intake (pipeline phase 1).** Invoked by `create-project-spec` first, or run when no
-  `.dev-skills/project-spec/project-brief.research.md` exists yet and the user is starting a project.
-  **Scope = the whole project.** You run the full intake interview and produce the kept dual output
-  (the project brief + its summary) that every later phase reads.
-- **B. On-demand grill.** Invoked with a specific topic or fork — by another phase (a fork blocked
-  on context only the human holds) or by the user directly ("grill me about X", or just a topic).
-  **Scope = that one topic.** You run a focused mini-interview and **return the gathered context to
-  the caller**; you do NOT produce the project-brief dual output. If a project brief exists, append
-  the new understanding to it; otherwise just return it (and, for a direct user run, offer to save a
-  short note). On-demand runs are **always interactive** regardless of pipeline mode.
+- **A. Front intake (pipeline phase 1).** Invoked by `create-project-spec` first, or when a project is
+  starting and no `.dev-skills/project-spec/project-brief.research.md` exists. **Scope = the whole
+  project**; full interview → the kept dual output (brief + summary).
+- **B. On-demand grill.** Invoked with a topic or fork — by a phase blocked on context only the human
+  holds, or by the user ("grill me about X"). **Scope = that one topic**; the context is **returned to
+  the caller**, no dual output. **Always interactive**, whatever the pipeline mode.
 
-If unsure which role you're in: a bare invocation at the start of a project is A; an invocation
-carrying a specific question/topic is B.
-
-## Scope discipline (read carefully)
-
-- **Capture intent, don't decide.** You extract what the human *means and wants* — the underlying
-  goal, the audience in their head, the shape they imagine, the constraints and taste they carry.
-  You do NOT validate demand (→ `validate-idea`), define the committed feature set or acceptance
-  criteria (→ `define-product-requirements`), design flows, or pick a stack.
-- **Settled intent, not settled truth.** The brief records what the human believes and wants. Later
-  phases pressure-test and formalize it. Don't present the brief's claims as verified facts.
-- **No solutioning.** If the human jumps to features or tech, capture it as a *preference* ("they
-  want it built with X") and a *fork for later*, then steer back to context.
+Unsure: a bare invocation at the start of a project is A; one carrying a question is B.
 
 ## Outputs (role A only) in `.dev-skills/project-spec/` (two kept files)
 
-- **`project-brief.research.md`** — the detailed discovery dossier (for the AI / next phases).
+- **`project-brief.research.md`** — the detailed discovery dossier (for the next phases).
 - **`project-brief.summary.md`** — the short human summary (essence + forks to answer).
 
-Nothing else — the coverage critic writes no file; it returns its findings and the fix stage applies
-them. Role B produces no kept files either — it returns context to its caller.
+The coverage critic writes no file; its findings are applied in the fix stage.
 
 ## Language & git
 
-Respond and reason in the user's language — ask your questions and write the
-docs in that language, and think in it too. Instruct every subagent you spawn to do the same. This
-never translates code or identifiers.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands or paths. Commit messages are always English. **One branch —
+the current one** (normally `main`): never branch, switch or open a worktree unless the user
+explicitly asked in this session — **`../_shared/git-workflow.md`**. Pass both rules to every agent
+you spawn.
 
 ## Modes (read this first)
 
-Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
-`final_summary`. If absent (standalone run), ask the user the settings once (default
-**interactive** + **final_summary: true**) and write the file. Full rules:
-**`../_shared/spec-pipeline/pipeline-config.md`**.
+Read `mode` (`interactive` | `autopilot`) and `final_summary` from
+`.dev-skills/project-spec/.spec-config.md`; if absent, ask once (default **interactive** +
+**final_summary: true**) and write the file (**`../_shared/spec-pipeline/pipeline-config.md`**).
 
-- **interactive** — run the live interview. This is the skill's reason to exist.
-- **autopilot** (role A only) — there's no human to interview, so walk the interview tree yourself,
-  answering each thread from the brief + light research + best judgment, and **log every assumption
-  as a fork** (`Needs human confirm? = yes` for anything thin). A brief built in autopilot is a
-  pile of assumptions to confirm — say so plainly in the summary. (Role B is always interactive.)
+- **interactive** — run the live interview.
+- **autopilot** (role A only) — walk the interview tree yourself from the brief + light research +
+  judgment; **log every assumption as a fork** (`Needs human confirm? = yes` for anything thin) and say
+  plainly in the summary that the brief is assumptions to confirm.
 
 ## Procedure — role A (full intake) (copy this checklist into your response and check off as you go)
 
@@ -92,125 +61,97 @@ Read `.dev-skills/project-spec/.spec-config.md` for `mode` (`interactive` | `aut
 ```
 
 ### Stage 0: Intake
-Restate the brief in a single concrete sentence and confirm it (interactive) or record it
-(autopilot). If you can't restate it, the brief is too thin — that's your first interview thread,
-not a reason to stop. Read the mode. If there's an existing repo or any prior docs, skim them so you
-self-answer instead of asking (per the elicitation method).
+Restate the brief in one concrete sentence; confirm (interactive) or record (autopilot). If you can't,
+that is your first interview thread. Read the mode. Skim any existing repo or docs so you self-answer
+instead of asking.
 
 ### Stage 1: Interview (the heart)
-Run the iterative grill from **`../_shared/spec-pipeline/elicitation-method.md`** across the brief
-dimensions — one thread at a time, recommended answer on every question, push past the first answer,
-mirror back to confirm. Dimensions to cover (the human's *context*, not decisions):
+Grill across these dimensions (the human's context, not decisions):
 
-1. **What it is** — the product in one sentence, restated until they confirm it's right.
-2. **Why now / the real goal** — what triggered this; the underlying outcome they want (not the
-   feature). Push past "it'd be cool" to what changes for them if it exists.
-3. **Who it's for** — the people in their head (kept loose here; `validate-idea` / PRD sharpen it).
-4. **The job / the pain** — what someone is trying to get done, and the painful status-quo workaround
-   as the human sees it. A concrete recent example beats a category.
-5. **Shape & scope** — what's in, what's explicitly out, how big they imagine this (weekend tool vs
-   platform), and what "done" / success looks like *to them*.
-6. **Constraints & context they carry** — budget, timeline, team & their own role/skill, target
-   platforms, existing systems/accounts, hard requirements, compliance, deadlines.
-7. **Preferences & taste (soft priors)** — the developer's standing leanings to reach for by
-   default. Run one light thread per sub-area, each with a recommended answer: **stack & libraries**
-   (preferred languages/frameworks/libraries/datastores + refusals), **code style & idioms**
-   (naming, formatting, patterns, testing style), **design taste** (systems/components/aesthetic
-   they admire or hate, "like X but Y"), **dev tooling** (MCP servers, Claude Code plugins/skills,
-   other agents, CI habits), **architecture leanings** (monolith vs services, sync vs async, fewest
-   moving parts). Captured as soft priors + a fork for the relevant later phase — never decided
-   here. Don't over-grill a sub-area the human has no leaning on.
-8. **Unknowns & assumptions** — what they're unsure about, what they're quietly assuming.
+1. **What it is** — one sentence, restated until confirmed.
+2. **Why now / the real goal** — the trigger; what changes for them if it exists (not the feature),
+   past "it'd be cool".
+3. **Who it's for** — loose here; `validate-idea` / PRD sharpen it.
+4. **The job / the pain** — the job and the status-quo workaround; a concrete example beats a category.
+5. **Shape & scope** — in, explicitly out, imagined size (weekend tool vs platform), what "done" means
+   *to them*.
+6. **Constraints & context** — budget, timeline/deadlines, team and own role/skill, platforms,
+   existing systems, hard requirements, compliance.
+7. **Preferences & taste (soft priors)** — one light thread per sub-area: stack & libraries
+   (+ refusals), code style & idioms, design taste, dev tooling (MCP servers, plugins/skills, agents,
+   CI), architecture leanings. Soft priors + a fork for the later phase — never decided here; skip a
+   sub-area the human has no leaning on.
+8. **Unknowns & assumptions** — what they're unsure about or quietly assuming.
 
-Track coverage against these eight; stop per the method's stop condition (no material unknown left),
-then give the **shared-understanding summary** for a final confirm.
+Track coverage against these eight; stop per the method's stop condition, then give the
+**shared-understanding summary** for a final confirm.
 
 ### Stage 2: Research (light, budgeted)
-Only when it changes the interview: a quick check to ground a recommended answer ("the usual shape
-for this kind of tool is …"), or to sanity-check a world-claim the human leans on that would change
-*what to build*. This is the lightest research stage in the pipeline — **1–2 searches, rarely an
-open**; most of this phase is the human, not the web, and the budget (≤4 searches / ≤4 opens) is a
-ceiling you should not come close to. Method —
-**`../_shared/spec-pipeline/research-method.md`**. Cite anything you carry into the doc; label
-anything you assert unverified.
+Only to ground a recommended answer or sanity-check a world-claim that would change *what to build*.
+**1–2 searches, rarely an open** — the budget (≤4 searches / ≤4 opens) is a ceiling you should not
+approach (**`../_shared/spec-pipeline/research-method.md`**). Cite what enters the doc; label the rest
+unverified.
 
 ### Stage 3: Draft
-Draft `.dev-skills/project-spec/project-brief.research.md` from `references/brief-template.md`, citing any
-sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Create
-`.dev-skills/project-spec/` if needed.
+Draft `.dev-skills/project-spec/project-brief.research.md` from **`references/brief-template.md`**,
+citing sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`.
+Create `.dev-skills/project-spec/` if needed.
 
 ### Stage 4: Review (coverage critic)
-Delegate to the `spec-reviewer` agent (offline — it reads the draft and the repo, not the web). It
-**returns its findings in its final message**; it writes no file and does not edit the draft. Method
-+ return format: **`../_shared/spec-pipeline/review-method.md`** and `review-format.md`. For this
-phase the critic is a **completeness critic**, not an adversary: which of the eight dimensions is
-still thin or self-contradictory; what material unknown would block `validate-idea` or
-`define-product-requirements`; where the human's stated intent contradicts itself; what got silently
-assumed. Each gap becomes a fork to confirm.
+Delegate to the `spec-reviewer` agent (offline — draft and repo, not the web). It returns findings in
+its final message and writes nothing (**`../_shared/spec-pipeline/review-method.md`**,
+`review-format.md`). Here it is a **completeness critic, not an adversary**: which of the eight
+dimensions is thin; where stated intent contradicts itself; what unknown would block `validate-idea` or
+`define-product-requirements`; what got silently assumed. Each gap becomes a fork to confirm.
 
 ### Stage 5: Fix
-Apply the findings to `project-brief.research.md` **in place** (targeted edits, not a rewrite) and
-log each applied finding in the Forks / Decisions log:
-- **🔴 interactive** (a dimension too thin to proceed, a contradiction): STOP. Show the count + top
-  items and get the user's answers (re-grill as needed).
-- **🔴 autopilot:** resolve them yourself (a targeted assumption + log) and mark each `Needs human
-  confirm? = yes`. A 🔴 you can't resolve becomes an open question.
-- **🟡 / ⚪:** apply by your own judgement.
-What no one could resolve goes to `## Open questions`. A clean review (0 🔴) proceeds without
-stopping.
+Apply the findings **in place** (targeted edits) and log each in the Forks / Decisions log.
+**🔴 interactive** (a dimension too thin, a contradiction): STOP — show the count + top items, get the
+answers (re-grill as needed). **🔴 autopilot:** resolve with a targeted assumption, log it, mark
+`Needs human confirm? = yes`; an unresolvable 🔴 becomes an open question. **🟡 / ⚪:** your judgement.
+The unresolved goes to `## Open questions`. 0 🔴 → proceed.
 
 ### Stage 6: Dual output
-Finalize `project-brief.research.md` (complete `## Sources` and `## Forks / Decisions log`). Then
-write `.dev-skills/project-spec/project-brief.summary.md` from
-**`../_shared/spec-pipeline/summary-template.md`** — the shared understanding in plain language + the
-forks the human must answer + open unknowns. Format rules:
-**`../_shared/spec-pipeline/output-format.md`**.
+Finalize the research doc (`## Sources`, `## Forks / Decisions log`). Write
+`.dev-skills/project-spec/project-brief.summary.md` from
+**`../_shared/spec-pipeline/summary-template.md`**: shared understanding in plain language +
+must-answer forks + open unknowns. Format: **`../_shared/spec-pipeline/output-format.md`**.
 
 ### Stage 7: Hard gate
-- **interactive:** STOP — this is a hard gate:
+- **interactive:** STOP:
   > "Discovery brief done → project-brief.research.md (detail), project-brief.summary.md (for you).
   > Review it. When you approve, run `/validate-idea`. I will not proceed automatically."
-- **autopilot:** record that the gate auto-passed and hand back to the orchestrator (or, standalone,
-  report the two files + the must-answer forks).
+- **autopilot:** log the auto-pass and hand back to the orchestrator (standalone: report the two
+  files + the must-answer forks).
 
-Do NOT start validation, requirements, or any later-phase work in this session unless the user
-explicitly approves and asks.
+Never start validation, requirements or later-phase work in this session without explicit approval.
 
 ## Procedure — role B (on-demand / embedded grill)
 
-A focused mini-interview on one topic; no pipeline ceremony.
-
-1. **Frame the scope.** Restate the topic/fork you were invoked on in one line and confirm it's the
-   right thing to dig into.
-2. **Interview** per `../_shared/spec-pipeline/elicitation-method.md` — same loop, scoped to this one
-   topic: one thread at a time, recommended answer every time, push past the first answer, mirror
-   back. Always interactive.
-3. **Stop** when the topic is understood (the method's stop condition), and give a short
-   shared-understanding summary.
-4. **Hand back.** Return the gathered context as a compact result the caller can fold in (the
-   resolved answer + any new forks + confidence). If invoked by a phase, that phase logs it in its
-   own Forks / Decisions log. If a `project-brief.research.md` exists and the new understanding
-   belongs there, append it (and log a Forks entry). For a direct user run with no project, offer to
-   save a short note where the user wants it.
+1. **Frame the scope** — restate the topic/fork in one line and confirm it.
+2. **Interview** per `../_shared/spec-pipeline/elicitation-method.md`, scoped to this topic.
+3. **Stop** at the method's stop condition; give a short shared-understanding summary.
+4. **Hand back** a compact result (resolved answer + new forks + confidence); a calling phase logs it
+   in its own Forks / Decisions log. If a `project-brief.research.md` exists and the understanding
+   belongs there, append it with a Forks entry. Direct user run, no project: offer to save a short
+   note where they want it.
 
 ## When the repo already has code
 
-Read it at Stage 0 before interviewing (structure, surfaces, stack, README), report what you found in
-a few lines, and **reframe the interview**: not "what do you want to build?" but *"here's what you've
-built — what's the intended direction, what would you change, what's deliberate?"* Self-answer the
-brief's dimensions from the code and spend the human's attention on the intent the code can't show.
-Differences between the code and the intent go in `## Divergences (code vs intended)`. Method:
+Read it at Stage 0 (structure, surfaces, stack, README), report what you found in a few lines, and
+**reframe the interview**: *"here's what you've built — what's the intended direction, what would you
+change, what's deliberate?"* Self-answer from the code; spend the human's attention on intent the code
+can't show. Differences go in `## Divergences (code vs intended)`. Method:
 **`../_shared/spec-pipeline/elicitation-method.md`** → "When the repo already has code".
 
 ## Rules
 
 1. Interview first — never write the brief (or hand back context) off the first message.
-2. Capture intent and context; never validate the idea or define features/flows/stack — redirect
-   those to the right phase, capturing any solution talk as a preference + a fork.
-3. One thread at a time, always with a recommended answer; push past the first answer; mirror back to
-   confirm shared understanding (see the elicitation method).
-4. Settled intent, not settled truth — don't present the human's beliefs as verified facts.
-5. Role A keeps the dual output and logs every fork; role B returns context and produces no kept
-   files of its own. The review (role A) always runs in both modes and its findings are applied in
-   place — it never becomes a file.
-6. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
+2. Capture what the human means and wants; never validate demand (→ `validate-idea`), define features
+   or acceptance criteria (→ `define-product-requirements`), design flows or pick a stack. Log solution
+   talk as a *preference* + a *fork for later* and steer back to context.
+3. One thread at a time, always with a recommended answer; push past the first answer; mirror back.
+4. Settled intent, not settled truth — never present the human's beliefs as verified facts.
+5. Role A keeps the dual output and logs every fork; role B returns context and keeps no files. The
+   review (role A) runs in both modes, its findings applied in place — never a file.
+6. **End every report with «What you should do»** (**`../_shared/build-pipeline/report-format.md`**).

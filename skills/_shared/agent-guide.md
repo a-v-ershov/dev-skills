@@ -1,27 +1,23 @@
 # Project documentation map (agent guide) — shared
 
-A small, navigational section that lives in the **target project's root `CLAUDE.md`** (the product
-repo being specced/built — not this plugin). It orients any coding agent to where the project's own
-documentation lives — the spec, the backlog, the setup contract, and the release audits — and the
-order to read it in before touching code. It is a **map, not a copy**: it points at the artifacts, it
-never restates them.
-
-This is shared methodology: several skills write or refresh the **same** section, each at a natural
-moment, all from this one spec — so the behavior is defined once and never duplicated.
+A small navigational section in the **target project's root `CLAUDE.md`** (the product repo, not
+this plugin): where the project's docs live — spec, backlog, setup contract, release audits — and the
+order to read them before touching code. A **map, not a copy**: it points at artifacts, never restates
+them. Several skills write or refresh the **same** section from this one spec.
 
 ## Who writes / refreshes it, and when
 
-- **`create-project-spec`** — *seeds* it at the start of a run (a skeleton describing the spec to
-  come) and *finalizes* it at the end (pointing at the real `.dev-skills/project-spec/` artifacts).
+- **`create-project-spec`** — *seeds* it at the start of a run (a skeleton) and *finalizes* it at the
+  end (pointing at the real `.dev-skills/project-spec/` artifacts).
 - **`setup-dev-environment`** — writes/refreshes it inside the project `CLAUDE.md` it scaffolds in
   the build phase, next to its stack notes + commands (which live **outside** the markers).
-- **`plan-development`** — refreshes it after writing the backlog, so `.dev-skills/build-plan/` shows up.
-- **`release-product`** — refreshes it after the release audits run (it always runs in the release
-  phase, so this is the release phase's primary refresh), so `.dev-skills/release/` shows up.
-- **`cut-release`** — refreshes it when finalizing a standalone cut, keeping `.dev-skills/release/` current.
+- **`plan-development`** — after writing the backlog, so `.dev-skills/build-plan/` shows up.
+- **`release-product`** — after the release audits run (the release phase's primary refresh), so
+  `.dev-skills/release/` shows up.
+- **`cut-release`** — when finalizing a standalone cut.
 
-Any of these can also run standalone. The operation is **idempotent** — re-running re-renders the
-block in place and never duplicates it.
+Any of these can run standalone. The operation is **idempotent** — re-running re-renders the block in
+place, never duplicates it.
 
 ## Marker discipline (non-destructive — read carefully)
 
@@ -35,18 +31,18 @@ The section is delimited by HTML-comment markers and is the ONLY thing these wri
 
 - **Markers present** → replace everything between them; leave the rest of `CLAUDE.md` untouched.
 - **No markers but the file exists** → append the block after the top-of-file title/intro; never
-  edit, reorder, or delete the user's existing content.
+  edit, reorder or delete the user's content.
 - **No `CLAUDE.md`** → create it with a one-line title + the block.
-- Everything **outside** the markers — the user's own notes, `setup-dev-environment`'s
-  stack/commands — is owned by someone else. Never rewrite it. (No `.bak` is needed when you only
-  replace between the markers.)
+- Everything **outside** the markers — the user's notes, `setup-dev-environment`'s stack/commands —
+  is owned by someone else. Never rewrite it. (No `.bak` needed when you only replace between the
+  markers.)
 
 ## What to map (scan, mark present vs planned)
 
-Scan `.dev-skills/project-spec/`, `.dev-skills/build-plan/`, `.dev-skills/project-setup/`, `.dev-skills/release/`, and the **root
-`DESIGN.md`** (UI projects). Emit one row per known artifact, pointing at it. If a file is not there yet (e.g. an early seed before the spec exists),
-still list it but mark it **planned** — so the map describes the intended shape from day one. Never
-invent artifacts the pipeline does not produce.
+Scan `.dev-skills/project-spec/`, `.dev-skills/build-plan/`, `.dev-skills/project-setup/`,
+`.dev-skills/release/`, and the **root `DESIGN.md`** (UI projects). One row per known artifact. If a
+file is not there yet (e.g. an early seed), still list it, marked **planned**. Never invent artifacts
+the pipeline does not produce.
 
 Known artifacts (the `.research.md` files are the depth; each has a short `.summary.md` human pair):
 
@@ -71,8 +67,8 @@ Known artifacts (the `.research.md` files are the depth; each has a short `.summ
 
 ## Rendered template (emit this between the markers)
 
-Set each `Status` from what exists at write time: `✓` present · `◦` planned. Keep the block short —
-it is a map, not a summary. Drop rows for trees that will never exist if you know they won't (rare).
+Set each `Status` from what exists at write time: `✓` present · `◦` planned. Keep the block short.
+Drop rows for trees that will never exist if you know they won't (rare).
 
 ```markdown
 <!-- dev-skills:project-map:start -->
@@ -112,12 +108,11 @@ absorb) any place where the code and the docs disagree; propagate real changes w
 
 ## Language
 
-Render the prose in the user's language, like every skill — but keep file paths, identifiers, the
-markers, and the acceptance keywords verbatim. Never translate them.
+Render the prose in the user's language; keep file paths, identifiers, the markers and the acceptance
+keywords verbatim.
 
-**Terms.** How the workflow vocabulary is rendered is governed by `glossary.md`: translate it
-(`findings` → замечания, `gate` → контрольная точка, `rework` → доработка, `spec` → спецификация),
-keep `fork`, `commit`, `backlog`, `mockup`, `deploy`, `checklist`, `baseline`, `harness`,
-`onboarding`, `sanity check` in Latin script and uninflected, never build hybrid verbs
-(«закоммитить», «отскаффолдить»), and leave template section headings and task fields
-(`## Forks / Decisions log`, `type: rework`) verbatim.
+**Terms.** Vocabulary per `glossary.md`: translate (`findings` → замечания, `gate` → контрольная
+точка, `rework` → доработка, `spec` → спецификация), keep `fork`, `commit`, `backlog`, `mockup`,
+`deploy`, `checklist`, `baseline`, `harness`, `onboarding`, `sanity check` in Latin script and
+uninflected, never build hybrid verbs («закоммитить», «отскаффолдить»), and leave template section
+headings and task fields (`## Forks / Decisions log`, `type: rework`) verbatim.

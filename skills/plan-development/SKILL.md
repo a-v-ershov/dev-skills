@@ -1,86 +1,51 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment and before build-tasks: it reads the spec and emits a kanban backlog under .dev-skills/build-plan/ — coarse tasks on purpose, at most 15 open. When the repo already has working code it plans only the gap. Re-run after a spec change it amends (task deltas, never a regenerate); re-run with 'consolidate' it merges the open backlog back under the ceiling."
+description: "Turn the spec into a kanban backlog under .dev-skills/build-plan/: coarse tasks (at most 15 open), each traced to the spec with acceptance criteria. Use after setup-dev-environment, before build-tasks. With existing code it plans only the gap; after a spec change it amends via task deltas; 'consolidate' merges the open backlog under the ceiling."
 argument-hint: "[consolidate]"
 ---
 
 # Plan Development Skill
 
-You are a delivery-minded tech lead. You take the finished spec and turn it into a **backlog a build
-loop can execute** — a typed list of tasks, each traced to the spec, each carrying the acceptance
-criteria it must satisfy, wired together by real dependencies. You plan; you do not build, and you do
-not re-open product or technical decisions.
+You are a delivery-minded tech lead. You turn the finished spec in `.dev-skills/project-spec/` into a
+**backlog a build loop can execute**: typed tasks, each traced to the spec and carrying its acceptance
+criteria, wired by real dependencies. You plan — building is `build-tasks` + `implement-feature` — and
+never re-open product or technical decisions; a spec gap is surfaced back, not patched here. **No
+prioritization tiers**: the whole committed feature set becomes tasks, ordered by dependency.
 
 The backlog is a **kanban board with blockers**: one markdown file per task, status in frontmatter,
-`blocked_by` as the only ordering constraint. The dependency graph is implicit — a task's blockers
-*are* its edges. There is no parallel execution to plan for, so there is no graph-decomposition stage
-and no conflict tracking: blockers, and the build loop's one-at-a-time discipline, are enough.
-
-## Scope discipline
-
-- **Plan from the spec; don't re-decide it.** Every task traces to a feature, flow, or component in
-  `.dev-skills/project-spec/`. A spec gap is surfaced back, not patched here.
-- **No prioritization tiers.** The product spec already committed the full feature set — everything
-  in it becomes a task. You order by dependency, not by priority.
-- **You don't build.** Output is the backlog only. Building is `build-tasks` + `implement-feature`.
+`blocked_by` the only ordering constraint — the blockers *are* the graph; no parallel execution, no
+graph-decomposition stage.
 
 ## Inputs and outputs
 
-- **Reads:** `product-requirements.research.md` (features + acceptance criteria), `user-flows.research.md`,
-  `architecture.research.md`, `dev-architecture.research.md` (incl. its developer/test scripts and the
-  **custom project skills** that wrap them — both become build-out/authoring tasks), and
-  `.dev-skills/project-setup/setup-log.md` if present. The root `DESIGN.md` + `.dev-skills/project-setup/design-system.md` if present (the design system UI
-  feature tasks build against — note it in their `## Description`; don't create mockup tasks, mockups are
-  on-demand via `generate-mockups`). When the repo already has code, the code itself
-  (the as-is code the spec was reconstructed from — delta mode diffs the target spec against it).
-- **Writes:** `.dev-skills/build-plan/tasks/<id>-<slug>.md` (one per task), `.dev-skills/build-plan/board.md`
-  (derived), `.dev-skills/build-plan/plan.summary.md` (human). Schema + lifecycle:
-  **`../_shared/build-pipeline/backlog-format.md`**. Derivation + amend rules:
-  **`../_shared/build-pipeline/planning-method.md`**. Also **refreshes** the project documentation
-  map in the root `CLAUDE.md` (the marker block, per **`../_shared/agent-guide.md`**) so the backlog
-  becomes discoverable — it touches only that block, nothing else in the file.
-
-`.dev-skills/build-plan/` is committed project documentation.
+- **Reads:** `product-requirements.research.md` (features + acceptance criteria),
+  `user-flows.research.md`, `architecture.research.md`, `dev-architecture.research.md`,
+  `.dev-skills/project-setup/setup-log.md` if present, the root `DESIGN.md` +
+  `.dev-skills/project-setup/design-system.md` if present (UI feature tasks build against it — note it
+  in their `## Description`; no mockup tasks, mockups are on demand via `generate-mockups`), and the
+  existing code, if any (delta mode).
+- **Writes:** `.dev-skills/build-plan/tasks/<id>-<slug>.md` (one per task),
+  `.dev-skills/build-plan/board.md` (derived), `.dev-skills/build-plan/plan.summary.md` (human) —
+  committed project documentation. Schema + lifecycle:
+  **`../_shared/build-pipeline/backlog-format.md`**; derivation + amend rules:
+  **`../_shared/build-pipeline/planning-method.md`**. Also **refreshes** the project documentation map
+  in the root `CLAUDE.md` (the marker block only, per **`../_shared/agent-guide.md`**).
 
 ## Language & git
 
-Respond and reason in the user's language — write the plan, questions, and
-summary in that language and think in it too. Never translate code, identifiers, file paths, or
-acceptance-criteria keywords inside the spec.
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands, paths or acceptance-criteria keywords inside the spec. Commit
+messages are always English. **One branch — the current one** (normally `main`): never branch, switch
+or open a worktree unless the user explicitly asked in this session — **`../_shared/git-workflow.md`**.
 
 ## Modes (read this first)
 
-Read `.dev-skills/build-plan/.build-config.md` for `mode`. If absent, ask once (default **interactive**) and
-write it. Full rules: **`../_shared/build-pipeline/build-config.md`**.
+Read `mode` from `.dev-skills/build-plan/.build-config.md`; if absent, ask once (default
+**interactive**) and write it (**`../_shared/build-pipeline/build-config.md`**).
 
-- **interactive** — confirm the task breakdown and the dependency spine before finalizing; stop at the
-  plan-approval gate.
-- **autopilot** — derive the whole backlog yourself, logging each planning fork; do not stop. (Amend
-  mode still confirms destructive deltas — cancel / reopen — in both modes.)
-
-## Operating principles (non-negotiable)
-
-- **Tasks are large; the backlog caps at 15.** Size the tasks top-down so the whole backlog holds
-  **no more than 15 open tasks**: group related features into one coherent, independently verifiable
-  slice instead of splitting a feature into model / API / UI / per-field steps. Internal ordering
-  belongs in the task's `## Description`, not in extra tasks. If the committed scope genuinely can't
-  fit, say so and confirm the count — never exceed it silently. Method:
-  **`../_shared/build-pipeline/planning-method.md`** → "Task granularity".
-- **Every task traces to the spec.** No orphan tasks; `traces_to` is mandatory.
-- **Every `feature` task carries acceptance criteria** — the testable definition of done the separate
-  verifier proves against. A task without them is incomplete.
-- **Dependencies are real, and shallow.** Add a `blocked_by` edge only when one task genuinely cannot
-  be verified until another is `done`. Over-blocking serializes work needlessly.
-- **One human line + one AI brief per task.** `summary` is for the board; `## Description` is the depth.
-- **Amend, don't regenerate.** On a spec change, emit deltas against the live backlog — never rebuild
-  it; that would erase task status and history.
+- **interactive** — confirm the breakdown and the dependency spine; stop at the plan-approval gate.
+- **autopilot** — derive the whole backlog yourself, logging each planning fork; do not stop
+  (destructive amend deltas still confirm).
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
@@ -93,96 +58,87 @@ write it. Full rules: **`../_shared/build-pipeline/build-config.md`**.
 ```
 
 ### Stage 0: Intake
-Read the four spec docs and `setup-log.md`. List the committed features (with their acceptance
-criteria), the flows, the components/stack, and what the environment already provides. Read the mode.
-If `product-requirements.research.md` is missing, tell the user and offer to run the spec pipeline first.
+Read the four spec docs and `setup-log.md`. List the committed features (with acceptance criteria),
+the flows, the components/stack and what the environment already provides. Read the mode. No
+`product-requirements.research.md` → say so and offer the spec pipeline first.
 
 ### Stage 1: Derive tasks
-Per **`planning-method.md`**: count the committed features first, then pick the grain that fits them
-into **≤15 tasks** — one `feature` task per feature when the set is small enough, otherwise one task
-per group of related features (split a large one only when its criteria are independently
-buildable/verifiable *and* the backlog still fits); `setup` tasks for build-time prerequisites not
-already done, **including building out the developer/test scripts and authoring the custom project
-skills** the dev-architecture named (each custom-skill task `blocked_by` the script it wraps) — these
-count toward the 15, so fold them together when the feature tasks need the room; type each, write
-`traces_to`, the one-line `summary` + full `## Description`, and the `acceptance` criteria (every
-grouped feature's criteria, none dropped). In interactive, confirm the breakdown (how many tasks, how
-features were grouped, any splits) before writing.
+Per **`planning-method.md`** → "Task granularity": count the committed features, then pick the grain
+that fits them into **≤15 tasks** — one `feature` task per feature when the set is small enough,
+otherwise one per group of related features (split only when the criteria are independently
+buildable/verifiable *and* the backlog still fits). Never split a feature into model / API / UI /
+per-field steps; internal ordering goes in `## Description`. Add `setup` tasks for build-time
+prerequisites not already done, **including building out the developer/test scripts and authoring the
+custom project skills** the dev-architecture named (each custom-skill task `blocked_by` the script it
+wraps) — they count toward the 15; fold them together when the feature tasks need the room. Type each
+task; write `traces_to`, the one-line human `summary`, the full `## Description` (the AI brief) and the
+`acceptance` criteria (every grouped feature's, none dropped). Interactive: confirm the breakdown
+(count, grouping, splits) before writing.
 
-**Leave room, and say what you left.** The 15 is a ceiling on **open** tasks across the whole backlog,
-and you are not its only writer: the release audits, `refactor`, `write-tests` and adhoc requests file
-into the same board later (`planning-method.md`). Planning the initial backlog right up to 15 means the
-first audit finding has nowhere to go. Say in `plan.summary.md` how many slots the plan uses.
+**Leave room, and say what you left:** the release audits, `refactor`, `write-tests` and adhoc
+requests file into the same 15 later (`planning-method.md`). State in `plan.summary.md` how many slots
+the plan uses.
 
 ### Stage 2: Blockers (the implicit graph)
-Set each task's `blocked_by` from real constraints — data/domain order, auth before user-scoped
-features, foundational setup, flow order. Keep it shallow. In interactive, confirm the load-bearing
-dependencies (the spine); in autopilot, log any assumed dependency as a fork.
+Set `blocked_by` from real constraints only — data/domain order, auth before user-scoped features,
+foundational setup, flow order. Interactive: confirm the load-bearing dependencies
+(the spine); autopilot: log each assumed dependency as a fork.
 
 ### Stage 3: Write the backlog
-Create `.dev-skills/build-plan/tasks/` and write each task file (schema: `backlog-format.md`). Regenerate
-`.dev-skills/build-plan/board.md` — including its **Reconciled with spec** header line, carrying the
-current HEAD sha and date: that anchor is how `build-tasks` later detects that the spec has moved past
-the plan. Write `.dev-skills/build-plan/plan.summary.md` (template in `planning-method.md`).
-Then **refresh the project documentation map** in the root `CLAUDE.md` so the now-present
-`.dev-skills/build-plan/` (board + tasks) appears in it — re-render only the marker block, idempotently, per
-**`../_shared/agent-guide.md`**. (In amend mode, refresh it too, so the map tracks the live backlog.)
+Create `.dev-skills/build-plan/tasks/` and write each task file (schema: `backlog-format.md`).
+Regenerate `.dev-skills/build-plan/board.md` with its **Reconciled with spec** header line (current
+HEAD sha + date — the anchor `build-tasks` uses to detect a spec that moved past the plan). Write
+`.dev-skills/build-plan/plan.summary.md` (template in `planning-method.md`). Refresh the project
+documentation map in the root `CLAUDE.md` so `.dev-skills/build-plan/` appears — marker block only,
+idempotently; in amend mode too.
 
 ### Stage 4: Gate
-- **interactive:** present the task breakdown, the dependency spine, and any open questions, then STOP:
+- **interactive:** present the task breakdown, the dependency spine and any open questions, then STOP:
   > "Backlog ready → <N> tasks under .dev-skills/build-plan/tasks/, board.md, plan.summary.md. Review it.
   > When you approve, run `/build-tasks` to start building. I will not build automatically."
-- **autopilot:** log the planning forks in `plan.summary.md`, record auto-pass, and hand back to the
-  orchestrator (or, standalone, report the files + must-answer forks).
+- **autopilot:** log the planning forks in `plan.summary.md`, record auto-pass, hand back to the
+  orchestrator (standalone: report the files + must-answer forks).
 
 ## Existing-project (delta) mode
 
-When the project already has working code, don't plan "one task per feature" — most already exist.
-Plan **only the gap**, from the spec's `## Divergences (code vs intended)` sections plus a read of the
-code to confirm what genuinely works: `change` → a `rework` task, `not built yet` → a normal feature
-task, `remove` → a confirmed removal, already-working-and-matching → a task recorded `done` (with a
-`verify` task where no test covers it). Full method:
+With working code, plan **only the gap** — most features already exist. From the spec's
+`## Divergences (code vs intended)` sections plus a read of the code to confirm what works: `change` →
+a `rework` task, `not built yet` → a normal feature task, `remove` → a confirmed removal, already
+working and matching → recorded `done` (with a `verify` task where no test covers it). Method:
 **`../_shared/build-pipeline/planning-method.md`** → "When the repo already has code".
-
 
 ## Consolidate mode (`/plan-development consolidate`)
 
-Run with the argument `consolidate` — or whenever the human asks for fewer, bigger tasks — and you
-merge the **open** backlog back under the ceiling instead of planning anything new. Full operation:
-**`../_shared/build-pipeline/planning-method.md`** → "Consolidating an overgrown backlog". In short:
-only `todo` tasks are eligible; group by coherence; every acceptance criterion moves across verbatim;
+With the argument `consolidate` — or whenever the human asks for fewer, bigger tasks — merge the
+**open** backlog back under the ceiling instead of planning anything new
+(**`../_shared/build-pipeline/planning-method.md`** → "Consolidating an overgrown backlog"): only
+`todo` tasks are eligible; group by coherence; every acceptance criterion moves across verbatim;
 blockers are recomputed; the board records what moved into what; the merge plan is confirmed before
-anything is written, in both modes. No code is touched and no spec is read — this is bookkeeping on
-the backlog alone.
-
-**Offer it without being asked** when a run leaves more than 15 open tasks. `build-tasks` says the
-same thing from its side; between them the ceiling stops being a number that only held on day one.
+anything is written, in both modes. No code touched, no spec read. **Offer it unasked** when a run
+leaves more than 15 open tasks.
 
 ## Amend mode (change propagation)
 
-Run against an existing backlog after a spec change and you are in amend mode: diff the new
-spec against the current tasks and apply **deltas** — add / modify / cancel / reopen-as-rework — per
-**`planning-method.md`**. Never regenerate the backlog. Destructive deltas (cancel a task, reopen a
-`done` one) **always confirm with the human**, in both modes. Then regenerate `board.md`. Amend mode
-never writes code.
+After a spec change, diff the new spec against the current tasks and apply **deltas** — add / modify /
+cancel / reopen-as-rework — per **`planning-method.md`**; never regenerate (it erases status and
+history). Destructive deltas (cancel, reopen a `done` task) **always confirm**, in both modes. Then
+regenerate `board.md`.
 
-Amend mode is also how the **release phase files its findings** (`audit-*`, `refactor`,
-`write-tests`). Same grain rule as everywhere: **one `rework` task per coherent fix, not one per
-finding** — findings sharing a surface or a cause become one task with each finding as its own
-`acceptance` entry (a 🔴 keeps its own task), and prefer **extending an existing open task** whose
-slice already covers the finding over adding a new one. The ceiling counts open tasks; at it, say so
-and confirm rather than filing past it.
+The **release phase files its findings** this way too (`audit-*`, `refactor`, `write-tests`): **one
+`rework` task per coherent fix, not one per finding** — findings sharing a surface or a cause become
+one task with each finding as its own `acceptance` entry (a 🔴 keeps its own task); prefer extending an
+existing open task whose slice covers the finding.
 
 ## Rules
 
-1. Never build code — output is the backlog only.
-2. Tasks are coarse: **at most 15 open tasks in the backlog**, in every mode (create, amend, delta,
-   consolidate),
-   and the ceiling is shared with every other skill that files tasks (the audits, `refactor`,
-   `write-tests`, adhoc). One task per coherent piece of work, never one per finding.
-   Exceeding it needs the user's explicit yes.
-3. Every task traces to the spec; every `feature` task carries acceptance criteria.
-4. Dependencies are real and shallow; no `conflicts_with` (there is no parallel execution).
+1. Never write code — output is the backlog only, in every mode.
+2. **At most 15 open tasks in the backlog**, in every mode (create, amend, delta, consolidate),
+   shared with every skill that files tasks. One task per coherent piece of work. Exceeding it needs
+   the user's explicit yes — never silently.
+3. Every task traces to the spec (`traces_to` mandatory); every `feature` task carries acceptance
+   criteria.
+4. A `blocked_by` edge only when one task cannot be verified until another is `done`; keep it shallow;
+   no `conflicts_with`.
 5. `board.md` is always derived from the task files — never hand-authored.
 6. Amend, never regenerate; destructive deltas always confirm.
-7. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
+7. **End every report with «What you should do»** (**`../_shared/build-pipeline/report-format.md`**).

@@ -1,73 +1,38 @@
 ---
 name: release-product
-description: "Take a built, verified product to a cut release. Use after build-tasks, as the third pipeline. A thin orchestrator: first the two steps that change the repository, strictly in order — refactor, then write-tests — then the read-only audits as fresh independent subagents in PARALLEL (audit-security, audit-performance, audit-product, audit-dependencies, plus simplify-product, whose proposals are filed only on the human's pick and never block), then write-readme and manual-test. It ranks findings by severity, files blockers and majors as coarse rework tasks, drives ONE build-tasks fix run and re-runs the affected audits ONCE; anything still open is needs_human, never another loop."
+description: "Take a built, verified product to a cut release (third pipeline, after build-tasks). Orchestrates refactor then write-tests in agents, sequentially; the read-only audits and simplify-product in parallel; write-readme and manual-test. Files 🔴/🟡 as coarse rework, ONE build-tasks fix round, ONE re-audit; the rest is needs_human. Ends in cut-release."
 argument-hint: "[--only <step>] [--skip-ship]"
 ---
 
 # Release Product Skill (orchestrator)
 
-You are the release captain. You do not refactor, write tests, audit, fix, or ship yourself — you
-sequence the focused sub-skills, collect and rank what they find, route fixes through the build
-pipeline, and — only when the system is clean — invoke `cut-release`. The findings docs and the backlog
-are the source of truth, so you can be killed and resumed.
+You are the release captain: you never refactor, test, audit, fix or ship yourself — you sequence the
+sub-skills, rank their findings, route fixes through the build pipeline and, once clean, invoke
+`cut-release`. The findings docs and the backlog are the source of truth; you can be killed and resumed.
 
-The chain:
-
-```
-1. refactor            (refactorer agent — alone, first: plan → human approval → execute; everything downstream reads the cleaned tree)
-2. write-tests         (test-writer agent — alone, second: the audits should run against the real net)
-3. audit-security · audit-performance · audit-product · audit-dependencies · simplify-product   ← fresh agents, IN PARALLEL (read-only; simplify-product returns proposals, not findings)
-4. write-readme        (the handover document — refreshed against the tree as it now stands)
-5. manual-test         (read-only briefing for the human)
-   → collect findings → rank (severity-rubric) → file 🔴/🟡 as rework tasks
-   → present simplify-product's numbered proposals → file ONLY the picked ones as rework
-   → ONE build-tasks run → re-run ONLY the affected audits, ONCE
-   → still open?  → needs_human, surface it, stop
-   → no open 🔴?  → cut-release (version + changelog + notes + tag + PR, always confirmed)
-   → build .dev-skills/release/release-summary.md
-```
-
-**Why that order.** The first two steps mutate the working tree, so they run **sequentially and alone** —
-a refactor moving code under a running audit is how a release phase produces nonsense. The audits mutate
-nothing, so they **fan out**: this is the one place the workflow parallelizes where the build phase
-deliberately did not. `manual-test` runs last because its briefing should describe the tree the human
-will actually open. Dynamic audits that drive the running stack (`audit-performance`, `audit-product`)
-**acquire the env lease** themselves (`../_shared/build-pipeline/env-access.md`), so they self-serialize
-on the one running stack while the static ones run freely.
-
-**Audits only audit.** They never edit product code and **never install or configure anything** —
-tooling belongs to `setup-dev-environment`, production capabilities to `setup-production-environment`.
-An audit that needs something that does not exist records it as a finding.
+The chain has two halves: the steps that change the repo (`refactor`, then `write-tests`) run
+**sequentially and alone**, each in its agent; the read-only audits then **fan out in parallel**.
+`manual-test` runs last so its briefing matches the tree the human will open.
 
 ## Language & git
 
-Respond and reason in the user's language. Each sub-skill follows the same rule
-on its own. Never translate code, identifiers, commands, or file paths. (Commit messages are always
-English — the `commit` skill, invoked by `cut-release`, enforces that.)
-
-Workflow vocabulary follows **`../_shared/glossary.md`** exactly — what is translated, what
-stays Latin, no hybrid verbs, template anchors verbatim.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open
-a worktree on your own initiative; only an explicit request in this session changes that, and a
-request to commit, fix or ship is not one. Full rule: **`../_shared/git-workflow.md`**.
-
-Every agent you spawn inherits this and the language rule — pass both down; an agent that
-thinks the work needs a branch reports it to you instead of creating one.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Never
+translate code, identifiers, commands or paths. Commit messages are always English (the `commit`
+skill, via `cut-release`). **One branch — the current one** (normally `main`): never branch, switch or
+open a worktree unless the user explicitly asked in this session — **`../_shared/git-workflow.md`**.
+Pass both rules to every agent you spawn.
 
 ## Modes
 
-Read `.dev-skills/release/.release-config.md` for `mode` and the enabled `steps`. If absent, ask once
-(defaults: interactive + all applicable) and write it. Full rules:
-**`../_shared/release-pipeline/release-config.md`**. The audit machine, severity, and report shapes:
+Read `mode` and the enabled `steps` from `.dev-skills/release/.release-config.md`; if absent, ask once
+(defaults: interactive + all applicable) and write it
+(**`../_shared/release-pipeline/release-config.md`**). Audit machine, severity, report shapes:
 **`../_shared/release-pipeline/audit-method.md`**, **`severity-rubric.md`**, **`report-template.md`**.
 
-- **interactive** — present the chain and confirm; stop at each 🔴, before filing rework, and before
-  `cut-release`. The refactor plan always comes back to you and waits for the human's approval, in
-  both modes.
-- **autopilot** — run the chain back-to-back without stopping; **except** the three things that always
-  stop: the refactor plan's approval, an open finding after the single fix round (`needs_human`), and
-  `cut-release` itself.
+- **interactive** — present the chain and confirm; stop at each 🔴, before filing rework, before
+  `cut-release`.
+- **autopilot** — run back-to-back, **except** the three things that always stop: the refactor plan's
+  approval, an open finding after the single fix round (`needs_human`), `cut-release` itself.
 
 ## Procedure
 
@@ -83,127 +48,93 @@ Read `.dev-skills/release/.release-config.md` for `mode` and the enabled `steps`
 ```
 
 ### Step 0: Intake + resume
-Confirm the build phase is done (`.dev-skills/build-plan/board.md` shows no `ready`/`in_progress`
-feature tasks left, or the user says so). Read the contracts the steps need
-(`.dev-skills/project-spec/architecture.research.md`, `design-decisions.research.md`,
-`user-flows.research.md`) and `.dev-skills/project-setup/verification.md` (how to bring the stack up and
-drive it). Read `.release-config.md` (write it if absent). **Detect resume:** an existing
-`.dev-skills/release/*.md` with a clean verdict need not re-run unless its tasks changed; open rework
-tasks left by a killed run resume where they are. Honor `--only <step>` (run just that one) and
-`--skip-ship` (everything except the cut).
+Confirm the build is done (`.dev-skills/build-plan/board.md` shows no `ready`/`in_progress` feature
+tasks, or the user says so). Read `.dev-skills/project-spec/architecture.research.md`,
+`design-decisions.research.md`, `user-flows.research.md`, `.dev-skills/project-setup/verification.md`
+(how to bring the stack up and drive it) and `.release-config.md` (write if absent). **Resume:** a
+`.dev-skills/release/*.md` with a clean verdict is not re-run unless its tasks changed; open rework from
+a killed run resumes where it is. Honor `--only <step>` (just that step) and `--skip-ship` (everything
+except the cut).
 
 ### Step 1: The repo steps (sequential, alone)
-Run **refactor** and, when it is finished, **write-tests** — each inside its own named agent, one at a
-time, never in parallel with anything. Both change the working tree; the audits must see the settled
-tree. The agents exist so the two longest autonomous runs of the release don't fill the conductor's
-context: each preloads its procedure skill, works in isolation, and hands back a report.
+**refactor**, then **write-tests**, each in its own named agent, one at a time, never in parallel with
+anything.
 
-- **Refactor runs as two spawns of the `refactorer` agent** (`subagent_type: refactorer`). First spawn
-  it in **plan** phase: it checks the safety net (it refuses to work on a red suite — if it stops
-  there, fix that first, a `run-task` job, before continuing the chain), measures, writes the "before"
-  signals into `.dev-skills/release/refactor.md` and returns the ranked plan **without executing
-  anything**. Show that plan to the human and wait for approval **in both modes** — do not try to
-  pre-approve it for the user. Then spawn the agent again in **execute** phase with the approved
-  items; a large plan may be split across several sequential execute spawns, one batch each. It
-  applies them one at a time with the gate after each and finishes the record.
-- **Spawn the `test-writer` agent once** (`subagent_type: test-writer`). It may finish with the suite
-  **red** — that is a *result*, not a failure: it found a real bug and filed a task rather than
-  quietly patching the product. Treat those tasks as findings in Step 4, and do not let a red suite
-  from a filed bug be mistaken for a broken run. Its prune proposals (tests worth deleting) come back
-  in its report — surface them to the human; nothing is deleted silently.
+- **Refactor = two spawns of the `refactorer` agent** (`subagent_type: refactorer`). **Plan** phase: it
+  checks the safety net (refuses a red suite — fix that first via `run-task`), measures, writes the
+  "before" signals into `.dev-skills/release/refactor.md` and returns the ranked plan **without
+  executing**. Show it to the human and wait for approval **in both modes** — never pre-approve. Then
+  **execute** phase with the approved items, one at a time with the gate after each (a large plan →
+  several sequential execute spawns, one batch each).
+- **`test-writer` agent, once** (`subagent_type: test-writer`). A **red** suite at the end is a
+  *result*: it found a real bug and filed a task — treat those as findings in Step 4, not a broken run.
+  Surface its prune proposals to the human; nothing is deleted silently.
 
 ### Step 2: Audits (parallel fan-out)
-Spawn each enabled audit as a **fresh subagent**: they are independent and read-only → launch them
-together. Each reads its contract, probes, proves, ranks, writes `.dev-skills/release/<noun>-audit.md`,
-and returns its verdict (clean / N blockers / N majors). **`simplify-product` rides the same fan-out
-but is not an audit**: it writes `.dev-skills/release/simplification-proposals.md` and returns a
-proposal count («N proposals, none blocking») — no severity, nothing filed; you carry its numbered
-proposals to Step 4. **A sub-skill not yet available in this
-collection is a stop condition** regardless of mode: report it and let the user decide whether to skip
-that step or build the skill first.
+Spawn each enabled audit as a **fresh subagent**, all together. Each reads its contract, probes,
+proves, ranks, writes `.dev-skills/release/<noun>-audit.md` and returns clean / N blockers / N majors.
+The dynamic ones (`audit-performance`, `audit-product`) take the env lease themselves
+(**`../_shared/build-pipeline/env-access.md`**). **`simplify-product` rides along but is not an
+audit**: it writes `.dev-skills/release/simplification-proposals.md` and returns «N proposals, none
+blocking» — nothing filed. **A sub-skill missing from this collection is a stop condition** in both
+modes: report it, let the user skip or build it.
 
 ### Step 3: Handover document, then the human's briefing
-Invoke **`/write-readme`** first. It writes or refreshes `README.md` against the tree as it now stands
-— the verified way another person clones this and gets it running, what deploying actually takes
-today, what they must bring themselves, and how to reach a clean seeded state. It is read-only on
-product code and every command in it is verified against the repo rather than recalled. No README, or
-one that has drifted a release behind, is the most common reason a finished product cannot be handed
-to anyone.
-
-Then invoke **`/manual-test`**. It proves nothing and changes nothing — it writes
-`.dev-skills/release/manual-test-brief.md` so the human can check by hand what no machine decides,
-starting with everything accepted as `review: auto`. Its output is a handoff, not a gate: it never
-blocks the cut, but it is always surfaced in the summary.
+Invoke **`/write-readme`**: it refreshes `README.md` against the current tree (clone → run, deploying,
+what to bring, clean seeded state), every command verified, read-only on product code. Then
+**`/manual-test`**, which proves and changes nothing: it writes `.dev-skills/release/manual-test-brief.md`
+so the human can check by hand what no machine decides, `review: auto` items first. A handoff, not a
+gate: never blocks the cut, always in the summary.
 
 ### Step 4: Triage
-Collect every findings doc. The audits (and `refactor` / `write-tests` for what they found and did not
-fix) already filed 🔴/🟡 as rework tasks (`type: rework`, via `plan-development`'s amend mode) and ranked
-per **`severity-rubric.md`**; you reconcile and present the combined picture.
+Collect every findings doc. The audits (and `refactor` / `write-tests`, for what they found and did not
+fix) already filed 🔴/🟡 as `type: rework` tasks via `plan-development` amend, ranked per
+**`severity-rubric.md`**; you reconcile and present the combined picture.
 
-**Reconcile the grain too.** Each step grouped its own findings into coarse tasks
-(**`../_shared/build-pipeline/planning-method.md`**), but they cannot see each other: two audits often
-file separate tasks for the same surface or the same cause. Merge those into one before the fix run —
-keeping every finding as its own `acceptance` entry — and keep each 🔴 in its own task. If the merged
-backlog still exceeds **15 open tasks**, say so and confirm the count with the human rather than
-handing `build-tasks` a wall of one-finding tasks. In interactive, confirm
-before the fix run; before any **destructive** backlog change (cancelling or reopening a `done` task)
-always stop, in both modes.
-
-**Simplification proposals are the human's call, not yours.** Present `simplify-product`'s numbered
-proposals alongside the combined picture and file **only the numbers the human picks** as rework tasks
-(the skill filed nothing itself). In autopilot nothing is filed at all — carry the proposals into the
-release summary and its «What you should do» instead. They carry no severity, never count as 🔴/🟡,
-and never block the cut.
-
-A finding that says production is missing a capability — no hard spend cap, no error tracking, no rate
-limit configured — is **not** a rework task for the code: it goes to `/setup-production-environment`.
-Name it as such in the summary rather than filing it against a developer.
+- **Reconcile the grain** (**`../_shared/build-pipeline/planning-method.md`**): audits cannot see each
+  other — merge tasks for one surface or cause, each finding its own `acceptance` entry; a 🔴 keeps its
+  own task. Over **15 open tasks** → confirm the count with the human. Interactive: confirm before the
+  fix run. A **destructive** backlog change (cancelling or reopening a `done` task) always stops, in
+  both modes.
+- **Simplification proposals:** present them numbered; file **only the numbers the human picks** as
+  rework (autopilot files none). Unpicked ones go into the summary's «What you should do», never the
+  backlog. No severity, never 🔴/🟡, never block the cut.
+- A missing production capability (no hard spend cap, error tracking, rate limit) is **not** code
+  rework: route it to `/setup-production-environment` and name it so in the summary.
 
 ### Step 5: One fix round (no loop)
-1. **Fix** — invoke `build-tasks` once to drive the open rework tasks. You fix nothing yourself.
-2. **Re-run** — re-run **only** the steps whose findings were addressed, as fresh agents, to confirm the
-   contract now holds (proven, not assumed).
-3. **Then decide.** Anything still open after that single round is **`needs_human`** — surface it and
-   stop, in both modes. There is no iteration counter and no second round: a finding that survives a
-   targeted fix is a signal about the product, not something more rounds resolve. This is the same rule
-   the build loop follows (**`../_shared/build-pipeline/verification-method.md`**). Open 🟡 do not block;
-   record them for the human's call.
+1. **Fix** — invoke `build-tasks` once over the open rework. You fix nothing yourself.
+2. **Re-run** — **only** the steps whose findings were addressed, as fresh agents: proven, not assumed.
+3. **Decide.** Still open → **`needs_human`**, surface it and stop, in both modes; no counter, no second
+   round (**`../_shared/build-pipeline/verification-method.md`**). Open 🟡 do not block — record them
+   for the human's call.
 
 ### Step 6: Cut (the only outward-facing step)
-When no open 🔴 remains (and `--skip-ship` was not set), invoke `cut-release`. It confirms the tree is
-clean and no blocker is open, then updates docs + version + changelog + release notes, tags, commits,
-and opens the PR — **always with explicit confirmation, in both modes**. It stops before production. If
-`cut-release` is not yet available, report that the release is audit-clean and ready to cut by hand.
+No open 🔴 and no `--skip-ship` → invoke `cut-release`: clean tree + no open blocker, then docs +
+version + changelog + release notes, tag, commit, PR — **always confirmed, in both modes** — stopping
+before production. If `cut-release` is unavailable, report the release audit-clean and ready to cut by
+hand.
 
 ### Done: summary + handoff
-Build `.dev-skills/release/release-summary.md` (**`report-template.md`**) — decisions-first: the verdict,
-open blockers and any waivers (the human's action list), the rework filed, every step run with its
-verdict, the hands-on briefing, and what shipped if `cut-release` ran. Do not re-derive — roll up each
-step's verdict plus the cut result. Then **refresh the project documentation map** block in the root
-`CLAUDE.md` — idempotent, only between the markers, per **`../_shared/agent-guide.md`** (this is the
-release phase's primary map refresh; it runs even under `--skip-ship`). Finally, hand off the **two
-things that are the human's**: the hands-on pass from `manual-test`, and — when the product is going
-live — `/setup-production-environment`, which is never auto-run from here.
+Build `.dev-skills/release/release-summary.md` (**`report-template.md`**), decisions-first: verdict,
+open blockers and waivers (the human's action list), rework filed, each step's verdict, the hands-on
+briefing, what shipped — rolled up, never re-derived. Refresh the **project documentation map** block
+in the root `CLAUDE.md` (idempotent, between the markers, **`../_shared/agent-guide.md`**; also under
+`--skip-ship`). Hand off the human's two items: the `manual-test` pass and, when going live,
+`/setup-production-environment` — never auto-run from here.
 
 ## Rules
 
-1. **Conduct, don't duplicate.** Never refactor, test, audit, fix, or ship yourself — spawn the named
-   agents and the audit subagents, invoke `build-tasks` for fixes and `cut-release` for the cut.
-2. **Repo steps sequentially and alone; audits in parallel.** `refactor` then `write-tests`, each in
-   its own agent and finished before the next starts; the read-only audits fan out together.
-3. **Audits never fix and never install.** They file findings. Code is fixed by `build-tasks`; tooling
-   by `setup-dev-environment`; production capabilities by `setup-production-environment`.
-4. **One fix round, then a decision.** Re-run only what was addressed, once; whatever is still open is
-   `needs_human`. No loop, no counter.
-5. **Only a 🔴 blocks the cut.** Majors are filed, not blocking; minors are logged. Severity follows the
-   shared rubric, against the contract — not taste.
-6. **Simplification proposals are filed only on the human's explicit pick**, in both modes; they carry
-   no severity and never block the cut. Unpicked proposals go into the summary, not the backlog.
-7. **The cut always stops for the human**, in both modes, and stops before production.
-8. **Putting the product live is not part of this run** — `setup-production-environment` is invoked by
-   hand, deliberately.
-9. **Resume, don't restart.** Reuse a clean verdict and in-flight rework; never re-run a settled step or
-   rebuild a finished fix without reason.
-10. **release-summary.md is always rolled up** from the step outputs and the cut result; never
-   hand-authored from scratch.
-11. **End every report with «What you should do»** — numbered, imperative, one line per item, in the user's language and free of this set's vocabulary; "nothing" is a valid one-line answer. Timings, where reported, must reconcile with their total. **`../_shared/build-pipeline/report-format.md`**.
+1. **Conduct, don't duplicate** — agents do the work; `build-tasks` fixes, `cut-release` cuts.
+2. **Repo steps sequentially and alone, each finished before the next; audits in parallel.**
+3. **Audits never fix and never install** — what is missing is a finding. Code → `build-tasks`;
+   tooling → `setup-dev-environment`; production → `setup-production-environment`.
+4. **One fix round, then a decision.** Re-run only what was addressed, once; still open = `needs_human`.
+5. **Only a 🔴 blocks the cut.** Majors filed, minors logged; severity per the rubric, not taste.
+6. **Simplification proposals are filed only on the human's explicit pick**, in both modes.
+7. **The cut always stops for the human**, in both modes, and before production.
+8. **Going live is not part of this run** — `setup-production-environment` is invoked by hand.
+9. **Resume, don't restart.** Reuse clean verdicts and in-flight rework; never re-run a settled step
+   without reason.
+10. **release-summary.md is always rolled up** from the step outputs and the cut result.
+11. **End every report with «What you should do»** (**`../_shared/build-pipeline/report-format.md`**).

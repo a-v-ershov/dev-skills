@@ -175,15 +175,15 @@ sections «Не предлагаю» and «Без правки файла»); ke
 wording verbatim.
 
 ```markdown
-# Session audit — <n> proposals across <m> targets
+# Skills audit — <n> proposals across <m> targets
 
-<one or two lines: what ran this session and the overall verdict>
+<one or two lines: the scope covered (window · sessions · projects), what ran, and the overall verdict>
 
 ## <skill or agent name> — <k> proposals
 *<what it was asked to do, and how it went — one line>*
 
 **1. 🔴 <the defect in one line>**
-- **Fact:** <timestamp, quote, count or duration from the digest>
+- **Fact:** <session short id + timestamp, quote, count or duration from the digest · in N of M sessions>
 - **Cause:** `<file>` → `## <section>`: "<the wording that allowed it>"
 - **Fix:** <the concrete edit — what the wording becomes>
 - **Effect:** <what changes on the next run> · <cost, if this adds lines>
@@ -224,7 +224,7 @@ Reply with the numbers to apply (`1, 4`), `all`, or say what to change.
 
 | Anti-pattern | Why it's wrong |
 |---|---|
-| "Add a rule about X" after one incident | One misstep can be noise. Say it's a single occurrence, or show it repeating. |
+| "Add a rule about X" after one incident | One misstep can be noise. Say it's a single occurrence, or show it repeating across sessions. |
 | A proposal that only adds lines | Every line is re-read on every future run. Prefer replacing or tightening; if it must be an addition, say what it costs — or move detail into `references/`. |
 | "Be more careful / more thorough / more explicit" | Not an edit. If you can't quote the before and after, it isn't a proposal. |
 | Patching the copy instead of the source | The rule lives in `_shared/`; editing one skill's copy makes the pipeline disagree with itself. |
@@ -233,4 +233,4 @@ Reply with the numbers to apply (`1, 4`), `all`, or say what to change.
 | Treating a tripwire as a verdict | The user may have asked for the branch, the push, the rebase. Check the conversation. |
 | Attributing a harness failure to the skill | An API error, a permission denial or a tool timeout isn't the skill's wording. Put it under **no file change — note only**. |
 | Grading the user's prompts | The audit is about the skills, not the person driving them. |
-| Proposing a fix the file already contains | Read the file first, every time — the rule is often there and merely buried. |
+| Proposing a fix the file already contains | Read the file first, every time — the rule is often there and merely buried, or was added after an older session ran. |

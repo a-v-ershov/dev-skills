@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
-"""scan_session.py — what the skills, subagents and tools in a Claude Code session actually did.
+"""scan_session.py — what the skills, subagents and tools in Claude Code sessions actually did.
 
-Reads a session transcript (``~/.claude/projects/<slug>/<session-id>.jsonl``) plus the
-subagent transcripts stored next to it, and prints a Markdown digest:
+Two modes:
+
+* **Cross-session (default).** Finds every session under ``~/.claude/projects/`` in which a
+  skill of the plugin (``--plugin``, default ``dev-skills``) actually ran — invoked through the
+  ``Skill`` tool or typed as ``/<plugin>:<skill>`` — optionally narrowed to a window
+  (``--since`` / ``--until`` / ``--days``) or one project (``--cwd``), and prints one compact
+  digest across all of them: a session table, per-skill aggregates, subagent cost by role,
+  tripwires and errors that recur, and the user turns inside skill runs. It is a map of where
+  to look; drill into one session with ``--session``.
+* **One session** (``--session <id|path>``, or ``--current`` for the newest transcript of this
+  project). Reads the transcript plus the subagent transcripts stored next to it and prints a
+  full Markdown digest:
 
 * which skills were loaded, from where on disk, and how each invocation ended;
 * per skill run: wall time, tool calls, errors — the evidence for "slow" or "thrashing";
@@ -30,10 +40,13 @@ import os
 import re
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from statistics import median
 
 PROJECTS = Path.home() / ".claude" / "projects"
+DEFAULT_PLUGIN = "dev-skills"
+SELF = "audit-skills"  # its own runs don't make a session worth auditing
 
 # ---------------------------------------------------------------- transcript discovery
 
@@ -77,11 +90,13 @@ def find_transcript(session, cwd):
         p = Path(session).expanduser()
         if p.is_file():
             return p
-        hits = sorted(
-            PROJECTS.glob(f"*/{session}.jsonl"),
+        hits = sorted(  # a full id, or the short prefix the cross-session digest prints
+            PROJECTS.glob(f"*/{session}*.jsonl"),
             key=lambda q: q.stat().st_mtime,
             reverse=True,
         )
+        if len({h.stem for h in hits}) > 1:
+            sys.exit(f"session prefix '{session}' is ambiguous: " + ", ".join(sorted({h.stem for h in hits})))
         if hits:
             return hits[0]
         sys.exit(f"no transcript found for session '{session}'")
@@ -96,24 +111,102 @@ def find_transcript(session, cwd):
     )
 
 
-def list_sessions(cwd, limit=15):
-    target = str(Path(cwd or os.getcwd()).resolve())
-    rows = []
-    for path in candidate_transcripts():
-        info = peek(path)
-        if info.get("cwd") != target:
+SLASH = re.compile(r"<command-name>/?([^<\s]+)</command-name>")
+
+
+def invoked_names(row):
+    """Skill names a single transcript row invokes: the model's `Skill` calls, the user's typed
+    `/<name>` commands, and the harness's `invoked_skills` attachment."""
+    names = []
+    if row.get("isSidechain"):
+        return names
+    for b in blocks(row):
+        if b.get("type") == "tool_use" and b.get("name") == "Skill":
+            names.append(str((b.get("input") or {}).get("skill") or ""))
+        elif b.get("type") == "text" and row.get("type") == "user":
+            names += [m.lstrip("/") for m in SLASH.findall(b.get("text") or "")]
+    att = row.get("attachment") or {}
+    if att.get("type") == "invoked_skills":
+        names += [s.get("name") or "" for s in att.get("skills") or []]
+    return names
+
+
+def ran_plugin(path, plugin):
+    """True when a skill of `plugin` (other than this auditor) actually ran in the transcript.
+    A raw substring pass first — most transcripts never mention the plugin — then a parse of
+    only the lines that do, so a grep result or a pasted name never counts as a run."""
+    needle = (plugin + ":").encode()
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return False
+    if needle not in data:
+        return False
+    for line in data.splitlines():
+        if needle not in line:
             continue
-        mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-        rows.append((mtime, info.get("sessionId", path.stem), path))
-        if len(rows) >= limit:
-            break
-    if not rows:
-        print(f"No sessions recorded for cwd {target}")
-        return
-    print(f"Sessions for {target} (newest first):\n")
-    for mtime, sid, path in rows:
-        size = path.stat().st_size // 1024
-        print(f"  {mtime}  {sid}  ({size} KB)")
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        for name in invoked_names(row):
+            if name.startswith(plugin + ":") and name.split(":")[-1] != SELF:
+                return True
+    return False
+
+
+def local_day(text):
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").astimezone()
+    except ValueError:
+        sys.exit(f"bad date '{text}' — use YYYY-MM-DD")
+
+
+def window_bounds(args):
+    since = local_day(args.since) if args.since else None
+    if args.days:
+        since = datetime.now().astimezone() - timedelta(days=args.days)
+    until = local_day(args.until) + timedelta(days=1) if args.until else None
+    return since, until
+
+
+def discover(plugin, since, until, cwd):
+    """Transcripts in which the plugin ran, oldest first, plus how many were scanned and the
+    oldest transcript still on disk (Claude Code deletes them after `cleanupPeriodDays`)."""
+    target = str(Path(cwd).resolve()) if cwd else None
+    found, scanned, oldest = [], 0, None
+    for path in candidate_transcripts():
+        mtime = datetime.fromtimestamp(path.stat().st_mtime).astimezone()
+        oldest = mtime if oldest is None or mtime < oldest else oldest
+        if since and mtime < since:  # last activity before the window opened
+            continue
+        if target and peek(path).get("cwd") != target:
+            continue
+        scanned += 1
+        if ran_plugin(path, plugin):
+            found.append(path)
+    found.sort(key=lambda p: p.stat().st_mtime)
+    return found, scanned, oldest
+
+
+def list_sessions(plugin, since, until, cwd):
+    found, scanned, _ = discover(plugin, since, until, cwd)
+    listed = []
+    for path in found:
+        rows = load_rows(path)
+        stamps = [r["_ts"] for r in rows if r["_ts"]]
+        if not stamps or (until and min(stamps) >= until):
+            continue
+        names = {n.split(":")[-1] for r in rows for n in invoked_names(r) if n.startswith(plugin + ":")}
+        listed.append((min(stamps), max(stamps), peek(path), path, names))
+    listed.sort(key=lambda x: x[0])
+    print("started              last active          session                               project  —  skills\n")
+    for start, last, info, path, names in listed:
+        print(
+            f"  {full_ts(start)}  {full_ts(last)}  {info.get('sessionId', path.stem)}  "
+            f"{Path(info.get('cwd', '?')).name}  —  {', '.join(sorted(names)) or '—'}"
+        )
+    print(f"\n{len(listed)} session(s) ran `{plugin}:` skills ({scanned} transcripts scanned).")
 
 
 # ---------------------------------------------------------------- loading
@@ -266,6 +359,22 @@ TRIPWIRES = (
 MANIFEST = re.compile(r"/\.claude-plugin/(?:plugin|marketplace)\.json$")
 
 
+HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n(.*?)\n\s*\1\b", re.S)
+QUOTED = re.compile(r"\"[^\"\n]*\"|«[^»]*»|“[^”]*”|`[^`\n]*`")  # quoted product text is not the message's language
+MESSAGE_ARG = re.compile(r"\s(?:-m|--message)(?:\s+|=)(?:\"((?:[^\"\\]|\\.)*)\"|'([^']*)')")
+
+
+def commit_message(cmd):
+    """The message text of a `git commit` in a shell command — the heredoc body or the -m
+    arguments — so Cyrillic in a neighbouring `echo` doesn't count as the message."""
+    if not re.search(r"\bgit\s+commit\b", cmd):
+        return ""
+    tail = cmd[re.search(r"\bgit\s+commit\b", cmd).start():]
+    parts = [m.group(2) for m in HEREDOC.finditer(tail)]
+    parts += [a or b for a, b in MESSAGE_ARG.findall(tail)]
+    return "\n".join(parts)
+
+
 def tripwires(calls):
     """Bash commands that touch one of the set's stated invariants, in time order."""
     hits = []
@@ -276,9 +385,76 @@ def tripwires(calls):
         for label, rx in TRIPWIRES:
             if rx.search(cmd):
                 hits.append((c, label, cmd))
-        if re.search(r"\bgit\s+commit\b", cmd) and CYRILLIC.search(cmd):
+        if CYRILLIC.search(QUOTED.sub("", commit_message(cmd))):
             hits.append((c, "non-English commit message", cmd))
     return hits
+
+
+# ---------------------------------------------------------------- background agents
+#
+# An agent launched in the background returns `status: async_launched` at once; its real
+# outcome and cost arrive later in a <task-notification> (a queued_command attachment, or the
+# text of a user turn), keyed by the same id.
+
+NOTE_ID = re.compile(r"<task-id>\s*([^<\s]+)\s*</task-id>")
+NOTE_STATUS = re.compile(r"<status>\s*([^<\s]+)\s*</status>")
+NOTE_NUM = {
+    "tokens": re.compile(r"(?:totalTokens'?\"?:\s*|<subagent_tokens>\s*)(\d+)"),
+    "ms": re.compile(r"(?:durationMs'?\"?:\s*|<duration_ms>\s*)(\d+)"),
+    "tools": re.compile(r"(?:toolUses'?\"?:\s*|<tool_uses>\s*)(\d+)"),
+}
+
+
+def notifications(rows):
+    """task id → the last reported {status, ms, tokens, tools} for background agents."""
+    notes = {}
+    for row in rows:
+        texts = []
+        att = row.get("attachment") or {}
+        if att.get("commandMode") == "task-notification":
+            texts.append(f"{att.get('prompt') or ''} {att.get('usage') or ''}")
+        if row.get("type") == "user":
+            texts += [b.get("text", "") for b in blocks(row) if b.get("type") == "text" and "<task-notification>" in b.get("text", "")]
+        for text in texts:
+            tid = NOTE_ID.search(text)
+            if not tid:
+                continue
+            note = notes.setdefault(tid.group(1), {})
+            status = NOTE_STATUS.search(text)
+            if status:
+                note["status"] = status.group(1)
+            for key, rx in NOTE_NUM.items():
+                m = rx.search(text)
+                if m:
+                    note[key] = int(m.group(1))
+    return notes
+
+
+def agent_result(call, notes):
+    """The Agent/Task result with a background agent's later notification merged in."""
+    res = dict(call["result"]) if isinstance(call["result"], dict) else {}
+    if res.get("status") == "async_launched":
+        note = notes.get(res.get("agentId") or "", {})
+        res["status"] = note.get("status", "background — no result in transcript")
+        res["totalDurationMs"] = note.get("ms")
+        res["totalTokens"] = note.get("tokens")
+        res["totalToolUseCount"] = note.get("tools")
+    return res
+
+
+def run_end(start, next_start, stamps, idle_ms):
+    """Where a skill run stops: the next skill invocation, or the first stretch of silence
+    longer than `idle_ms` (the user walked away; whatever follows is a new piece of work)."""
+    prev = start
+    for ts in stamps:
+        if ts <= start:
+            continue
+        if next_start and ts >= next_start:
+            return next_start
+        if (ts - prev).total_seconds() * 1000 > idle_ms:
+            return prev
+        prev = ts
+    return next_start or prev
 
 
 # ---------------------------------------------------------------- extraction
@@ -536,7 +712,7 @@ def build(transcript, rows, args):
     for c in skill_calls[: args.top]:
         if not c["ts"]:
             continue
-        stop = next((b for b in starts if b > c["ts"]), end)
+        stop = run_end(c["ts"], next((b for b in starts if b > c["ts"]), None), stamps, args.idle * 60000)
         window = [x for x in calls if x["ts"] and c["ts"] <= x["ts"] < (stop or end) and x["name"] != "Skill"]
         mix = Counter(x["name"] for x in window)
         errs = [x for x in window if x["error"]]
@@ -555,10 +731,11 @@ def build(transcript, rows, args):
     # ---- subagents
     out += ["## Subagents", ""]
     agent_calls = [c for c in calls if c["name"] in ("Agent", "Task")]
+    notes = notifications(rows)
     rows_out = []
     details = []
     for c in agent_calls:
-        res = c["result"] if isinstance(c["result"], dict) else {}
+        res = agent_result(c, notes)
         stats = res.get("toolStats") if isinstance(res.get("toolStats"), dict) else {}
         rows_out.append(
             [
@@ -566,7 +743,7 @@ def build(transcript, rows, args):
                 res.get("agentType") or (c["input"] or {}).get("subagent_type", "?"),
                 cut((c["input"] or {}).get("description"), 40) or "—",
                 res.get("status") or ("error" if c["error"] else "?"),
-                fmt_dur(res.get("totalDurationMs") or c["ms"]),
+                fmt_dur(res.get("totalDurationMs") if res.get("isAsync") else (res.get("totalDurationMs") or c["ms"])),
                 res.get("totalTokens") or "—",
                 res.get("totalToolUseCount") or "—",
                 res.get("resolvedModel") or "—",
@@ -583,7 +760,7 @@ def build(transcript, rows, args):
             key = res.get("agentType") or (c["input"] or {}).get("subagent_type", "?")
             a = by_type[key]
             a["n"] += 1
-            a["ms"] += res.get("totalDurationMs") or c["ms"] or 0
+            a["ms"] += res.get("totalDurationMs") or (0 if res.get("isAsync") else c["ms"]) or 0
             a["tok"] += res.get("totalTokens") or 0
             a["tools"] += res.get("totalToolUseCount") or 0
         out += ["### Cost by agent type", ""]
@@ -747,24 +924,321 @@ def build(transcript, rows, args):
     return "\n".join(out)
 
 
+# ---------------------------------------------------------------- cross-session digest
+
+CORRECTION = re.compile(
+    r"^\W*(?:нет\b|не\s+(?:так|надо|нужно|то)\b|стоп|подожди|зачем|почему|опять|снова|неправильн"
+    r"|ты\s+(?:не|опять|зачем)\b|no\b|nope|stop\b|wait\b|why\b|don'?t\b|wrong|again\b|that'?s not)",
+    re.I,
+)
+VERSION = re.compile(r"/(\d+\.\d+\.\d+)/skills/")
+
+
+def norm_error(text):
+    """Collapse paths, ids and numbers so the same failure in two sessions groups together."""
+    text = re.sub(r"(?:~|/)[\w.@~-]*(?:/[\w.@~-]+)+", "<path>", text or "")
+    text = re.sub(r"\b[0-9a-f]{8,}\b", "<id>", text)
+    return cut(re.sub(r"\d+", "#", text), 110)
+
+
+def summarize(path, rows, plugin, args):
+    """Everything the cross-session digest needs from one transcript."""
+    calls = collect_calls(rows)
+    turns, _ = user_turns(rows, args.max_user_chars)
+    loaded = collect_skills(rows)
+    head = peek(path)
+    stamps = sorted(r["_ts"] for r in rows if r["_ts"])
+    start, end = stamps[0], stamps[-1]
+    sid = str(head.get("sessionId", path.stem))
+
+    # where the plugin's skills were loaded from: an installed version or a local checkout
+    sources = {e["dir"] for n, e in loaded.items() if n.startswith(plugin + ":") and e.get("dir")}
+    versions = sorted({m.group(1) for d in sources for m in [VERSION.search(d + "/")] if m})
+    loaded_from = ", ".join(versions) if versions else ("local checkout" if sources else "—")
+
+    events = []
+    for c in calls:
+        if c["name"] == "Skill" and c["ts"]:
+            events.append({"ts": c["ts"], "skill": str((c["input"] or {}).get("skill") or "?"),
+                           "via": "tool", "error": c["error"]})
+    for row in rows:
+        if row.get("type") == "user" and not row.get("isSidechain") and row["_ts"]:
+            for b in blocks(row):
+                if b.get("type") == "text":
+                    for m in SLASH.findall(b.get("text") or ""):
+                        name = m.lstrip("/")
+                        if name.startswith(plugin + ":") or name in loaded:
+                            events.append({"ts": row["_ts"], "skill": name, "via": "typed", "error": None})
+    events.sort(key=lambda e: e["ts"])
+    deduped = []
+    for e in events:  # a typed command and its own load can both appear — keep one
+        if deduped and deduped[-1]["skill"] == e["skill"] and (e["ts"] - deduped[-1]["ts"]).total_seconds() < 5:
+            continue
+        deduped.append(e)
+    bounds = [e["ts"] for e in deduped]
+
+    runs = []
+    since, until = getattr(args, "window", (None, None))
+    for e in deduped:
+        if not e["skill"].startswith(plugin + ":"):
+            continue
+        if (since and e["ts"] < since) or (until and e["ts"] >= until):
+            continue  # a long session overlaps the window; only its runs inside it count
+        stop = run_end(e["ts"], next((b for b in bounds if b > e["ts"]), None), stamps, args.idle * 60000)
+        window = [x for x in calls if x["ts"] and e["ts"] <= x["ts"] < stop and x["name"] != "Skill"]
+        inside = [t for t in turns if t["ts"] and e["ts"] < t["ts"] < stop]
+        runs.append({
+            "skill": e["skill"].split(":", 1)[1], "ts": e["ts"], "via": e["via"], "error": e["error"],
+            "ms": (stop - e["ts"]).total_seconds() * 1000, "calls": len(window),
+            "errors": [x for x in window if x["error"]], "turns": inside,
+        })
+
+    agents = []
+    notes = notifications(rows)
+    for c in calls:
+        if c["name"] not in ("Agent", "Task"):
+            continue
+        res = agent_result(c, notes)
+        agents.append({
+            "type": res.get("agentType") or (c["input"] or {}).get("subagent_type") or "general-purpose",
+            "status": res.get("status") or ("error" if c["error"] else "?"),
+            "ms": res.get("totalDurationMs") or (0 if res.get("isAsync") else c["ms"]) or 0,
+            "tokens": res.get("totalTokens") or 0,
+            "model": res.get("resolvedModel") or "—",
+        })
+
+    hooks = Counter()
+    for row in rows:
+        att = row.get("attachment") or {}
+        if row.get("type") == "attachment" and att.get("type") == "hook_non_blocking_error":
+            hooks[(att.get("hookName") or "?", norm_error(att.get("stderr") or att.get("message")))] += 1
+
+    return {
+        "sid": sid, "short": sid[:8], "project": Path(head.get("cwd", "?")).name, "start": start, "end": end,
+        "loaded_from": loaded_from, "runs": runs, "agents": agents, "turns": turns,
+        "interrupts": sum(1 for t in turns if INTERRUPT.search(t["text"])),
+        "compactions": sum(1 for r in rows if r.get("type") == "system" and r.get("subtype") == "compact_boundary"),
+        "api_errors": sum(1 for r in rows if r.get("type") == "system" and r.get("subtype") == "api_error"),
+        "errors": [c for c in calls if c["error"]], "tripwires": tripwires(calls), "hooks": hooks,
+    }
+
+
+def flagged(text):
+    return bool(INTERRUPT.search(text) or CORRECTION.search(text))
+
+
+def build_multi(sessions, plugin, scanned, oldest, since, until, args):
+    global MULTIDAY
+    MULTIDAY = True
+    out = []
+    runs = [(s, r) for s in sessions for r in s["runs"]]
+    projects = {s["project"] for s in sessions}
+    agents = [(s, a) for s in sessions for a in s["agents"]]
+
+    out += [
+        f"# Cross-session digest — `{plugin}`",
+        "",
+        f"- **window**: {full_ts(since) if since else 'everything on disk'} → {full_ts(until) if until else 'now'}"
+        f"  ·  oldest transcript on disk: {full_ts(oldest)}",
+        "  _(Claude Code deletes transcripts older than `cleanupPeriodDays`, 30 days by default —"
+        " nothing older can be audited.)_",
+        f"- **sessions**: {len(sessions)} ran `{plugin}:` skills, across {len(projects)} project(s)"
+        f"  ·  {scanned} transcripts scanned",
+        f"- **skill runs**: {len(runs)} ({sum(1 for _, r in runs if r['via'] == 'tool')} by the model,"
+        f" {sum(1 for _, r in runs if r['via'] == 'typed')} typed by the user)  ·  **subagents**: {len(agents)}"
+        f"  ·  **compactions**: {sum(s['compactions'] for s in sessions)}"
+        f"  ·  **user interrupts**: {sum(s['interrupts'] for s in sessions)}",
+        "",
+        "_A run spans from its invocation to the next skill invocation (or the session's end — so the"
+        " last run of a session may include idle time). Older sessions may have run an older version of"
+        " a skill: check the current file still carries the cause before proposing a fix._",
+        "",
+    ]
+
+    # ---- sessions
+    out += ["## Sessions", ""]
+    out += table(
+        ["#", "started", "session", "project", "span", "plugin", "skills run", "user turns", "interrupts",
+         "compactions", "errors", "tripwires"],
+        [
+            [
+                i, full_ts(s["start"]), s["short"], s["project"],
+                fmt_dur((s["end"] - s["start"]).total_seconds() * 1000), s["loaded_from"],
+                ", ".join(f"{k}×{v}" if v > 1 else k for k, v in Counter(r["skill"] for r in s["runs"]).most_common()),
+                len(s["turns"]), s["interrupts"], s["compactions"], len(s["errors"]), len(s["tripwires"]),
+            ]
+            for i, s in enumerate(sessions, 1)
+        ],
+    )
+
+    # ---- per skill
+    out += ["## Per skill", "", "_Where to look first: many user turns, flagged turns or errors inside a skill's runs._", ""]
+    by_skill = defaultdict(list)
+    for s, r in runs:
+        by_skill[r["skill"]].append((s, r))
+    out += table(
+        ["skill", "runs", "sessions", "typed", "invocation errors", "median wall", "longest", "median tool calls",
+         "user turns inside", "⚑ flagged", "tool errors inside"],
+        [
+            [
+                k, len(v), len({s["sid"] for s, _ in v}), sum(1 for _, r in v if r["via"] == "typed"),
+                sum(1 for _, r in v if r["error"]), fmt_dur(median(r["ms"] for _, r in v)),
+                fmt_dur(max(r["ms"] for _, r in v)), int(median(r["calls"] for _, r in v)),
+                sum(len(r["turns"]) for _, r in v), sum(1 for _, r in v for t in r["turns"] if flagged(t["text"])),
+                sum(len(r["errors"]) for _, r in v),
+            ]
+            for k, v in sorted(by_skill.items(), key=lambda kv: len(kv[1]), reverse=True)
+        ],
+    )
+
+    # ---- subagents
+    out += ["## Subagents by role", ""]
+    by_type = defaultdict(list)
+    for s, a in agents:
+        by_type[a["type"]].append((s, a))
+    out += table(
+        ["agent", "runs", "sessions", "not completed", "no result", "median duration", "total duration", "total tokens", "models"],
+        [
+            [
+                k, len(v), len({s["sid"] for s, _ in v}),
+                sum(1 for _, a in v if a["status"] not in ("completed", "?") and not a["status"].startswith("background")),
+                sum(1 for _, a in v if a["status"].startswith("background")),
+                fmt_dur(median([a["ms"] for _, a in v if a["ms"]] or [0])), fmt_dur(sum(a["ms"] for _, a in v)),
+                sum(a["tokens"] for _, a in v) or "—", ", ".join(sorted({a["model"] for _, a in v})),
+            ]
+            for k, v in sorted(by_type.items(), key=lambda kv: sum(a["ms"] for _, a in kv[1]), reverse=True)
+        ],
+    )
+    out += ["_The same role run N times is where a per-run inefficiency multiplies._", ""]
+
+    # ---- tripwires
+    out += [
+        "## Invariant tripwires",
+        "",
+        "_Signals, not verdicts — the user may have asked for exactly this. Drill into the session and read around it._",
+        "",
+    ]
+    trip = defaultdict(list)
+    for s in sessions:
+        for c, label, cmd in s["tripwires"]:
+            trip[label].append((s, c, cmd))
+    out += table(
+        ["tripwire", "hits", "sessions", "example"],
+        [
+            [label, len(v), len({s["sid"] for s, _, _ in v}), f"`{v[0][0]['short']}` {hhmmss(v[0][1]['ts'])} — {cut(v[0][2], 80)}"]
+            for label, v in sorted(trip.items(), key=lambda kv: len(kv[1]), reverse=True)
+        ],
+    )
+
+    # ---- errors
+    out += ["## Recurring errors", "", "_Grouped with paths, ids and numbers collapsed; most widespread first._", ""]
+    errs = defaultdict(list)
+    for s in sessions:
+        for c in s["errors"]:
+            errs[norm_error(c["error"])].append((s, c))
+    ranked = sorted(errs.items(), key=lambda kv: (len({s["sid"] for s, _ in kv[1]}), len(kv[1])), reverse=True)
+    out += table(
+        ["error", "hits", "sessions", "tools"],
+        [
+            [msg, len(v), len({s["sid"] for s, _ in v}), ", ".join(sorted({c["name"] for _, c in v}))]
+            for msg, v in ranked[: args.top * 2]
+        ],
+    )
+    if len(ranked) > args.top * 2:
+        out += [f"_… and {len(ranked) - args.top * 2} more distinct errors._", ""]
+
+    hooks = Counter()
+    for s in sessions:
+        hooks.update(s["hooks"])
+    if hooks:
+        out += ["Hook errors (grouped):"]
+        out += [f"- `{name}` ×{n} — {msg}" for (name, msg), n in hooks.most_common(10)]
+        out += [""]
+
+    # ---- user turns inside skill runs
+    out += [
+        "## User turns inside skill runs",
+        "",
+        "_⚑ = an interrupt or a correction-shaped opening («нет», «стоп», «зачем», «no», «wait» …) — where to"
+        " read around first, not a verdict. Flagged turns first, then in time order; capped per skill._",
+        "",
+    ]
+    for k, v in sorted(by_skill.items(), key=lambda kv: len(kv[1]), reverse=True):
+        inside = [(s, t) for s, r in v for t in r["turns"]]
+        if not inside:
+            continue
+        inside.sort(key=lambda st: (not flagged(st[1]["text"]), st[1]["ts"]))
+        out += [f"### {k} — {len(inside)} turn(s)", ""]
+        for s, t in inside[: args.top]:
+            text = cut(t["text"], args.max_user_chars)
+            out += [f"- {'⚑ ' if flagged(t['text']) else ''}`{s['short']}` {hhmmss(t['ts'])} — {text}"]
+        if len(inside) > args.top:
+            out += [f"- _… {len(inside) - args.top} more_"]
+        out += [""]
+
+    out += [
+        "## Drill down",
+        "",
+        "`scan_session.py --session <id>` prints the full single-session digest — tool mix, slowest and repeated"
+        " calls, files written, subagent transcripts, every user turn. Full ids:",
+        "",
+    ]
+    out += [f"- `{s['short']}` → `{s['sid']}` ({s['project']})" for s in sessions]
+    out += [""]
+    return "\n".join(out)
+
+
 def main():
-    ap = argparse.ArgumentParser(description="Digest of skill/agent/tool activity in a Claude Code session.")
-    ap.add_argument("--session", help="session id or path to a transcript .jsonl (default: current session)")
-    ap.add_argument("--cwd", help="project directory to match (default: the current one)")
-    ap.add_argument("--list", action="store_true", help="list recorded sessions for this project and exit")
+    ap = argparse.ArgumentParser(
+        description="Digest of skill/agent/tool activity across Claude Code sessions (default) or in one session."
+    )
+    ap.add_argument("--session", help="one session: id or path to a transcript .jsonl")
+    ap.add_argument("--current", action="store_true", help="one session: the newest transcript of this project")
+    ap.add_argument("--plugin", default=DEFAULT_PLUGIN, help=f"whose skills mark a session (default: {DEFAULT_PLUGIN})")
+    ap.add_argument("--since", help="only sessions active on or after YYYY-MM-DD")
+    ap.add_argument("--until", help="only sessions started on or before YYYY-MM-DD")
+    ap.add_argument("--days", type=int, help="only sessions active in the last N days")
+    ap.add_argument("--cwd", help="only sessions of this project directory")
+    ap.add_argument("--list", action="store_true", help="list the sessions that ran the plugin and exit")
+    ap.add_argument("--idle", type=int, default=30, help="minutes of silence that end a skill run (default: 30)")
     ap.add_argument("--top", type=int, default=12, help="rows per truncated section (default: 12)")
-    ap.add_argument("--max-user-chars", type=int, default=700, help="truncate each user turn (default: 700)")
+    ap.add_argument("--max-user-chars", type=int, help="truncate each user turn (default: 700 one session, 280 across)")
     args = ap.parse_args()
 
-    if args.list:
-        list_sessions(args.cwd)
+    if args.session or args.current:
+        args.max_user_chars = args.max_user_chars or 700
+        transcript = find_transcript(args.session, args.cwd)
+        rows = load_rows(transcript)
+        if not rows:
+            sys.exit(f"transcript {transcript} is empty")
+        print(build(transcript, rows, args))
         return
 
-    transcript = find_transcript(args.session, args.cwd)
-    rows = load_rows(transcript)
-    if not rows:
-        sys.exit(f"transcript {transcript} is empty")
-    print(build(transcript, rows, args))
+    args.max_user_chars = args.max_user_chars or 280
+    since, until = window_bounds(args)
+    args.window = (since, until)
+    if args.list:
+        list_sessions(args.plugin, since, until, args.cwd)
+        return
+
+    found, scanned, oldest = discover(args.plugin, since, until, args.cwd)
+    sessions = []
+    for path in found:
+        rows = load_rows(path)
+        stamps = [r["_ts"] for r in rows if r["_ts"]]
+        if not stamps or (until and min(stamps) >= until):
+            continue
+        summary = summarize(path, rows, args.plugin, args)
+        if summary["runs"]:
+            sessions.append(summary)
+    if not sessions:
+        print(
+            f"No session in the window ran a `{args.plugin}:` skill ({scanned} transcripts scanned;"
+            f" oldest on disk: {full_ts(oldest)}). Try a wider window, or --session <id> for one session."
+        )
+        return
+    sessions.sort(key=lambda s: s["start"])
+    print(build_multi(sessions, args.plugin, scanned, oldest, since, until, args))
 
 
 if __name__ == "__main__":

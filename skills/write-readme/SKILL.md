@@ -1,6 +1,6 @@
 ---
 name: write-readme
-description: "Write or refresh the repository README as a handover document — what the project is, how another person clones it and gets the dev environment running, how a release is deployed to production, what they must bring themselves (accounts, secrets, licences), and how to get back to a clean seeded state. Use in the release phase (run by release-product before the manual-test briefing) or standalone whenever someone else has to run the project. Every command it writes is verified against the repo, never recalled: an unverified step is written as unknown rather than filled in with something plausible. Read-only on product code — it writes README.md and its own record, nothing else."
+description: "Write or refresh the README as a handover document: what the project is, how a stranger clones and runs it, how it is deployed, what they must bring, how to reach a clean seeded state. Every command verified against the repo; the unverifiable is written as unknown. Run by release-product or standalone. Read-only on product code; writes README.md."
 argument-hint: "[dev-only | prod-only]"
 hooks:
   PreToolUse:
@@ -12,52 +12,32 @@ hooks:
 
 # Write Readme Skill (the handover document)
 
-You write the file a **second person** opens first. Not a marketing page and not a feature list — the
-document that answers, in order: *what is this, how do I run it, how do I ship it, and what do I have
-to bring myself?*
+You write the file a **second person** opens first: *what is this, how do I run it, how do I ship it,
+what must I bring?* The test: **a stranger with a fresh clone gets the dev environment running from
+this file alone** and knows which steps only they can do; where they would stall, the step is not
+finished.
 
-The test this document has to pass is concrete: **someone who has never seen the repository clones it
-and gets the dev environment running from this file alone**, and knows exactly which of the remaining
-steps only they can do. Every project in this set eventually needs it — to hand work to a colleague,
-to publish somewhere, or simply because the owner will be six months older when they next deploy.
-
-## Scope discipline
-
-- **You verify, you do not recall.** Every command in the README is read out of the repo — the
-  `Makefile`, the package manifest's scripts, `verification.md`, the compose file — and, where it is
-  cheap and safe, **run** to confirm it exists and starts. A command nobody checked is the single most
-  common defect in a README, and it fails on the one person the file exists for.
-- **Unknown is written as unknown.** "Deployment: not established in this repository — see
-  `production-setup.md`" is a correct line. Inventing a plausible `npm run deploy` is not.
-- **Read-only on the product.** You write `README.md` (and, if the project already keeps one, a
-  translated sibling like `README.ru.md`) and nothing else. A missing script is a finding, not
-  something you write here — file it as a task like anything else.
-- **No secrets, ever.** Names of variables, never values; where to get one, never the one in `.env`.
-- **This is not the runbook.** `production-runbook.md` (from `setup-production-environment`) is the
-  owner's operating manual; the README **points at it**, and carries only what a newcomer needs to get
-  as far as a running dev environment plus an honest account of what production takes.
+Scope: `README.md` (and an existing sibling like `README.ru.md`), nothing else. It is **not the
+runbook** — `production-runbook.md` (from `setup-production-environment`) stays the owner's manual,
+pointed at; the README covers a newcomer's dev environment plus an honest account of production.
 
 ## Language & git
 
-Respond and reason in the user's language, and write the README in **the language the project's
-existing docs use** — if the repo has none, ask once; a handover file in the wrong language is worse
-than a short one. Code, identifiers, paths and commands are never translated. Workflow vocabulary
-follows **`../_shared/glossary.md`**.
-
-**One branch — the current one, normally `main`.** Never create a branch, switch branch, or open a
-worktree on your own initiative. Full rule: **`../_shared/git-workflow.md`**.
+Respond and reason in the user's language; vocabulary per **`../_shared/glossary.md`**. Write the
+README in **the language the project's existing docs use** — none → ask once. Never translate code,
+identifiers, commands or paths. Commit messages are always English. **One branch — the current one**
+(normally `main`): never branch, switch or open a worktree unless the user explicitly asked in this
+session — **`../_shared/git-workflow.md`**.
 
 ## Modes
 
-Read `.dev-skills/release/.release-config.md` (or `.dev-skills/build-plan/.build-config.md` when run
-outside the release phase) for `mode`; default **interactive**.
+Read `mode` from `.dev-skills/release/.release-config.md` (or `.dev-skills/build-plan/.build-config.md`
+outside the release phase); default **interactive**.
 
-- **interactive** — show the outline and the list of unverified claims before writing; confirm a
-  rewrite of an existing README.
+- **interactive** — show the outline and the unverified claims before writing; confirm a rewrite.
 - **autopilot** — write it and report what could not be verified.
 
-An argument narrows the job: `dev-only` (skip the production half — nothing is deployed yet),
-`prod-only` (refresh just the deployment section).
+`dev-only` skips the production half; `prod-only` refreshes only the deployment section.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
@@ -72,80 +52,60 @@ An argument narrows the job: `dev-only` (skip the production half — nothing is
 ```
 
 ### Stage 0: Intake
-Read, in this order: the current `README.md` (never blow it away — it may hold hand-written prose worth
-keeping); `.dev-skills/project-spec/product-requirements.summary.md` for what the product *is* in one
-paragraph; `.dev-skills/project-setup/setup-log.md` and **`verification.md`** for the real commands;
-`.dev-skills/project-setup/production-setup.md` and `production-runbook.md` if they exist; the root
-`CLAUDE.md`; and the repo's own entry points — `Makefile`, package manifest scripts, compose file,
-`.env.example`, `.gitignore`.
-
-`.gitignore` matters more than it looks: it tells you **what a clone does not contain**, which is
-exactly the part a newcomer trips over.
+Read, in order: the current `README.md` (never blow it away);
+`.dev-skills/project-spec/product-requirements.summary.md`; `.dev-skills/project-setup/setup-log.md`
+and **`verification.md`** for the real commands; `.dev-skills/project-setup/production-setup.md` and
+`production-runbook.md` if present; the root `CLAUDE.md`; the entry points — `Makefile`, manifest
+scripts, compose file, `.env.example`, `.gitignore` (**what a clone does not contain**).
 
 ### Stage 1: The dev path (verified)
-Write the sequence a stranger runs: prerequisites (with versions, read from the manifest or the
-toolchain files — not from memory), clone, install, configure, bring up, and **how they know it
-worked** (the URL, the seeded login, what they should see).
-
-Verify it. Where a step is cheap and non-destructive, **run it** — `make help`, `docker compose
-config`, `--version` probes — and where it is not, at minimum confirm the target exists in the file
-that would define it. Mark anything you could not check with a visible `⚠ unverified` in your report
-(not in the README — the README either states a verified step or says it is unknown).
+Prerequisites (versions from the manifest or toolchain files, not memory), clone, install, configure,
+bring up, and **how they know it worked** (URL, seeded login, what they see). **Run** what is cheap and
+non-destructive (`make help`, `docker compose config`, `--version`); otherwise confirm the target exists
+in its defining file. Unchecked → `⚠ unverified` in your report, never in the README.
 
 ### Stage 2: The prod path (honest)
-Answer one question plainly: **could this person deploy it?** Read `production-setup.md`. Three honest
-outcomes, and all three are acceptable:
+**Could this person deploy it?** Read `production-setup.md`. Three acceptable outcomes:
 
-- **Deployable** — the platform, the command, and what to watch. Point at `production-runbook.md` for
-  the detail rather than copying it.
-- **Deployable with gaps** — name each gap as a bullet: the account, the secret, the DNS record, the
-  migration that has never run anywhere but locally.
-- **Not established** — say so in one line and point at `/setup-production-environment`. Do not
-  reconstruct a deployment story from the architecture doc: the architecture records a *decision*, and
-  the README describes *what exists*.
+- **Deployable** — platform, command, what to watch; point at `production-runbook.md` for detail.
+- **Deployable with gaps** — each gap a bullet: account, secret, DNS record, a migration only run locally.
+- **Not established** — one line pointing at `/setup-production-environment`. Never reconstruct a
+  deployment story from the architecture doc — it records a *decision*, not *what exists*.
 
 ### Stage 3: What you must bring
-The list of things a clone genuinely does not contain and cannot generate: provider accounts, API keys
-and where to obtain each, licences, a domain, any data file excluded by `.gitignore`. For each: what
-it is, where it goes (the variable name from `.env.example`), and whether the dev environment works
-without it (many do, in a degraded mode worth naming).
+What a clone lacks and cannot generate: provider accounts, API keys and where to obtain each,
+licences, a domain, files excluded by `.gitignore`. For each: what it is, where it goes (the variable
+name from `.env.example`), whether dev works without it (often degraded — say how).
 
 ### Stage 4: The clean state
-How to get back to a known-good local state — the reset command, the seed command, what the seed
-contains, and **what to do about assets the repository does not carry**. If the project has fixtures,
-audio, sample media or a database dump that is gitignored, say how they are produced, or say plainly
-that they must be obtained. A newcomer who cannot recreate the fixtures cannot run the tests.
+Reset command, seed command, what the seed contains, and **assets the repo does not carry**
+(gitignored fixtures, audio, sample media, a database dump): how they are produced, or plainly that
+they must be obtained.
 
 ### Stage 5: Write it
-Sections, in this order, and skip any that genuinely does not apply:
+Sections, in order; skip any that does not apply:
 
-1. **What this is** — two or three sentences, plain language, from the product summary.
+1. **What this is** — two or three sentences, from the product summary.
 2. **Requirements** — with versions.
 3. **Run it locally** — the verified sequence, then "you should see …".
-4. **Everyday commands** — the handful that matter (dev, tests, the gate, reset), from `verification.md`.
+4. **Everyday commands** — dev, tests, the gate, reset, from `verification.md`.
 5. **What you must bring** — Stage 3.
 6. **Deploying** — Stage 2, at its honest level.
 7. **Getting back to a clean state** — Stage 4.
 8. **Where the documentation lives** — the `.dev-skills/` map and the root `CLAUDE.md`, one line each.
 
-Refresh in place: keep the existing structure and hand-written prose where it is still true, correct
-what has drifted, and add what is missing. A README rewritten from scratch every release loses the one
-paragraph a human wrote by hand.
-
 ### Stage 6: Report
-Say what changed, list every claim you could **not** verify and why, and end with the
-**«What you should do»** block (**`../_shared/build-pipeline/report-format.md`**) — typically: fill in
-the accounts only they can create, confirm the deploy story, or run
-`/setup-production-environment` if production is still unestablished.
+What changed, every claim you could **not** verify and why, then **«What you should do»**
+(**`../_shared/build-pipeline/report-format.md`**) — typically: create the accounts only they can,
+confirm the deploy story, or run `/setup-production-environment` if production is unestablished.
 
 ## Rules
 
-1. **Every command is verified against the repo**; anything unverifiable is written as unknown, never
-   as a plausible guess.
-2. **Never invent a deployment story.** "Not established" is a correct README line.
-3. **Never write a secret's value**, and never copy `.env` into the document.
-4. **Refresh, don't regenerate** — hand-written prose that is still true survives.
-5. **Product code is never touched.** A missing script or broken command is a finding to report, and a
-   task if it matters.
-6. **The test of the file is a stranger with a fresh clone.** If they would stall at any step, that
-   step is not finished.
+1. **Every command is verified against the repo**; the unverifiable is written as unknown, never a
+   plausible guess ("Deployment: not established in this repository — see `production-setup.md`", not
+   an invented `npm run deploy`).
+2. **Never write a secret's value** — variable names and where to get one, never the one in `.env`.
+3. **Refresh, don't regenerate** — keep the structure and hand-written prose still true, correct drift,
+   add what is missing.
+4. **Product code is never touched.** A missing script or broken command is a finding, and a task if
+   it matters.

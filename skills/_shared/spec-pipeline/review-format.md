@@ -1,11 +1,10 @@
 # Review return format (shared — spec pipeline)
 
-How the `spec-reviewer` agent reports. Its **final message is the deliverable** — it writes no file,
-so there is nothing to keep, merge, or delete. The phase's fix stage reads this list and applies it
-to `<artifact>.research.md` directly.
+How the `spec-reviewer` agent reports. Its **final message is the deliverable** — no file. The
+phase's fix stage applies this list to `<artifact>.research.md` directly.
 
-Rules: at most **7 findings**, most severe first. No preamble, no restatement of the draft, no
-praise for what is right, no summary of the phase. Findings only.
+At most **7 findings**, most severe first. No preamble, no restatement of the draft, no praise, no
+phase summary. Findings only.
 
 ```
 ИТОГО — <N> problems · 🔴 <c> · 🟡 <m> · ⚪ <k>
@@ -23,12 +22,12 @@ praise for what is right, no summary of the phase. Findings only.
    …
 ```
 
-If the draft is clean, return one line — `ИТОГО — 0 problems · 🔴 0 · 🟡 0 · ⚪ 0` — and nothing
-else. A clean review is a valid outcome; do not manufacture findings to look useful.
+A clean draft returns one line — `ИТОГО — 0 problems · 🔴 0 · 🟡 0 · ⚪ 0` — and nothing else. A clean
+review is a valid outcome; never manufacture findings.
 
 ## Gaps
 
-A gap — something the draft did **not** answer — is reported as a finding like any other, typed
-`unsupported claim` or `placeholder left in` as fits, with `Fix:` naming what should fill it. The
-reviewer does not fill gaps itself: it is offline, and filling them is the phase's job (within its
-research budget, see `research-method.md`).
+A gap — something the draft did **not** answer — is a finding like any other, typed
+`unsupported claim` or `placeholder left in`, with `Fix:` naming what should fill it. The reviewer
+does not fill gaps: it is offline, and filling them is the phase's job (within its research budget,
+see `research-method.md`).
